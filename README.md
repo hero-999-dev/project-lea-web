@@ -41,8 +41,9 @@ account in them, no credentials.
 
 This replaces `https://hero-999-dev.github.io/Project-Lea/`, which stopped
 working when that repository became private — GitHub Pages does not serve from
-a private repository on a free account. The gate directory name is unchanged,
-so **the password is the same**.
+a private repository on a free account. The gate directory was renamed on 2026-09-06 to match the password this
+account actually uses everywhere, so an older gate link no longer resolves; the
+gate page itself is unchanged.
 
 The pages that used to link to the repository now link to the copies here, and
 `git clone` is replaced by the zip.
