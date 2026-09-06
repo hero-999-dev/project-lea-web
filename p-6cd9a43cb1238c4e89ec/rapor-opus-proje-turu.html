@@ -1,0 +1,583 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opus Proje Turu</title>
+<style>
+  :root {
+    --paper:#e9ecef; --card:#f7f8f9; --sunk:#dfe4e8; --ink:#131a20; --ink-2:#5c6873; --ink-3:#7d8892;
+    --rule:#cdd4da; --accent:#0a6e8c; --accent-soft:#0a6e8c22;
+    --good:#2c6e49; --bad:#9b2c2c; --warn:#8a5a00;
+    --good-bg:#2c6e4919; --bad-bg:#9b2c2c19; --warn-bg:#8a5a0019;
+    --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --body:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+    --data:"Cascadia Mono",ui-monospace,Consolas,"SF Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#101519; --card:#171e24; --sunk:#0b1014; --ink:#e4eaef; --ink-2:#93a1ac; --ink-3:#74828d;
+      --rule:#26313a; --accent:#4fb3d1; --accent-soft:#4fb3d128;
+      --good:#63b37e; --bad:#e0716b; --warn:#d9a340;
+      --good-bg:#63b37e1f; --bad-bg:#e0716b1f; --warn-bg:#d9a3401f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101519; --card:#171e24; --sunk:#0b1014; --ink:#e4eaef; --ink-2:#93a1ac; --ink-3:#74828d;
+    --rule:#26313a; --accent:#4fb3d1; --accent-soft:#4fb3d128;
+    --good:#63b37e; --bad:#e0716b; --warn:#d9a340;
+    --good-bg:#63b37e1f; --bad-bg:#e0716b1f; --warn-bg:#d9a3401f;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 clamp(1rem,4vw,3rem) 6rem; }
+  .col { max-width:74ch; }
+  h1,h2,h3 { font-family:var(--display); font-weight:600; text-wrap:balance; letter-spacing:-0.01em; }
+  h1 { font-size:clamp(2.1rem,5vw,3.1rem); line-height:1.1; margin:0; }
+  h2 { font-size:clamp(1.5rem,3vw,1.95rem); line-height:1.2; margin:0; }
+  h3 { font-size:1.12rem; margin:2.4rem 0 0.6rem; }
+  p { margin:0 0 1rem; }
+  a { color:var(--accent); text-underline-offset:3px; }
+  a:focus-visible, summary:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+  code,.mono { font-family:var(--data); font-size:0.88em; }
+  code { background:var(--sunk); padding:0.1em 0.36em; border-radius:3px; }
+  header.masthead { border-bottom:1px solid var(--rule); padding:clamp(3rem,8vw,5.5rem) 0 2.2rem; display:flex; flex-direction:column; gap:1.1rem; }
+  .eyebrow { font-family:var(--data); font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-3); }
+  .lede { font-size:1.12rem; color:var(--ink-2); max-width:68ch; margin:0; }
+  .kpis { display:grid; gap:1px; background:var(--rule); grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border:1px solid var(--rule); margin:2.5rem 0 0; }
+  .kpi { background:var(--card); padding:1.1rem 1.2rem; display:flex; flex-direction:column; gap:0.15rem; }
+  .kpi b { font-family:var(--data); font-size:1.75rem; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .kpi span { font-size:0.82rem; color:var(--ink-2); }
+  nav.toc { margin:2.5rem 0 0; font-size:0.92rem; }
+  nav.toc ol { margin:0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:0.4rem 1.4rem; }
+  nav.toc a { color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--rule); }
+  nav.toc a:hover { color:var(--accent); border-color:var(--accent); }
+  section { padding-top:3.6rem; }
+  .sec-head { display:flex; align-items:baseline; gap:0.9rem; margin-bottom:1.4rem; }
+  .marker { font-family:var(--data); font-size:0.78rem; color:var(--accent); border:1px solid var(--accent); border-radius:2px; padding:0.1rem 0.42rem; letter-spacing:0.05em; flex:none; }
+  .scroller { overflow-x:auto; margin:1.4rem 0; border:1px solid var(--rule); background:var(--card); }
+  table { border-collapse:collapse; width:100%; font-size:0.9rem; }
+  th,td { padding:0.58rem 0.85rem; text-align:left; border-bottom:1px solid var(--rule); white-space:nowrap; vertical-align:top; }
+  thead th { font-family:var(--data); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-3); font-weight:500; background:var(--sunk); }
+  tbody tr:last-child td { border-bottom:0; }
+  td.num, th.num { text-align:right; font-family:var(--data); font-variant-numeric:tabular-nums; }
+  td.cfg { font-family:var(--data); font-weight:600; }
+  td.wrap-cell { white-space:normal; min-width:22rem; }
+  tr.hl td { background:var(--accent-soft); }
+  .meter { display:grid; grid-template-columns:1fr 3.2rem; align-items:center; gap:0.6rem; min-width:8.5rem; }
+  .meter .track { height:7px; background:var(--sunk); border-radius:2px; overflow:hidden; }
+  .meter .fill { display:block; height:100%; background:var(--accent); border-radius:0 2px 2px 0; }
+  .meter .val { font-family:var(--data); font-variant-numeric:tabular-nums; text-align:right; font-size:0.86rem; }
+  .tag { display:inline-flex; align-items:center; gap:0.32rem; font-family:var(--data); font-size:0.76rem; padding:0.08rem 0.42rem; border-radius:2px; border:1px solid; }
+  .tag.ok { color:var(--good); border-color:var(--good); background:var(--good-bg); }
+  .tag.no { color:var(--bad); border-color:var(--bad); background:var(--bad-bg); }
+  .tag.mid { color:var(--warn); border-color:var(--warn); background:var(--warn-bg); }
+  .verdict { border-left:3px solid var(--accent); background:var(--card); padding:0.9rem 1.2rem; margin:1.6rem 0; max-width:74ch; }
+  .verdict b { font-family:var(--data); font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:0.25rem; }
+  .verdict p { margin:0; }
+  .note { color:var(--ink-2); font-size:0.92rem; max-width:74ch; }
+  ul.tight { max-width:74ch; padding-left:1.1rem; margin:0 0 1rem; }
+  ul.tight li { margin-bottom:0.5rem; }
+  pre { font-family:var(--data); font-size:0.82rem; line-height:1.55; background:var(--card); border:1px solid var(--rule); padding:0.9rem 1rem; overflow-x:auto; margin:0 0 1rem; }
+  footer { border-top:1px solid var(--rule); margin-top:4rem; padding-top:1.4rem; color:var(--ink-3); font-size:0.86rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+/* TIMELINE:CSS:START */
+.tl { list-style: none; margin: 1.4rem 0 0; padding-inline-start: 1.5rem; border-inline-start: 2px solid var(--rule); }
+.tl > li { position: relative; padding-bottom: 1.5rem; }
+.tl > li:last-child { padding-bottom: 0; }
+.tl > li::before {
+  content: ""; position: absolute; inset-inline-start: calc(-1.5rem - 6px); top: 0.4rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--rule);
+}
+.tl > li.tl-key::before  /* namespaced: one report styles a chart legend .key */ { background: var(--accent); border-color: var(--accent); }
+.tl time { display: block; font-family: var(--data); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.tl h4 { margin: 0.15rem 0 0.35rem; font-size: 1rem; font-weight: 640; color: var(--ink); }
+.tl p { margin: 0 0 0.4rem; color: var(--ink-2); max-width: 68ch; }
+.tl p:last-child { margin-bottom: 0; }
+/* TIMELINE:CSS:END */
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">18 Ağustos 2026 · Opus · gerçek proje · 25 Ağustos'ta n=3'e çıkarıldı · 30 Ağustos'ta Lea ve aynı gün baseline eklendi</div>
+  <h1>Beş config, aynı canlı siteye bakıyor</h1>
+  <p class="lede">
+    Önceki dört tur oyuncak görevlerdi. Bu tur gerçek bir işte: haftalardır süren, 7 dilli,
+    ~6,900 satırlık canlı bir kedi bakıcılığı sitesi. Her config kendi kopyasını aldı, sistemi
+    <strong>yalnızca koddan</strong> anlamak zorundaydı, bir iyileştirme seçip uyguladı ve
+    kararını yazdı. Markdown dosyalarına bakmak yasaktı — ve bu kural da ölçüldü.
+  </p>
+  <div class="kpis">
+    <div class="kpi"><b>21</b><span>koşu, config başına 3</span></div>
+    <div class="kpi"><b>$111.13</b><span>ölçülen toplam</span></div>
+    <div class="kpi"><b>0</b><span>kural ihlali</span></div>
+    <div class="kpi"><b>1</b><span>bozulan build (15'te)</span></div>
+  </div>
+  <nav class="toc">
+    <ol>
+      <li><a href="#gorev">Görev</a></li>
+      <li><a href="#olcum">Ölçüm</a></li>
+      <li><a href="#sonuc">Sonuçlar</a></li>
+      <li><a href="#kararlar">Ne seçtiler</a></li>
+      <li><a href="#dogrulama">Nasıl doğruladılar</a></li>
+      <li><a href="#bug">Bug analizi</a></li>
+      <li><a href="#zaman">Nasıl ilerledi</a></li>
+      <li><a href="#karar">Karar</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="gorev">
+  <div class="sec-head"><span class="marker">A</span><h2>Görev ve kural</h2></div>
+  <p class="col">
+    Proje: <span class="mono">index.html</span> şablon, <span class="mono">scripts/build-langs.js</span>
+    onu <span class="mono">i18n.js</span> + <span class="mono">config.js</span> ile 6 dile üretiyor,
+    <span class="mono">sitemap.xml</span> dahil. <span class="mono">app.js</span> 1,328 satır,
+    <span class="mono">i18n.js</span> 1,160, <span class="mono">styles.css</span> 993, her HTML 469.
+    Bağımlılık yok, build adımı yok, Vercel'de yayında.
+  </p>
+  <p class="col">Her koşuya verilen prompt aynıydı:</p>
+  <pre>Bu dizin canlı, çok dilli bir statik web sitesi. Sistemin bütününün nasıl
+işlediğini koddan çıkar: HTML, CSS, JavaScript ve build scriptleri.
+
+Bu görev için katı kural: hiçbir Markdown dosyasını okuma. HANDOFF.md,
+README.md, TRAFIK-TAKIBI.md ve diğer tüm .md dosyaları yasak.
+
+Sonra bu site için en değerli bulduğun tek iyileştirmeyi seç ve uygula.
+Kendin seç, hangisi olsun diye sorma.
+
+Son olarak ANALYSIS.md yaz: sistem nasıl işliyor, hangi seçenekleri
+değerlendirdin, neden bunu seçtin, tam olarak neyi değiştirdin ve sitenin
+hâlâ çalıştığını nasıl doğruladın.</pre>
+  <p class="note">
+    Kopyalardan <span class="mono">.git</span> (24 MB geçmiş) ve <span class="mono">Sources</span>
+    (19 MB Notion arşivi) çıkarıldı — kod değil. Kalan 8.3 MB'lık ağaç beş kez kopyalandı,
+    bir de dokunulmamış <span class="mono">_pristine</span> referansı ayrıldı.
+  </p>
+</section>
+
+<section id="olcum">
+  <div class="sec-head"><span class="marker">B</span><h2>Ölçüm nasıl yapıldı</h2></div>
+  <p class="col">
+    Bu turda çıktı formatı <span class="mono">stream-json</span>: yalnız maliyet değil,
+    <strong>sürecin tamamı</strong> kaydedildi — hangi araç kaç kez çağrıldı, hangi dosya
+    okundu, hangi kabuk komutu çalıştı. Modelin kendi beyanı hiçbir yerde kanıt sayılmadı.
+  </p>
+  <ul class="tight">
+    <li><strong>Kural denetimi</strong> — <span class="mono">Read</span>, <span class="mono">Grep</span> ve <span class="mono">Bash</span> çağrıları .md dosyasına dokunuyor mu diye tarandı. Dedektör önce sahte bir stream'le sınandı: dört ihlali de yakaladı, <span class="mono">ANALYSIS.md</span> yazımını ihlal saymadı.</li>
+    <li><strong>Diff</strong> — <span class="mono">_pristine</span>'e karşı; el yazımı kod, build çıktısı ve analiz yazısı ayrı sayıldı.</li>
+    <li><strong>Build tutarlılığı</strong> — sonuç bir kopyaya alınıp <span class="mono">node scripts/build-langs.js</span> yeniden koşturuldu; dil sayfaları değişiyorsa gönderilen hâl build'den yeniden üretilemiyor demektir.</li>
+    <li><strong>Tarayıcı</strong> — <span class="mono">index.html</span> ve <span class="mono">tr.html</span> gerçek Chrome'da CDP ile açıldı: uncaught exception, konsol hatası, DOM/metin hacmi kaybı, kırık görsel.</li>
+    <li><strong>Statik denetim</strong> — her JS'e <span class="mono">node --check</span>, her yerel <span class="mono">src</span>/<span class="mono">href</span> için dosya var mı kontrolü.</li>
+    <li><strong>Grader doğrulaması</strong> — değişmemiş kopya üzerinde sıfır fark, sıfır bayat sayfa, sıfır hata verdiği kanıtlandıktan sonra kullanıldı.</li>
+  </ul>
+</section>
+
+<section id="sonuc">
+  <div class="sec-head"><span class="marker">C</span><h2>Sonuçlar</h2></div>
+  <p class="note">
+    Bu bölümün tamamı — tablolar, seçimler, araç profilleri — turun <strong>ilk</strong>
+    koşusunu anlatıyor, config başına tek örnek. Üç örnekli medyanlar hemen aşağıdaki
+    <em>Güncelleme</em> tablosunda; maliyet sıralamasını orası değiştiriyor.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>maliyet (USD)</th><th class="num">tur</th><th class="num">dk</th><th class="num">input</th><th class="num">output</th><th class="num">araç</th><th class="num">okunan dosya</th><th>md ihlali</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">full</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:49%"></span></span><span class="val">2.90</span></span></td>
+          <td class="num">31</td><td class="num">35.3</td><td class="num">2.39M</td><td class="num">25,268</td><td class="num">30</td><td class="num">4</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="cfg">hooks</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:70%"></span></span><span class="val">4.15</span></span></td>
+          <td class="num">40</td><td class="num">34.8</td><td class="num">3.93M</td><td class="num">32,134</td><td class="num">39</td><td class="num">8</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="cfg">bare</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:82%"></span></span><span class="val">4.82</span></span></td>
+          <td class="num">51</td><td class="num">26.6</td><td class="num">4.57M</td><td class="num">47,371</td><td class="num">50</td><td class="num">5</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="cfg">superpowers</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:97%"></span></span><span class="val">5.72</span></span></td>
+          <td class="num">59</td><td class="num">35.8</td><td class="num">5.78M</td><td class="num">54,039</td><td class="num">58</td><td class="num">6</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="cfg">modes</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">5.91</span></span></td>
+          <td class="num">70</td><td class="num">49.4</td><td class="num">6.95M</td><td class="num">41,050</td><td class="num">69</td><td class="num">4</td><td><span class="tag ok">0</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Sıralama tersine döndü — ama tek koşuda</b>
+    <p>Bu ilk koşuda <strong>full en ucuzuydu: $2.90, bare'in %60'ı, modes'un yarısı.</strong>
+    Önceki araçlı turlarda full her zaman en pahalıydı (+%82 ile +%97 arası). Sebep tur sayısı:
+    full 31 turda bitirdi, modes 70 turda. Gerçek projede maliyeti belirleyen şey sabit prompt
+    yükü değil, <strong>kaç tur döndüğün</strong>. Aşağıdaki n=3 güncellemesi bu yönü doğruluyor
+    ama büyüklüğü çürütüyor.</p>
+  </div>
+
+  <h3>Güncelleme: config başına 3 koşu (25 Ağustos 2026)</h3>
+  <p class="col">
+    Yukarıdaki tablo turun <strong>ilk</strong> koşusu. Tur sonradan config başına 3 örneğe
+    çıkarıldı; 15 koşunun tamamı <span class="mono">grade_project.mjs</span> ile yeniden notlandı.
+    Medyanlar ve koşular arası aralık:
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>maliyet medyanı (USD)</th><th class="num">en düşük</th><th class="num">en yüksek</th><th class="num">tur medyanı</th><th class="num">dk medyanı</th><th>build</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">hooks</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:59%"></span></span><span class="val">4.15</span></span></td>
+          <td class="num">2.78</td><td class="num">9.39</td><td class="num">40</td><td class="num">34.8</td><td><span class="tag ok">3/3</span></td></tr>
+        <tr><td class="cfg">full</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:63%"></span></span><span class="val">4.43</span></span></td>
+          <td class="num">2.90</td><td class="num">5.73</td><td class="num">52</td><td class="num">35.3</td><td><span class="tag ok">3/3</span></td></tr>
+        <tr><td class="cfg">modes</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:65%"></span></span><span class="val">4.52</span></span></td>
+          <td class="num">3.59</td><td class="num">5.91</td><td class="num">48</td><td class="num">41.0</td><td><span class="tag ok">3/3</span></td></tr>
+        <tr><td class="cfg">bare</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:69%"></span></span><span class="val">4.82</span></span></td>
+          <td class="num">3.72</td><td class="num">5.99</td><td class="num">51</td><td class="num">28.9</td><td><span class="tag ok">3/3</span></td></tr>
+        <tr><td class="cfg">superpowers</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">6.99</span></span></td>
+          <td class="num">5.72</td><td class="num">7.64</td><td class="num">71</td><td class="num">48.0</td><td><span class="tag mid">2/3</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Üç örnekle: dört config tek kümede, superpowers dışarıda</b>
+    <p>
+      <strong>hooks $4.15, full $4.43, modes $4.52, bare $4.82</strong> — aradaki toplam fark
+      %16, oysa <em>aynı config'in</em> kendi koşuları arasındaki fark çok daha büyük: hooks
+      $2.78'den $9.39'a çıkıyor, full $2.90'dan $5.73'e. Yani bu dört config arasında gerçek proje
+      maliyeti bakımından <strong>ayrım yok</strong>; "full en ucuz" tek örneğin gürültüsüymüş.
+      Ayrılan tek config <span class="mono">superpowers</span>: medyan $6.99, en iyi koşusu bile
+      ($5.72) diğerlerinin medyanının üstünde, ve 71 tur medyanıyla en uzun döngü.
+    </p>
+    <p>
+      Yön korunuyor: gerçek projede maliyeti tur sayısı belirliyor, sabit prompt yükü değil.
+      Değişen, büyüklük — 5 kat değil, kümenin içinde kaybolan bir fark.
+    </p>
+  </div>
+
+  <h3>İkinci güncelleme: Lea ve aynı gün <span class="mono">full</span> baseline'ı (30 Ağustos 2026)</h3>
+  <p class="col">
+    Lea'nın üç hücresi 26 Ağustos'ta koştu ve ilki tedirgin ediciydi: <strong>$8.095, 77 tur,
+    71.9 dakika</strong> — turun o güne kadarki en pahalı tek koşusu. Ama bunu yukarıdaki ağustos
+    rakamlarıyla karşılaştırmak yasak: onlar başka bir fiyat rejiminde ölçüldü. O yüzden
+    <span class="mono">full</span> için üç yeni hücre 30 Ağustos'ta koşturuldu ve fiyat rejiminin
+    19 Ağustos'tan beri değişmediği ayrıca doğrulandı (üç Opus canary satırı, eski fiyat
+    vektörleriyle %0.2 hatayla eşleşti).
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">n</th><th class="num">medyan</th><th class="num">ortalama</th><th class="num">en düşük</th><th class="num">en yüksek</th><th>ölçüm günü</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">lea</td><td class="num">3</td><td class="num"><b>$3.735</b></td><td class="num">$4.920</td><td class="num">2.93</td><td class="num">8.10</td><td>26 Ağustos</td></tr>
+        <tr><td class="cfg">full</td><td class="num">3</td><td class="num">$5.560</td><td class="num">$6.029</td><td class="num">5.49</td><td class="num">7.04</td><td>30 Ağustos</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">
+    Lea hem medyanda hem ortalamada düşük ve $5'in altına inen tek kol o; <span class="mono">full</span>
+    ise bugün $7.04'lük kendi pahalı koşusunu üretti. Yani <strong>“Lea gerçek işte pahalı”
+    cümlesi ölçümle çürüdü</strong> — o $8.095 kolun karakteri değil, aykırı değeriydi. Ama tam
+    Mann-Whitney testi <strong>p=0.70</strong>: n=3'e karşı n=3'te ulaşılabilecek en küçük p zaten
+    0.10, dolayısıyla bu tur hiçbir farkı anlamlı kılamazdı.
+  </p>
+  <div class="verdict">
+    <b>Turun çözünürlüğü: n=3 sadece 2 kat farkı görebilir</b>
+    <p>19 koşu üzerinden config-içi <span class="mono">log(maliyet)</span> havuzlanmış standart
+    sapması <strong>0.397</strong> — tek bir koşu kendi config'inin ortalamasından ×1.49 sapıyor.
+    %80 güçle: %50 farkı görmek için kol başına n=16, %30 için <strong>n=37</strong> (~$192 ve
+    ~24 saat), %20 için n=75 gerekir. Bu sayfadaki her sıralama — ilk koşunun “full en ucuz,
+    $2.90” başlığı da, n=3 güncellemesinin sıralaması da — bu eşiğin çok altında. Turun ölçtüğü
+    şey config farkı değil, koşu içi değişkenlik.</p>
+  </div>
+  <p class="note">
+    Kalite tarafında altı koşunun altısı da temiz: build geçiyor, Markdown ihlali yok, JS sözdizim
+    hatası yok, kırık referans yok, konsol hatası yok, bayat build çıktısı yok. Altı satırın altısı
+    maliyet/token tutarlılık denetimini de geçiyor (oran 1.00), yani hiçbiri yarım raporlanmış bir
+    oturum değil.
+  </p>
+
+  <h3>Üretim kodu değişimi, dosya dosya</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">app.js</th><th class="num">index.html</th><th class="num">build-langs.js</th><th class="num">6 dil sayfası</th><th>ek dosya</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">hooks</td><td class="num">+11/−1</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>—</td></tr>
+        <tr><td class="cfg">full</td><td class="num">+36/−5</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td><span class="mono">scripts/test-hero-slides.js</span> +136</td></tr>
+        <tr><td class="cfg">modes</td><td class="num">+38/−5</td><td class="num">+8</td><td class="num">+12</td><td class="num">her biri +8</td><td>—</td></tr>
+        <tr><td class="cfg">superpowers</td><td class="num">+60/−7</td><td class="num">+7</td><td class="num">+26</td><td class="num">her biri +7</td><td>—</td></tr>
+        <tr><td class="cfg">bare</td><td class="num">+77/−14</td><td class="num">+18/−2</td><td class="num">—</td><td class="num">her biri +18/−2</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    Dil sayfalarındaki değişiklikler build'in ürettiği kopyalar, elle yazılmış kod değil.
+    <span class="mono">bare</span> şablonu düzenleyip build'i koşturdu; <span class="mono">superpowers</span>
+    ve <span class="mono">modes</span> ayrıca build scriptini de değiştirip preload satırını her dil için
+    ürettirdi; <span class="mono">full</span> ve <span class="mono">hooks</span> build zincirine hiç dokunmadı.
+  </p>
+
+  <h3>Araç kullanım profili</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>araç dağılımı</th><th class="num">toplam</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">modes</td><td class="wrap-cell mono">Bash 60 · Read 4 · Edit 4 · Write 1</td><td class="num">69</td></tr>
+        <tr><td class="cfg">superpowers</td><td class="wrap-cell mono">PowerShell 22 · Bash 17 · Edit 7 · Read 7 · Write 3 · Glob 1 · Grep 1</td><td class="num">58</td></tr>
+        <tr><td class="cfg">bare</td><td class="wrap-cell mono">PowerShell 24 · Write 8 · Bash 7 · Read 5 · Edit 3 · Grep 3</td><td class="num">50</td></tr>
+        <tr><td class="cfg">hooks</td><td class="wrap-cell mono">Bash 30 · Read 8 · Write 1</td><td class="num">39</td></tr>
+        <tr><td class="cfg">full</td><td class="wrap-cell mono">Bash 19 · Read 4 · PowerShell 2 · Edit 2 · Write 2 · Glob 1</td><td class="num">30</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    Hiçbiri projeyi baştan sona okumadı: en çok dosya okuyan <span class="mono">hooks</span>, 8 dosya.
+    Sistemi anlama işi büyük ölçüde hedefli <span class="mono">sed</span>/<span class="mono">grep</span>
+    çağrılarıyla yapıldı, tam dosya okumalarıyla değil.
+  </p>
+</section>
+
+<section id="kararlar">
+  <div class="sec-head"><span class="marker">D</span><h2>Ne seçtiler</h2></div>
+  <p class="col">
+    Beşi de aynı iki sorunu gördü. Dördü aynısını seçti, biri ayrıştı.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>seçtiği iş</th><th>yaklaşım</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">hooks</td><td class="wrap-cell"><strong>SEO bug'ı</strong> — <span class="mono">app.js</span> sayfa açılır açılmaz <span class="mono">canonical</span> ve <span class="mono">og:url</span>'i İngilizce ana sayfaya çeviriyor, build'in yazdığı doğru adresi eziyordu. Google'a "pl.html ana sayfanın kopyası" demek; hreflang kümesi kırılır, dil sayfaları indeksten düşer.</td><td class="wrap-cell">9 satır, tek dosya. <span class="mono">langHref()</span> ve build'le aynı kuralı paylaşan <span class="mono">pageUrl()</span>.</td></tr>
+        <tr><td class="cfg">bare</td><td class="wrap-cell"><strong>Hero yükü</strong> — üst üste duran 19 slaytın hepsi ilk boyamadan önce iniyordu.</td><td class="wrap-cell">İlk slaytı HTML'e gömdü, kalanları tek tek oluşturdu. Şablonu düzenleyip build'i koşturdu.</td></tr>
+        <tr><td class="cfg">superpowers</td><td class="wrap-cell"><strong>Hero yükü</strong> — dört seçenek listeledi, canonical bug'ını A şıkkı olarak yazıp bilerek eledi.</td><td class="wrap-cell">Slaytları erteledi, LCP görseli için <span class="mono">preload</span> ekledi ve o satırı build scriptine ürettirdi.</td></tr>
+        <tr><td class="cfg">modes</td><td class="wrap-cell"><strong>Hero yükü</strong> — <span class="mono">loading="lazy"</span>'nin burada hiçbir şey ertelemediğini tespit etti: slaytlar <span class="mono">position:absolute</span>, hepsi ekranın içinde sayılıyor.</td><td class="wrap-cell"><span class="mono">data-src</span> ile erteleme, ilk slayt <span class="mono">fetchpriority="high"</span>, eşleşen preload, srcset/sizes uyumu.</td></tr>
+        <tr class="hl"><td class="cfg">full</td><td class="wrap-cell"><strong>Hero yükü</strong> — aynı sorun, en dar müdahale.</td><td class="wrap-cell">Sadece <span class="mono">app.js</span>. Şablona ve build'e hiç dokunmadı, üstüne kalıcı bir regresyon testi bıraktı.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict">
+    <b>Dikkat çeken</b>
+    <p>Dört config performansı seçerken <span class="mono">hooks</span> tek başına doğruluk
+    hatasına gitti. Kimse yanlış bir şey seçmedi — ama <span class="mono">superpowers</span>'ın
+    yazısı bunun bir <em>tercih</em> olduğunu gösteriyor: canonical bug'ını görüp "A şıkkı"
+    diye yazmış, sonra performansı seçmiş. Yani beş koşu iki gerçek kusur buldu, biri düzeltildi,
+    diğeri dört kez rapor edilip dört kez ertelendi.</p>
+  </div>
+</section>
+
+<section id="dogrulama">
+  <div class="sec-head"><span class="marker">E</span><h2>Nasıl doğruladılar</h2></div>
+  <p class="col">
+    Beşi de gerçek ölçüm yaptı; hiçbiri "muhtemelen çalışıyor" demedi. İddiaları araç
+    stream'iyle karşılaştırıldı ve tuttu.
+  </p>
+  <ul class="tight">
+    <li><strong>bare</strong> — kendi Node statik sunucusunu ve headless Chrome harness'ını kurdu, eski hâli mekanik olarak geri yamalayıp aynı ortamda önce/sonra ölçtü: 51→32 istek, fotoğraf 2,876→795 KB, hero <span class="mono">&lt;img&gt;</span> 19→1. Harness'ı sildi — "proje kökünde bırakırsam Vercel onu da yayınlar" gerekçesiyle.</li>
+    <li><strong>hooks</strong> — bug'ı önce <em>kırmızı</em> hâlde üretti (<span class="mono">pl/uk/tr</span> hepsinde canonical yanlış çıktı), düzeltti, yedi sayfayı yeşil doğruladı. Ayrıca bir sayfanın adresinin geçtiği dört yerin artık birbiriyle uyuştuğunu kontrol etti.</li>
+    <li><strong>superpowers</strong> — build'i iki kez koşturup idempotent olduğunu, her sayfada tam 1 preload ve 8 hreflang bulunduğunu, preload'un işaret ettiği her dosyanın diskte var olduğunu doğruladı.</li>
+    <li><strong>modes</strong> — iki portta eşzamanlı önce/sonra, cache kapalı: 30→13 istek, 2.52→0.60 MB. Üstüne 390px telefon + DPR 3 senaryosu (doğru boyun seçildiğini kanıtladı), 26 saniyelik gözlemle slayt döngüsü, üç sayfada DOM durumu.</li>
+    <li><strong>full</strong> — doğrulamayı tek seferlik harness yerine projede kalan bir teste dönüştürdü: <span class="mono">scripts/test-hero-slides.js</span>, 136 satır.</li>
+  </ul>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">ANALYSIS.md</th><th class="num">başlık</th><th>geride bırakılan dosya</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">superpowers</td><td class="num">17,724 B</td><td class="num">23</td><td>—</td></tr>
+        <tr><td class="cfg">bare</td><td class="num">14,204 B</td><td class="num">15</td><td>—</td></tr>
+        <tr><td class="cfg">hooks</td><td class="num">14,039 B</td><td class="num">10</td><td>—</td></tr>
+        <tr><td class="cfg">modes</td><td class="num">12,554 B</td><td class="num">11</td><td>—</td></tr>
+        <tr><td class="cfg">full</td><td class="num">11,697 B</td><td class="num">12</td><td><span class="mono">scripts/test-hero-slides.js</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    <span class="mono">modes</span> en kısa yazılardan birini yazdı ama en ayrıntılı ölçümü yaptı.
+    Sonnet'teki zor bug turunda "kısa çıktı = kaçırılan kusur" ilişkisi kusursuzdu; gerçek projede
+    ve Opus'ta o ilişki görünmüyor. Kısalık yazıya uygulanıyor, işe değil.
+  </p>
+</section>
+
+<section id="bug">
+  <div class="sec-head"><span class="marker">F</span><h2>Bug analizi</h2></div>
+  <p class="col">Beş koşunun tamamı temiz çıktı. Aranan ve bulunamayan şeyler:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>kontrol</th><th>bare</th><th>hooks</th><th>superpowers</th><th>modes</th><th>full</th></tr></thead>
+      <tbody>
+        <tr><td>md kuralı ihlali</td><td><span class="tag ok">0</span></td><td><span class="tag ok">0</span></td><td><span class="tag ok">0</span></td><td><span class="tag ok">0</span></td><td><span class="tag ok">0</span></td></tr>
+        <tr><td>JS sözdizimi hatası</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>kırık <span class="mono">src</span>/<span class="mono">href</span></td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>uncaught exception</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>konsol hatası</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>kaybolan metin</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>build bayatlığı</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td><span class="tag mid">6*</span></td><td class="num">0</td></tr>
+        <tr><td>silinen dosya</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>İki bulgu incelendi ve geri çekildi</h3>
+  <p class="col">
+    İkisi de ilk bakışta kusur gibi görünüyordu; mekanizmasına bakınca ikisi de kusur değildi.
+    Metriğe güvenip rapor etmek yanlış olurdu.
+  </p>
+  <ul class="tight">
+    <li><strong>"18 kırık görsel"</strong> (<span class="mono">superpowers</span>, <span class="mono">modes</span>, <span class="mono">full</span>) — hepsi kendi ertelemeli yükleme tasarımları. Görsel sırası gelene kadar <span class="mono">data-src</span>'de bekliyor, dolayısıyla tarayıcı için "kaynağı yok" görünüyor. Amaçlanan davranış. Metrik lazy-loading'i kırıklık sanıyor.</li>
+    <li><strong>"6 bayat dil sayfası"</strong> (<span class="mono">modes</span>) — normalize edip karşılaştırınca içerik farkı <strong>0 satır</strong>. Fark sadece satır sonu: dosyalarda CRLF, build LF yazıyor. Muhtemelen 60 kabuk çağrısının içindeki bir PowerShell yazımı satır sonlarını çevirmiş. Site tutarsız değil; sadece gönderilen hâl build'den birebir yeniden üretilemiyor.</li>
+  </ul>
+  <p class="note">
+    Not: <span class="mono">_pristine</span>'de zaten 1 kırık görsel vardı, yani o projenin mevcut
+    durumu; hiçbir config'in soktuğu bir kusur değil.
+  </p>
+</section>
+
+<!-- TIMELINE:START -->
+<section id="zaman">
+  <div class="sec-head"><span class="marker">G</span><h2>Nasıl ilerledi — on beş gün</h2></div>
+  <p class="col">Proje bir benchmark olarak başlamadı; iki bozuk hook olarak başladı. Sonraki her tur da, bir önceki cevabın güvenilmez çıkması yüzünden var.</p>
+
+  <ol class="tl">
+    <li class="tl-key">
+      <time>2026-08-16 · kaza</time>
+      <h4>İki arıza ve kimsenin cevaplayamadığı bir soru</h4>
+      <p>Skill'ler kendiliğinden yüklenmez oldu. İki ayrı sebep: bütün <span class="mono">SessionStart</span> hook'ları tek bir zaman aşımı penceresini paylaşıyor, yani yavaş bir hook bütün grubu iptal ediyor — ve <span class="mono">enabledPlugins</span> ile <span class="mono">installed_plugins.json</span> birbirinden kaymış. İkisi de bir öğleden sonrada düzeldi.</p>
+      <p>Rahatsız edici kısım ardından gelen soruydu: on bir plugin açıktı ve hiçbirinin ne kadara mal olduğunu ya da işe yarayıp yaramadığını kimse söyleyemiyordu. Bütün proje o soru.</p>
+    </li>
+    <li>
+      <time>2026-08-17 · denetim</time>
+      <h4>On bir plugin üçe indi, sonra bu kesintiyi sınayacak harness</h4>
+      <p>Önce token denetimi geldi — sen bir şey yazmadan her plugin'in ne yüklediğini ölç — ve on birin sekizini eledi. Ama denetim yalnızca maliyeti ölçer, faydayı asla; o yüzden harness onu izledi: beş yapılandırma, aynı görevler, aynı prompt'lar, aynı repo kopyaları ve ajanın erişemeyeceği bir notlama — o çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i.</p>
+    </li>
+    <li>
+      <time>2026-08-18 · ilk cevap</time>
+      <h4>Gerçek bir proje, config başına tek koşu — ve yaşamayan bir başlık</h4>
+      <p>Oyuncak görevler oyuncak soruları cevaplar; o yüzden her config'e canlı, yedi dilli bir sitenin kopyası verilip "iyileştir" dendi. İlk sonuç şuydu: <strong>"full en ucuzu, $2.90, bare'in %60'ı"</strong>. Yanına bir n=1 uyarısı iliştirilmişti ve o uyarı, cümlenin kalıcı olan tek parçası çıktı.</p>
+    </li>
+    <li>
+      <time>2026-08-19 → 08-24 · kısıtlar geri saldırıyor</time>
+      <h4>İkinci bir tuzak görev, ikinci bir model ve n=3</h4>
+      <p>Kalite tam olarak bir turda ayrışmıştı; o ayrımı tekrarlamak için özel bir ikinci tuzak görev (Paginator) yazıldı. Tekrarlayamadı: bütün configler geçti. Ardından her tur Opus'ta yeniden koşturuldu — kalite farkı tamamen kayboldu, maliyet sıralaması iki hücrede tersine döndü.</p>
+      <p>Proje turu config başına üç örneğe çıktı ve $2.90 başlığı orada öldü: beş config'in dördü %16'lık bir bantta toplanırken tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyordu.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-25 · tasarım</time>
+      <h4>Config seçmek yerine, mekanizmalardan bir tane kurmak</h4>
+      <p>Matris üç mekanizma açığa çıkarmıştı: metin tasarrufu kısalan çıktıdan gelir, araçlı iş kaybı her turda yeniden okunan sabit kural setinden gelir, doğruluk ise sözleşme denetimi sırasındaki çıktı hacmini izler. Lea bu üçüne karşı yazıldı ve bir günde v1'den v7'ye getirildi; her değişiklikten sonra her tur yeniden ölçüldü. Bir cümlenin <em>nerede durduğunun</em> cümlenin kendisinden daha çok fark yarattığı da böyle görüldü — dört ayrı kez.</p>
+      <p>Aynı gün bugüne kadar her şeyi yöneten kural doğdu: <strong>yeni bir koşuyu asla kayıtlı bir dolar rakamıyla karşılaştırma.</strong> Değiştirilmemiş bir baseline yeniden koşturulunca ağustostakinden farklı bir örtük fiyat verdi — rejim, tablonun altından kaymıştı.</p>
+    </li>
+    <li>
+      <time>2026-08-26 · canlıya geçiş ve bir uyarı</time>
+      <h4>Lea canlıya alınıyor; başlık sonuç tekrarlanmıyor</h4>
+      <p>Opus mekanizmayı doğruladı (metinde −%42, zor fix'te aynı doğrulukla −%53), canlı yapılandırma Lea'ya geçirildi ve tek başarısız koşu <em>okunarak</em> — tahmin edilerek değil — bir v8 adayı yazıldı.</p>
+      <p>Sonra değiştirilmemiş aynı config zor turda yeniden ölçüldü ve <strong>bir gün önce 4/5 aldığı yerde 1/5</strong> aldı. Maliyet neredeyse hiç oynamadı; oynayan çıktı hacmiydi. Fiyatlar için öğrenilen ders, doğruluk için de geçerliymiş.</p>
+    </li>
+    <li>
+      <time>2026-08-27 → 08-29 · üç gün hiçbir şey</time>
+      <h4>Reset saati olmayan bir kullanım limiti ve kör beş saatlik uyku</h4>
+      <p>Runner, mesajında ayrıştırılabilir bir reset saati taşımayan bir 429'a çarptı ve beş saat uyumaya geçti — üstelik dört kez, bir saat içinde geri gelen bir kota karşısında. Ardından makine kapandı. Kuyruk üç gün kımıldamadı.</p>
+      <p>Düzeltme artık harness'in içinde: tahmin etmek yerine kısa bir merdivende yokla; başarısız bir yoklama on beş saniye ve sıfır token, bu da tek bir uzun tahminden kesinlikle ucuz.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-29 · belirleyici tur</time>
+      <h4>v7'ye karşı v8, kol başına yirmi örnek, aynı gün</h4>
+      <p>n=5'te iki sürüm berabere görünüyordu (1/5'e karşı 3/5, p=0,52). Kol başına n=20'de görünmediler: <strong>4/20'ye karşı 13/20</strong>, Fisher p=0,010; üstelik v8 %7 ucuz ve %36 hızlı. Tek bir paragraf, izinden yükümlülüğe yeniden yazıldı.</p>
+      <p>Aynı gün, bunu sessizce zehirleyecek bir satır da çıktı: 1 tur ve 29 output token yazan, ama gizli suite'i 8/8 geçen bir hücre. Transcript'inde on beş tur vardı — ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. Aritmetikle yakalandı: bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</p>
+    </li>
+    <li>
+      <time>2026-08-30 · kapanış</time>
+      <h4>Son bilinmeyen ve geçiş</h4>
+      <p>Gerçek proje turu nihayet aynı gün ölçülmüş bir rakip kazandı ve Lea hakkındaki son korkuyu çürüttü: medyanı <strong>$3.735</strong>, <span class="mono">full</span>'ünki <strong>$5.560</strong>. Aynı gün, o turun ne söyleyip ne söyleyemeyeceği de ölçüldü — %30'luk bir farkı çözmek için <strong>kol başına n=37</strong>; yani ürettiği hiçbir sıralama, hiçbir zaman gerçek değildi.</p>
+      <p>v8 önerilmeden önce metin vergisi ödeyip ödemediği sınandı (ödemiyor), bütün raporlar yeniden yazıldı ve canlı hook v8'e geçirildi. Ölçüm 232 hücre, 0 başarısız, 286 notlandırılmış koşuyla kapandı.</p>
+    </li>
+  </ol>
+
+  <div class="verdict">
+    <b>Bunun biçimi</b>
+    <p>Yukarıdaki dokuz maddenin beşi, önceki bir sonucun geri çekilmesi: $2.90 başlığı, kalite sıralaması, zor turdaki 4/5, meseleyi çözmesi beklenen tuzak görev ve proje turunun ürettiği her sıralama. Hayatta kalan şey sayılar değil, onları öldüren kurallar — baseline'ı aynı gün ölç, tek güne dayanan kalite rakamına güvenme, ve bir satıra kendi maliyetini kanıtlat.</p>
+  </div>
+</section>
+<!-- TIMELINE:END -->
+
+<section id="karar">
+  <div class="sec-head"><span class="marker">H</span><h2>Karar ve kısıtlar</h2></div>
+  <div class="verdict">
+    <b>Bu turun söylediği</b>
+    <p>Gerçek projede beş config de <strong>işi doğru yaptı</strong>: kural ihlali yok, bozulan
+    sayfa yok, hepsi gerçek ölçümle doğruladı. Ayrım kalitede değil, <strong>tur sayısında ve
+    parada</strong> — ama <em>hangi config'in önde olduğu</em> bu turun cevaplayabileceği bir soru
+    değil. İlk koşunun "<span class="mono">full</span> $2.90'a 31 turda bitirdi" başlığı n=3'te
+    dağıldı (medyanlar %16'lık bir bantta, tek config'in kendi koşuları 2.78–9.39) ve turun
+    çözünürlüğü sonradan ölçüldü: %30'luk bir farkı görmek için kol başına n=37 gerekiyor. Bu
+    sayfadaki hiçbir sıralama o eşiğin yanından geçmiyor.</p>
+  </div>
+  <p class="col">
+    Turun sağlam söylediği şey config sıralaması değil, <strong>mekanizma</strong>: Sonnet'in
+    oyuncak görevlerinde maliyeti sabit prompt yükü belirliyordu ve iş 6 turda bitiyordu; gerçek
+    projede iş 29-84 tur sürüyor, sabit yük önemsizleşiyor ve <strong>kaç turda toparladığın</strong>
+    belirleyici oluyor. Bu ifade tek bir koşuya değil, 21 koşunun tamamına dayanıyor — tur sayısı ile
+    maliyet birlikte hareket ediyor. Mekanizmayı ilk koşunun 31/70 turuyla örneklemek yanlış olurdu:
+    o iki sayı, n=3'te gürültü çıkan koşulardan geliyor (n=3 medyanları full 52, modes 48).
+  </p>
+  <h3>Neye güvenilmemeli</h3>
+  <ul class="tight">
+    <li>Config başına <strong>3 koşu</strong>. Bu, tek koşunun gürültüsünü göstermeye yetti
+      (aynı config $2.78 ile $9.39 arasında değişebiliyor) ama configleri ayırmaya yetmiyor:
+      dört config'in medyanı %16'lık bir bantta ve bantlar iç içe geçiyor.</li>
+    <li>Tek proje, tek görev tipi ("bir iyileştirme seç ve uygula").</li>
+    <li>Ölçüm sayıları config'ler arası kıyaslanabilir değil — her biri kendi önce/sonrasını, kendi kurduğu ortamda ölçtü.</li>
+    <li>Kalite ayrımı neredeyse yok: 15 koşunun 14'ü temiz geçti. Tek istisna
+      <span class="mono">superpowers</span>'ın üçüncü koşusu — kaynağı düzenleyip yeniden build
+      etmedi, 7 üretilmiş dosya bayat kaldı ve build kontrolü düştü. Tek olay, bir eğilim değil.</li>
+    <li>Seçim kalitesi öznel: <span class="mono">hooks</span>'un bulduğu SEO bug'ı bence en değerlisiydi, ama bu ölçülmüş bir sonuç değil, bir yargı.</li>
+  </ul>
+  <h3>Turun gerçek maliyeti</h3>
+  <p class="col">
+    İlk turun ölçülen beş koşusu $23.50 (üç örnekli tam turun tamamı $78.28). Bunun dışında ilk
+    turda iki koşu hesap limiti yüzünden yarıda öldürüldü:
+    <span class="mono">superpowers</span> 28.7 dk ve <span class="mono">full</span> 57.1 dk.
+    Harness ikisini de <span class="mono">cost=n/a</span> diye kaydetti, ama bu bir ayrıştırma
+    hatasıydı — stream'in <em>son satırını</em> okuyordu, oysa oradaki satır bir arka plan görev
+    bildirimi, <span class="mono">result</span> olayı daha yukarıdaydı.
+  </p>
+  <p class="col">
+    Doğrusu: <span class="mono">superpowers</span>'ın maliyeti kayıtlı — <b>$3.2305</b>, 35 tur,
+    <span class="mono">api_error_status 429</span>, hâlâ
+    <span class="mono">_killed/superpowers-partial.ndjson</span> içinde duruyor.
+    <span class="mono">full</span>'ünki gerçekten kayıp, çünkü sonraki deneme aynı dosyanın üzerine
+    yazdı. Yani turun bilinen gerçek toplamı <b>$26.73</b> artı <span class="mono">full</span>'ün
+    bilinmeyen 57.1 dakikası.
+  </p>
+  <div class="verdict">
+    <b>n=1 uyarısı — sonradan haklı çıktı</b>
+    <p>
+      Bu, "full en ucuz" sonucunu tek başına çürütmüyordu ama zayıflatıyordu. Sayılan
+      <span class="mono">full</span> koşusu 35.4 dakika sürdü; atılan koşu öldüğü anda zaten
+      57.1 dakikadaydı ve bitmemişti. Config başına tek örnek varken, atılan örnek sonucun
+      <em>tersine</em> işaret ediyordu. Tur bu yüzden Opus'ta n=3 olarak tekrar koşuldu ve
+      uyarı doğrulandı: üç örnekle full'ün medyanı $4.43, bare'inki $4.82 — "bare'in %60'ı"
+      değil, ölçüm gürültüsü içinde kalan bir fark.
+    </p>
+  </div>
+  <p class="col">
+    Harness bu turdan sonra üç yerde düzeltildi: <span class="mono">result</span> olayı artık
+    konumuna göre değil aranarak bulunuyor, başarısız stream'ler
+    <span class="mono">logs/_failed/</span> altında tarih damgasıyla saklanıyor (üzerine yazılmıyor),
+    ve <span class="mono">529 Overloaded</span> limitten ayrı sınıflanıp tekrar deneniyor —
+    sunucu yoğunluğu sonuç tablosuna başarısızlık diye girmesin diye.
+  </p>
+  <h3>Dosyalar</h3>
+  <pre>Optimizing CLI/project-round/
+├── run-project.ps1        koşu harness'ı (stream-json, limit-bekleme, temiz kopya geri yükleme)
+├── grade_project.mjs      notlama: stream ayrıştırma, diff, build kontrolü, CDP tarayıcı testi
+├── inspect_imgs.mjs       kırık görsel incelemesi
+├── results.json / .csv    tüm ölçümler
+├── _pristine/             dokunulmamış referans kopya
+├── work/&lt;config&gt;/         beş sonuç, her birinde ANALYSIS.md
+├── logs/&lt;config&gt;.ndjson   tam olay akışı + ekran görüntüleri
+└── _killed/               limitin kestiği yarım koşu, kanıt olarak saklandı</pre>
+</section>
+
+<footer>
+  18 Ağustos 2026 · Claude Opus · 5 koşu, config başına 1 · $23.50 ölçülen · tüm sayılar stream, dosya ağacı ve gerçek tarayıcıdan
+</footer>
+
+</div>

@@ -1,0 +1,1561 @@
+<!doctype html>
+<html lang="en" data-active="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Setup Lab</title>
+<meta name="description" content="A tuned Claude Code CLI configuration and a four-round benchmark measuring what each plugin and hook costs — and what it buys.">
+<style>
+:root {
+  --bg: #fbfbfa;
+  --bg-raised: #ffffff;
+  --bg-sunken: #f2f2ef;
+  --text: #1f1f1d;
+  --text-dim: #5f5f58;
+  --text-faint: #8a8a80;
+  --border: #e2e2dc;
+  --border-strong: #cfcfc6;
+  --accent: #b4531f;
+  --accent-soft: #f6ece4;
+  --good: #2f6f43;
+  --bad: #a8341f;
+  --code-bg: #f4f4f0;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16161a;
+    --bg-raised: #1d1d22;
+    --bg-sunken: #111114;
+    --text: #e8e8e3;
+    --text-dim: #a5a59d;
+    --text-faint: #77776f;
+    --border: #2c2c33;
+    --border-strong: #3d3d45;
+    --accent: #e08b56;
+    --accent-soft: #2a201a;
+    --good: #6cc08a;
+    --bad: #e2705b;
+    --code-bg: #101014;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- header ---- */
+header.top {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.75rem clamp(1rem, 4vw, 3rem);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+header.top .mark {
+  font-weight: 650; letter-spacing: -0.01em; font-size: 0.95rem;
+  margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+header.top .mark span { color: var(--accent); }
+.langswitch { display: flex; border: 1px solid var(--border-strong); border-radius: 999px; overflow: hidden; flex: none; }
+.langswitch button {
+  font: inherit; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
+  padding: 0.25rem 0.7rem; border: 0; background: transparent; color: var(--text-dim);
+  cursor: pointer;
+}
+.langswitch button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .langswitch button[aria-pressed="true"] { color: #16161a; } }
+header.top a.gh {
+  font-size: 0.8rem; color: var(--text-dim); text-decoration: none;
+  border: 1px solid var(--border-strong); border-radius: 999px; padding: 0.25rem 0.7rem;
+  white-space: nowrap; flex: none;
+}
+header.top a.gh:hover { color: var(--text); border-color: var(--text-faint); }
+
+/* ---- layout ---- */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+.cols { display: grid; grid-template-columns: 1fr; gap: 3rem; align-items: start; }
+@media (min-width: 1020px) { .cols { grid-template-columns: 15rem 1fr; } }
+nav.toc { display: none; }
+@media (min-width: 1020px) {
+  nav.toc {
+    display: block; position: sticky; top: 4.5rem;
+    max-height: calc(100vh - 6rem); overflow-y: auto;
+    font-size: 0.85rem; border-inline-start: 1px solid var(--border); padding-inline-start: 1rem;
+  }
+  nav.toc strong { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-faint); margin: 1.2rem 0 0.4rem; }
+  nav.toc strong:first-child { margin-top: 0; }
+  nav.toc a { display: block; padding: 0.16rem 0; color: var(--text-dim); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); }
+}
+main { min-width: 0; padding-bottom: 5rem; }
+
+/* ---- hero ---- */
+.hero { padding: clamp(2.5rem, 7vw, 4.5rem) 0 2rem; }
+.hero h1 {
+  font-size: clamp(2rem, 5.5vw, 3.1rem); line-height: 1.08; letter-spacing: -0.028em;
+  margin: 0 0 0.9rem; font-weight: 680;
+}
+.hero .sub { font-size: clamp(1.02rem, 2.2vw, 1.18rem); color: var(--text-dim); max-width: 46rem; margin: 0; }
+.hero .meta { margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-faint); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 2rem 0 0; }
+.stats div { background: var(--bg-raised); padding: 1rem 1.1rem; }
+.stats dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin: 0 0 0.3rem; }
+.stats dd { margin: 0; font-size: 1.5rem; font-weight: 640; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stats dd small { display: block; font-size: 0.78rem; font-weight: 400; letter-spacing: 0; color: var(--text-dim); margin-top: 0.15rem; }
+
+/* ---- typography ---- */
+h2 {
+  font-size: clamp(1.4rem, 3vw, 1.75rem); letter-spacing: -0.02em; font-weight: 660;
+  margin: 3.5rem 0 0.4rem; padding-top: 1.6rem; border-top: 1px solid var(--border);
+}
+h2:first-of-type { border-top: 0; padding-top: 0; }
+h3 { font-size: 1.1rem; font-weight: 640; letter-spacing: -0.012em; margin: 2.2rem 0 0.5rem; }
+h4 { font-size: 0.94rem; font-weight: 640; margin: 1.6rem 0 0.4rem; color: var(--text-dim); }
+p, ul, ol { margin: 0.85rem 0; }
+ul, ol { padding-inline-start: 1.4rem; }
+li { margin: 0.35rem 0; }
+a { color: var(--accent); }
+.kicker { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.11em; color: var(--accent); font-weight: 700; margin: 0 0 0.35rem; }
+.lede { color: var(--text-dim); font-size: 1.02rem; }
+strong { font-weight: 640; }
+
+code { font-family: var(--mono); font-size: 0.86em; background: var(--code-bg); padding: 0.12em 0.36em; border-radius: 4px; border: 1px solid var(--border); }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; overflow-x: auto; font-size: 0.84rem; line-height: 1.55; }
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+/* ---- tables ---- */
+.tw { overflow-x: auto; margin: 1.2rem 0; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.87rem; min-width: 30rem; }
+th, td { text-align: start; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+thead th { background: var(--bg-sunken); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 660; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.win { color: var(--good); font-weight: 660; }
+.lose { color: var(--bad); font-weight: 660; }
+/* Band that splits one table into two model blocks, so the reader never has to ask which
+   half of the rows they are looking at. */
+td.sub-head { background: var(--bg-sunken); color: var(--text-dim); font-size: 0.78rem; letter-spacing: 0.02em; }
+
+/* ---- mindmap ---- */
+.map { display: block; width: 100%; height: auto; margin: 1.2rem 0; }
+.map text { font-family: var(--sans); fill: var(--text); }
+.map .box { fill: var(--bg-raised); stroke: var(--border-strong); }
+.map .box-drop { fill: var(--bg-sunken); stroke: var(--border); }
+.map .box-keep { fill: var(--accent-soft); stroke: var(--accent); }
+.map .link { fill: none; stroke: var(--border-strong); stroke-width: 1.6; }
+.map .link-drop { stroke-dasharray: 4 4; }
+.map .t-title { font-size: 13px; font-weight: 680; }
+.map .t-item { font-size: 11.5px; fill: var(--text-dim); }
+.map .t-item.keep { fill: var(--text); }
+.map .t-note { font-size: 10.5px; fill: var(--text-faint); }
+.map .t-mono { font-family: var(--mono); font-size: 11.5px; }
+
+/* ---- callouts ---- */
+.note { border-inline-start: 3px solid var(--accent); background: var(--accent-soft); padding: 0.9rem 1.1rem; border-radius: 0 8px 8px 0; margin: 1.4rem 0; }
+.note p:first-child { margin-top: 0; } .note p:last-child { margin-bottom: 0; }
+.note.plain { border-inline-start-color: var(--border-strong); background: var(--bg-sunken); }
+.finding { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.2rem; margin: 1rem 0; background: var(--bg-raised); }
+.finding h4 { margin-top: 0; color: var(--text); font-size: 1rem; }
+.finding p:last-child { margin-bottom: 0; }
+
+/* ---- cards ---- */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin: 1.4rem 0; }
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.2rem; background: var(--bg-raised); }
+.card h4 { margin: 0 0 0.4rem; color: var(--text); font-size: 0.98rem; }
+.card p { margin: 0; font-size: 0.9rem; color: var(--text-dim); }
+
+.btns { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 1.8rem 0 0; }
+.btn { display: inline-block; padding: 0.55rem 1.1rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; border: 1px solid var(--border-strong); color: var(--text); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .btn.primary { color: #16161a; } }
+.btn:hover { border-color: var(--text-faint); }
+
+footer { border-top: 1px solid var(--border); margin-top: 4rem; padding: 2rem 0 4rem; font-size: 0.85rem; color: var(--text-faint); }
+footer a { color: var(--text-dim); }
+
+/* ---- language switching ---- */
+[data-lang] { display: none; }
+html[data-active="en"] [data-lang="en"],
+html[data-active="tr"] [data-lang="tr"] { display: revert; }
+
+/* ---- password gate ----
+   Same approach as the Hero Dev Constellation: a static page on GitHub Pages has no
+   server, so the check runs in the browser and everything behind it is already in the
+   page source. It keeps the page from being read at a glance. It is not access control,
+   and nothing secret belongs on it. */
+body.locked > header.top, body.locked > .wrap { display: none; }
+.gate { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 1.5rem; }
+body.locked .gate { display: flex; }
+.gate-card { width: 340px; max-width: 100%; text-align: center; padding: 2rem 1.8rem;
+  border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-raised); }
+.gate-card h1 { font-size: 1.05rem; margin: 0 0 0.4rem; letter-spacing: 0.02em; }
+.gate-card p { font-size: 0.85rem; color: var(--text-dim); margin: 0 0 1.2rem; }
+.gate-card input { width: 100%; padding: 0.6rem 0.7rem; border-radius: 8px; font: inherit;
+  text-align: center; color: var(--text); background: var(--bg-sunken); border: 1px solid var(--border-strong); }
+.gate-card input:focus { outline: none; border-color: var(--accent); }
+.gate-card button { width: 100%; margin-top: 0.8rem; padding: 0.6rem; border-radius: 8px;
+  font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+@media (prefers-color-scheme: dark) { .gate-card button { color: #16161a; } }
+.gate-error { min-height: 1.2rem; margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--bad); }
+.shake { animation: shake 0.3s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* TIMELINE:CSS:START */
+.tl { list-style: none; margin: 1.4rem 0 0; padding-inline-start: 1.5rem; border-inline-start: 2px solid var(--border); }
+.tl > li { position: relative; padding-bottom: 1.5rem; }
+.tl > li:last-child { padding-bottom: 0; }
+.tl > li::before {
+  content: ""; position: absolute; inset-inline-start: calc(-1.5rem - 6px); top: 0.4rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--border);
+}
+.tl > li.tl-key::before  /* namespaced: one report styles a chart legend .key */ { background: var(--accent); border-color: var(--accent); }
+.tl time { display: block; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-faint); }
+.tl h4 { margin: 0.15rem 0 0.35rem; font-size: 1rem; font-weight: 640; color: var(--text); }
+.tl p { margin: 0 0 0.4rem; color: var(--text-dim); max-width: 68ch; }
+.tl p:last-child { margin-bottom: 0; }
+/* TIMELINE:CSS:END */
+</style>
+</head>
+<body class="locked">
+
+<div class="gate" id="gate">
+  <form class="gate-card" id="gateForm" autocomplete="off">
+    <h1>Claude Code Setup Lab</h1>
+    <p><span data-lang="en">Enter the password to open the report.</span><span data-lang="tr">Raporu açmak için parolayı gir.</span></p>
+    <input id="gateInput" type="password" placeholder="Password" autocomplete="off" required>
+    <button type="submit"><span data-lang="en">Open</span><span data-lang="tr">Aç</span></button>
+    <p class="gate-error" id="gateError" role="alert" hidden><span data-lang="en">Wrong password.</span><span data-lang="tr">Parola yanlış.</span></p>
+  </form>
+</div>
+
+<header class="top">
+  <div class="mark">Claude Code <span>Setup Lab</span></div>
+  <div class="langswitch" role="group" aria-label="Language">
+    <button type="button" data-set="en" aria-pressed="true">EN</button>
+    <button type="button" data-set="tr" aria-pressed="false">TR</button>
+  </div>
+  <a class="gh" href="./">GitHub</a>
+</header>
+
+<div class="wrap">
+<div class="cols">
+
+<nav class="toc">
+  <div data-lang="en">
+    <strong>Report</strong>
+    <a href="#brief">In brief</a>
+    <a href="#verdict">The verdict</a>
+    <a href="#lea">Lea — the built config</a>
+    <a href="#configs">The five configs</a>
+    <strong>Benchmarks</strong>
+    <a href="#r1">1 · Prose, no tools</a>
+    <a href="#r2">2 · Easy bug fix</a>
+    <a href="#r3">3 · Hard bug fix</a>
+    <a href="#r4">4 · Website build</a>
+    <a href="#r5">5 · Hard bug fix #2</a>
+    <a href="#models">Sonnet vs Opus</a>
+    <a href="#project">Real project round</a>
+    <a href="#timeline">How it unfolded</a>
+    <a href="#method">Method notes</a>
+    <strong>Setup</strong>
+    <a href="#map">The 11 → 3 map</a>
+    <a href="#cost">The token audit</a>
+    <a href="#gotchas">Gotchas</a>
+    <a href="#plugins">Plugin roster</a>
+    <a href="#install">Install</a>
+  </div>
+  <div data-lang="tr">
+    <strong>Rapor</strong>
+    <a href="#brief">Kısaca</a>
+    <a href="#verdict">Hüküm</a>
+    <a href="#lea">Lea — kurulan config</a>
+    <a href="#configs">Beş config</a>
+    <strong>Benchmark</strong>
+    <a href="#r1">1 · Metin, tool yok</a>
+    <a href="#r2">2 · Kolay bug fix</a>
+    <a href="#r3">3 · Zor bug fix</a>
+    <a href="#r4">4 · Website kurma</a>
+    <a href="#r5">5 · Zor bug fix #2</a>
+    <a href="#models">Sonnet ve Opus</a>
+    <a href="#project">Gerçek proje turu</a>
+    <a href="#timeline">Nasıl ilerledi</a>
+    <a href="#method">Yöntem notları</a>
+    <strong>Kurulum</strong>
+    <a href="#map">11 → 3 haritası</a>
+    <a href="#cost">Token denetimi</a>
+    <a href="#gotchas">Tuzaklar</a>
+    <a href="#plugins">Plugin listesi</a>
+    <a href="#install">Kurulum</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div data-lang="en">
+    <p class="kicker">Measured report</p>
+    <h1>What a stacked Claude Code config actually costs</h1>
+    <p class="sub">Eleven enabled plugins cut to three, then benchmark rounds — ~$140 of API spend — to check whether the survivors were worth their token cost. They are, for one kind of work, and actively harmful for another. So a sixth configuration was built out of the measurements instead of picked from the shelf: <a href="#lea"><strong>Lea</strong></a>, one 226-word hook that matches or beats every rival on both models.</p>
+    <p class="meta">5 task types · 286 graded matrix runs · 232 matrix cells, 0 failed · 7 configurations · 2 models (Sonnet, Opus)</p>
+    <dl class="stats">
+      <div><dt>Prose, Opus</dt><dd class="win">−43%</dd><dd><small>Lea vs the terse modes, n=5, same day</small></dd></div>
+      <div><dt>Hard bug fix, Opus</dt><dd class="win">−53%</dd><dd><small>identical 5/5 correctness, half the price</small></dd></div>
+      <div><dt>Hard bug fix, Sonnet</dt><dd><span class="win">13/20</span> vs <span class="lose">4/20</span></dd><dd><small>Lea v8 against v7 — same task, same day, n=20 each</small></dd></div>
+      <div><dt>Ruleset size</dt><dd>226</dd><dd><small>words, against caveman + ponytail's ~6,000 tokens</small></dd></div>
+    </dl>
+    <div class="btns">
+      <a class="btn primary" href="install.html">Install guide</a>
+      <a class="btn" href="Project-Lea.zip">Download full report (.zip)</a>
+      <a class="btn" href="./">Repository</a>
+    </div>
+  </div>
+  <div data-lang="tr">
+    <p class="kicker">Ölçülmüş rapor</p>
+    <h1>Yığılmış bir Claude Code config'i gerçekte neye mal oluyor</h1>
+    <p class="sub">Etkin on bir plugin üçe indirildi, sonra hayatta kalanların token maliyetine değip değmediğini ölçmek için benchmark turları — ~140 dolar API harcaması. Bir iş türü için değiyor, bir diğeri için açıkça zarar veriyor. Bu yüzden altıncı bir yapılandırma raftan seçilmedi, ölçümlerden kuruldu: <a href="#lea"><strong>Lea</strong></a>, 226 kelimelik tek bir hook — iki modelde de her rakibe ya berabere ya üstün.</p>
+    <p class="meta">5 görev tipi · 286 notlandırılmış matris koşusu · 232 matris hücresi, 0 başarısız · 7 yapılandırma · 2 model (Sonnet, Opus)</p>
+    <dl class="stats">
+      <div><dt>Metin, Opus</dt><dd class="win">−%43</dd><dd><small>Lea, kısa modlara karşı, n=5, aynı gün</small></dd></div>
+      <div><dt>Zor bug fix, Opus</dt><dd class="win">−%53</dd><dd><small>aynı 5/5 doğruluk, yarı fiyat</small></dd></div>
+      <div><dt>Zor bug fix, Sonnet</dt><dd><span class="win">13/20</span> — <span class="lose">4/20</span></dd><dd><small>Lea v8, v7'ye karşı — aynı görev, aynı gün, kol başına n=20</small></dd></div>
+      <div><dt>Kural seti boyu</dt><dd>226</dd><dd><small>kelime; caveman + ponytail ~6.000 token</small></dd></div>
+    </dl>
+    <div class="btns">
+      <a class="btn primary" href="kurulum.html">Kurulum rehberi</a>
+      <a class="btn" href="Project-Lea.zip">Tam raporu indir (.zip)</a>
+      <a class="btn" href="./">Repo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IN BRIEF ============ -->
+<h2 id="brief"><span data-lang="en">In brief</span><span data-lang="tr">Kısaca</span></h2>
+
+<div data-lang="en">
+<p class="lede">One question, asked with money: a Claude Code setup had eleven plugins enabled, and nobody knew what they cost or whether they helped. So each one was measured instead of argued about.</p>
+<p>The setup was first cut from eleven plugins to three, then five configurations were built from the survivors — <code>bare</code> (nothing), <code>hooks</code>, <code>superpowers</code>, <code>modes</code> (the terse caveman + ponytail pair), and <code>full</code> (everything) — and run against the same tasks, same prompts, same repository copies. Grading is automatic and out of the agent's reach: a hidden test suite copied in after the agent exits, and a real Chrome driven over CDP for the website round.</p>
+<p>It grew past the original four rounds. Today it stands at <strong>286 graded runs across five task types, every one of them measured on both Sonnet and Opus</strong>, plus a separate <strong>21-run round on a real, live production site</strong> instead of a toy task. Measurement closed on 2026-08-30: 232 matrix cells, none failed.</p>
+<ul>
+  <li><strong>Prose work: the terse modes win outright</strong> — 45% cheaper than a bare config, on both models. The whole saving is the shorter answer, not a smaller prompt.</li>
+  <li><strong>Agentic coding: nearly every configuration loses to <code>bare</code></strong>, by +8% to +97%. A coding task produces a few hundred output tokens, so there is nothing for terseness to compress, while the fixed ruleset is re-read on every turn. The two exceptions in 45 cells are both Opus and both <code>modes</code> — the website round (84) and the second hard bug fix (92) — where terseness cuts the <em>turn count</em> instead of the prose.</li>
+  <li><strong>Quality separated exactly once, and even that did not hold up</strong>: one hard bug fix on Sonnet, where <code>modes</code> got 0/5 and <code>superpowers</code> 3/5. A second trap task built specifically to reproduce that separation failed to — every config passed — and on Opus the original task is 5/5 for everyone. Worse for the finding: re-running an <em>unchanged</em> config on that same task gave 4/5, 1/5 and 2/14 on three different days. A single-day quality figure from this benchmark is a photograph, not a property. The only quality result here measured with both arms on the same day, at n=20, is <a href="#lea">v7 against v8</a>.</li>
+  <li><strong>On a real project, four of five configurations are indistinguishable</strong> ($4.15–$4.82 median) while one config's own runs swing from $2.78 to $9.39. Only <code>superpowers</code> separates, upward: $6.99 and the round's single failed build.</li>
+  <li><strong>Then a sixth configuration was built from those mechanisms</strong> rather than chosen from the five. <a href="#lea"><code>Lea</code></a> is one <code>SessionStart</code> hook of 226 words — a hard prose budget, a tool-loop rule that spends turns instead of tokens, and an exception that makes contract-checking unlimited. It matches or beats every rival on five Sonnet rounds and three Opus rounds.</li>
+  <li><strong>Then one paragraph of it was rewritten, and that is the largest quality effect on this page.</strong> Lea's exception clause said analysis "is unlimited" — a permission a run that never felt uncertain never takes. <a href="#lea">v8</a> makes the same check an obligation. Same length, same budget line last, one paragraph different: <strong>13/20 correct against v7's 4/20</strong> on the hard round (Fisher p=0.010), while costing 7% less and finishing 36% faster.</li>
+</ul>
+<div class="note">
+<p><strong>What to do with it.</strong> For prose-heavy sessions the terse plugin pair is still a real win over a bare config, and for coding <code>superpowers</code> plus the verification hook looked like it bought correctness that terseness destroys — though that comparison rests on a single Sonnet day, and days move (see the brief). But you no longer have to choose per session: <a href="#lea"><code>Lea</code></a> was built to hold both ends at once, and it does, on both models. The rest of this page is the evidence: round by round, with the numbers, the failures, and the mistakes made along the way.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Tek bir soru, parayla soruldu: bir Claude Code kurulumunda on bir plugin açıktı ve hiç kimse bunların ne kadara mal olduğunu ya da işe yarayıp yaramadığını bilmiyordu. Tartışmak yerine her biri ölçüldü.</p>
+<p>Kurulum önce on bir plugin'den üçe indirildi, sonra kalanlardan beş yapılandırma kuruldu — <code>bare</code> (hiçbir şey), <code>hooks</code>, <code>superpowers</code>, <code>modes</code> (kısa konuşan caveman + ponytail ikilisi) ve <code>full</code> (hepsi) — ve aynı görevlere, aynı prompt'larla, aynı repo kopyalarıyla koşturuldu. Notlama otomatik ve agent'ın erişemeyeceği yerde: agent çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i, website turunda ise CDP üzerinden sürülen gerçek bir Chrome.</p>
+<p>İş ilk dört turu aştı. Bugün <strong>beş görev tipinde 286 notlandırılmış koşu — hepsi hem Sonnet'te hem Opus'ta ölçülmüş</strong>, artı oyuncak görev yerine <strong>canlı bir üretim sitesinde 21 koşuluk ayrı bir tur</strong> var. Ölçüm 30 Ağustos 2026'da kapandı: 232 matris hücresi, başarısız hücre yok.</p>
+<ul>
+  <li><strong>Metin işinde kısa modlar açık ara kazanıyor</strong> — boş config'e göre %45 ucuz, iki modelde de. Tasarrufun tamamı kısalan cevaptan geliyor, küçülen prompt'tan değil.</li>
+  <li><strong>Agentic kodlamada neredeyse her yapılandırma <code>bare</code>'e kaybediyor</strong>, +%8 ile +%97 arasında. Kodlama görevi birkaç yüz output token üretiyor; kısaltmanın sıkıştıracak bir şeyi yok, buna karşılık sabit kural seti her turda yeniden okunuyor. 45 hücredeki iki istisnanın ikisi de Opus ve ikisi de <code>modes</code> — web turu (84) ve ikinci zor bug fix (92) — orada kısalık metni değil <em>tur sayısını</em> kesiyor.</li>
+  <li><strong>Kalite tam olarak bir kez ayrıştı, o bir kez de tutmadı</strong>: Sonnet'te tek bir zor bug fix turunda, <code>modes</code> 0/5, <code>superpowers</code> 3/5. Bu ayrımı tekrarlamak için özel yazılan ikinci tuzak görev ayıramadı — beş config de geçti — ve aynı görev Opus'ta herkese 5/5 veriyor. Bulgu için daha kötüsü: aynı görevde <em>değiştirilmemiş</em> bir config üç ayrı günde 4/5, 1/5 ve 2/14 aldı. Bu benchmark'ta tek güne dayanan bir kalite rakamı bir özellik değil, bir fotoğraf. Burada iki kolu da aynı gün, n=20 ile ölçülmüş tek kalite sonucu <a href="#lea">v7'ye karşı v8</a>.</li>
+  <li><strong>Gerçek projede beş config'in dördü ayırt edilemiyor</strong> (medyan $4.15–$4.82), üstelik tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyor. Ayrılan tek config <code>superpowers</code>, o da yukarı yönde: $6.99 ve turun tek bozuk build'i.</li>
+  <li><strong>Sonra beşin içinden seçmek yerine, bu mekanizmalardan altıncı bir yapılandırma kuruldu.</strong> <a href="#lea"><code>Lea</code></a> 226 kelimelik tek bir <code>SessionStart</code> hook'u: sert bir metin bütçesi, maliyeti token'da değil tur sayısında arayan bir tool-loop kuralı ve sözleşme denetimini sınırsız bırakan bir istisna. Beş Sonnet turunda ve üç Opus turunda her rakibe ya berabere ya üstün.</li>
+  <li><strong>Sonra tek bir paragrafı yeniden yazıldı ve bu sayfadaki en büyük kalite etkisi bu oldu.</strong> Lea'nın istisna maddesi "analizin sınırsızdır" diyordu — hiç tereddüt etmemiş bir koşunun hiç kullanmadığı bir izin. <a href="#lea">v8</a> aynı denetimi zorunlu kılıyor. Aynı uzunluk, bütçe satırı yine en sonda, tek paragraf farklı: zor turda <strong>v7'nin 4/20'sine karşı 13/20 doğru</strong> (Fisher p=0.010), üstelik %7 ucuz ve %36 hızlı.</li>
+</ul>
+<div class="note">
+<p><strong>Bununla ne yapmalı.</strong> Metin ağırlıklı oturumlarda kısa konuşan plugin ikilisi boş config'e karşı hâlâ gerçek bir kazanç, kodlamada ise <code>superpowers</code> artı verification hook'u kısalığın yok ettiği doğruluğu geri alıyor <em>gibi</em> göründü — ama o karşılaştırma tek bir Sonnet gününe dayanıyor ve günler oynuyor (yukarıdaki maddeye bak). Ama artık oturum başına seçmek zorunda değilsin: <a href="#lea"><code>Lea</code></a> tam olarak iki ucu birden tutmak için kuruldu ve iki modelde de tutuyor. Sayfanın geri kalanı kanıt: tur tur sayılar, başarısızlıklar ve yol boyunca yapılan hatalar.</p>
+</div>
+</div>
+
+<!-- ============ VERDICT ============ -->
+<h2 id="verdict"><span data-lang="en">The verdict</span><span data-lang="tr">Hüküm</span></h2>
+
+<div data-lang="en">
+<p class="lede">Among the five stock configurations there is no single one that is right for both prose and agentic coding, and the default of "install everything" is the wrong one for coding. That is what made a sixth worth building — the table below is the evidence <a href="#lea">Lea</a> was designed from.</p>
+<div class="tw"><table>
+  <thead><tr><th>Round</th><th class="num">n</th><th>Cheapest</th><th>Best quality</th><th>One-line verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Prose, no tools</td><td class="num">5</td><td><code>modes</code>, 45% under bare</td><td>not measured</td><td>caveman's output cut is the whole saving</td></tr>
+    <tr><td>Easy tool bug fix</td><td class="num">5</td><td><code>bare</code></td><td>tie, 25/25 correct</td><td><code>full</code> costs +97% for nothing</td></tr>
+    <tr><td>Hard tool bug fix</td><td class="num">5</td><td><code>bare</code></td><td><code>superpowers</code> 3/5, <code>modes</code> <span class="lose">0/5</span></td><td>the metric is the false-"done" rate — Sonnet only, 5/5 across the board on Opus</td></tr>
+    <tr><td>Hard bug fix #2 (Paginator)</td><td class="num">5</td><td><code>bare</code> on Sonnet, <code>modes</code> on Opus</td><td>tie, 50/50 correct</td><td>built to reproduce the split above; it did not, on either model</td></tr>
+    <tr><td>Website build</td><td class="num">5</td><td><code>bare</code> $0.127</td><td>tie, 24/25</td><td><code>modes</code> fastest and shortest</td></tr>
+    <tr><td>Real project (Opus)</td><td class="num">3</td><td>four-way tie, $4.15–$4.82</td><td>14/15 clean builds</td><td>only <code>superpowers</code> separates, upward</td></tr>
+  </tbody>
+</table></div>
+<div class="note">
+<p><strong>Practical shape.</strong> If you stay on the stock five: keep <code>superpowers</code> and the verification hook on for coding work, drop <code>caveman</code> and <code>ponytail</code> there, and turn them on for prose-heavy sessions. The lever is <code>enabledPlugins</code> plus a restart — saying "stop caveman" mid-session does not recover the tokens, because the ruleset is already in context. If you would rather not switch per session, <a href="#lea">Lea</a> is the single configuration that measured well on every round; it replaces all three plugins with one hook — and use its <a href="#lea">v8</a> exception clause, which is the version the hard round actually favours. One caveat about this table: its quality column was measured on a single day, and the same unchanged config has since scored 4/5, 1/5 and 2/14 on the same task across three days. Treat the cost columns as durable and the quality column as that day's photograph.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Hazır beş yapılandırmanın içinde hem metin hem agentic kodlama için doğru olan tek bir tane yok, "her şeyi kur" varsayılanı da kodlama için yanlış olan. Altıncısını kurmaya değdiren şey bu: aşağıdaki tablo, <a href="#lea">Lea</a>'nın tasarlandığı kanıt.</p>
+<div class="tw"><table>
+  <thead><tr><th>Tur</th><th class="num">n</th><th>En ucuz</th><th>En iyi kalite</th><th>Tek cümlelik hüküm</th></tr></thead>
+  <tbody>
+    <tr><td>Metin, tool yok</td><td class="num">5</td><td><code>modes</code>, bare'in %45 altında</td><td>ölçülmedi</td><td>tasarrufun tamamı caveman'in çıktı kesmesi</td></tr>
+    <tr><td>Kolay tool bug fix</td><td class="num">5</td><td><code>bare</code></td><td>berabere, 25/25 doğru</td><td><code>full</code> hiçbir şey için +%97</td></tr>
+    <tr><td>Zor tool bug fix</td><td class="num">5</td><td><code>bare</code></td><td><code>superpowers</code> 3/5, <code>modes</code> <span class="lose">0/5</span></td><td>metrik: yanlış "bitti" oranı — sadece Sonnet'te, Opus'ta hepsi 5/5</td></tr>
+    <tr><td>Zor bug fix #2 (Paginator)</td><td class="num">5</td><td>Sonnet'te <code>bare</code>, Opus'ta <code>modes</code></td><td>berabere, 50/50 doğru</td><td>üstteki ayrımı tekrarlamak için yazıldı, iki modelde de ayıramadı</td></tr>
+    <tr><td>Website kurma</td><td class="num">5</td><td><code>bare</code> 0,127 $</td><td>berabere, 24/25</td><td><code>modes</code> en hızlı ve en kısa</td></tr>
+    <tr><td>Gerçek proje (Opus)</td><td class="num">3</td><td>dörtlü berabere, $4.15–$4.82</td><td>15 build'in 14'ü temiz</td><td>sadece <code>superpowers</code> ayrışıyor, yukarı yönde</td></tr>
+  </tbody>
+</table></div>
+<div class="note">
+<p><strong>Pratik biçim.</strong> Hazır beşte kalacaksan: kodlama işi için <code>superpowers</code> ve verification hook'unu açık tut, orada <code>caveman</code> ile <code>ponytail</code>'i kapat, metin ağırlıklı oturumlarda aç. Kaldıraç <code>enabledPlugins</code> artı yeniden başlatma — oturum ortasında "stop caveman" demek token'ı geri getirmiyor, çünkü kural seti zaten bağlamda. Oturum başına geçiş yapmak istemiyorsan, her turda iyi ölçen tek yapılandırma <a href="#lea">Lea</a>; üç plugin'in yerine tek bir hook koyuyor — ve istisna maddesinin <a href="#lea">v8</a> hâlini kullan, zor turun asıl tercih ettiği sürüm o. Bu tabloyla ilgili tek uyarı: kalite sütunu tek bir günde ölçüldü ve değiştirilmemiş aynı config o günden sonra aynı görevde üç ayrı gün 4/5, 1/5 ve 2/14 aldı. Maliyet sütunlarını kalıcı, kalite sütununu o günün fotoğrafı olarak oku.</p>
+</div>
+</div>
+
+<!-- ============ LEA ============ -->
+<h2 id="lea"><span data-lang="en">Lea — the configuration the measurements built</span><span data-lang="tr">Lea — ölçümlerin kurduğu yapılandırma</span></h2>
+
+<div data-lang="en">
+<p class="lede">Every round above compares configurations somebody else shipped. Lea is the sixth: not picked from the five, but designed from the <em>mechanisms</em> the matrix exposed, then made to pass the rounds one at a time with a regression re-check after each.</p>
+
+<p>It is one <code>SessionStart</code> hook, 226 words. <code>caveman</code> + <code>ponytail</code> inject roughly 6,000 tokens to do a narrower job. Four rules, and the order between them turned out to matter more than the rules:</p>
+
+<div class="cards">
+<div class="card"><h4>A hard prose budget</h4><p>At most 120 words of explanation per reply, plus whatever code or data the answer needs. Lead with the answer, no preamble, no closing summary.</p></div>
+<div class="card"><h4>Each implementation once</h4><p>Never re-paste unchanged code — name it, state the delta. What you <em>build</em> is exempt: viewport meta, titles, labelled controls, validation and error handling survive every cut.</p></div>
+<div class="card"><h4>A tool loop</h4><p>Read what the task needs, change it, check once, report. No re-running a passed check, no narrating the next call. Turns are the bill.</p></div>
+<div class="card"><h4>One exception that overrides the budget</h4><p>When the code states a contract — a docstring, a spec, a type — checking every clause of it against the implementation is <em>required</em>, and analysis there is unlimited. A green test suite does not count as that check. This clause is the whole design, and rewriting it is the single largest quality effect measured here — see below.</p></div>
+</div>
+
+<h3>Sonnet — five rounds, all measured 2026-08-25</h3>
+<div class="tw"><table>
+  <thead><tr><th>Round</th><th class="num">n</th><th>Lea</th><th>Best rival, re-measured the same day</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Prose, no tools</td><td class="num">5</td><td>0.0626 median · 0.0613 mean</td><td><code>modes</code> 0.0577 median · 0.0730 mean</td><td>tie — <code>modes</code> takes the median, Lea the mean and half the spread</td></tr>
+    <tr><td>Easy tool bug fix</td><td class="num">3</td><td><span class="win">0.0828</span> · 3/3 correct</td><td><code>bare</code> 0.0957</td><td><span class="win">−13%</span> — nothing had beaten <code>bare</code> here before</td></tr>
+    <tr><td>Hard tool bug fix</td><td class="num">5</td><td><span class="win">0.0897</span> · <span class="win">4/5 correct</span></td><td><code>superpowers</code> 0.1244 · <span class="lose">1/5</span></td><td>best on both axes at once</td></tr>
+    <tr><td>Website build</td><td class="num">3</td><td><span class="win">0.0757</span> · 7/7 three times</td><td><code>bare</code> 0.0911</td><td><span class="win">−17%</span>, viewport and title intact</td></tr>
+    <tr><td>Hard bug fix #2</td><td class="num">3</td><td>0.0815 · 3/3 correct</td><td><code>bare</code> 0.0799</td><td>+2%, a tie — this task is saturated for every config</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Opus — three rounds, all measured 2026-08-26</h3>
+<div class="tw"><table>
+  <thead><tr><th>Round</th><th class="num">n</th><th>Lea</th><th>Best rival, re-measured the same day</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Prose, no tools</td><td class="num">5</td><td><span class="win">0.2032</span> median · 0.2581 mean</td><td><code>modes</code> 0.3558 median · 0.3734 mean</td><td><span class="win">−43%</span></td></tr>
+    <tr><td>Easy tool bug fix</td><td class="num">3</td><td><span class="win">0.1842</span> · 3/3 · <span class="win">6 turns</span></td><td><code>bare</code> 0.2171 · 3/3 · 9 turns</td><td><span class="win">−15%</span></td></tr>
+    <tr><td>Hard tool bug fix</td><td class="num">5</td><td><span class="win">0.2058</span> · 5/5 · 7 turns · 1,870 out</td><td><code>superpowers</code> 0.4366 · 5/5 · 10 turns · 3,620 out</td><td><span class="win">−53%</span></td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+<p><strong>The mechanism transfers across models; no quality edge survived on either.</strong> Turn-cutting works on both: 9 turns down to 6 on the easy fix, 10 down to 7 on the hard one. On Opus nothing separates on correctness — every config is 5/5. This page used to call that "the quality edge is Sonnet-specific"; that reading was too kind to the Sonnet number. Re-measured, the same unchanged config scored 4/5, then 1/5, then 2/14 on three different days, so v7 has no replicated quality edge on <em>either</em> model. The one quality result that did replicate is <a href="#lea">v8's</a>, measured with both arms on the same day at n=20. On Opus the case for Lea is therefore the plain one: the same result at half the price.</p>
+</div>
+
+<h3>Why the exception clause is the whole design</h3>
+<p>The matrix found a law and Lea is built around it: in the hard round <strong>every wrong fix came in under 1,596 output tokens and every correct one over 1,924</strong>, a clean split across 25 runs. The runs that wrote more are the runs that checked the code against its docstring and caught the second, untested bug. Terseness is free everywhere except during a contract audit — which is precisely what the exception protects, and Lea's two remaining Sonnet failures are runs where the exception never fired.</p>
+<p>Ordering inside the ruleset moved the numbers more than the rules did, four separate times. Adding the tool-loop paragraph improved tools and pushed prose from 0.0563 to 0.0760; cutting it to one sentence and restating the word budget <em>last</em> recovered it. A four-line "keep correctness basics" block collapsed prose to 0.0879; shrinking it to one sentence and scoping it to built artifacts held the viewport fix at ~15% prose cost instead of 60%.</p>
+
+<h3>v8 — the same clause, rewritten as an obligation</h3>
+<p>v7's failures were read, not guessed. In one of them the agent fixed the visible bug, ran the visible suite, saw green, and closed the task in four words — <em>"All tests pass."</em> 1,266 output tokens, hidden suite 5/8, all three failures on the same expiry boundary it had never looked at. Nothing in the ruleset told it to look: v7 grants permission ("your analysis is unlimited"), and a run that never felt uncertain never takes a permission.</p>
+<p>v8 changes that one paragraph and nothing else — same length, budget line still last, because the matrix showed four times over that adding length here costs prose:</p>
+<pre><code>v7 — permission
+One exception, and it overrides the budget: while debugging, reading unfamiliar code, or checking
+an implementation against a stated contract, your analysis is unlimited - walk the contract clause
+by clause and say what you checked. That analysis is the work, not padding; shortening it is how a
+wrong fix ships as a right one. Explaining a concept in chat is not that exception.
+
+v8 — obligation
+One exception, and it overrides the budget: when the code you are fixing states a contract - a
+docstring, a spec, a type - checking every clause of it against the implementation is required, not
+optional, and your analysis there is unlimited. A green test suite is not that check; it is someone
+else's sample of the contract. Say what you checked. Explaining a concept in chat is not this.</code></pre>
+<div class="tw"><table>
+  <thead><tr><th>Measure</th><th>v7</th><th>v8</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Hard round, correct — <strong>same day</strong>, 2026-08-29</td><td class="num"><span class="lose">2/14</span></td><td class="num"><span class="win">10/15</span></td><td>Fisher p=0.008</td></tr>
+    <tr><td>Hard round, correct — pooled, n=20 each</td><td class="num"><span class="lose">4/20</span></td><td class="num"><span class="win">13/20</span></td><td>Fisher p=0.010</td></tr>
+    <tr><td>Median cost</td><td class="num">0.0954</td><td class="num"><span class="win">0.0888</span></td><td>−7%</td></tr>
+    <tr><td>Median wall clock</td><td class="num">211 s</td><td class="num"><span class="win">135 s</span></td><td>−36%</td></tr>
+    <tr><td>Median input / output tokens</td><td class="num">165,608 / 1,188</td><td class="num">132,474 / 1,524</td><td>reads less, says more</td></tr>
+    <tr><td>Prose round, median — same day, n=5</td><td class="num">0.0624</td><td class="num"><span class="win">0.0563</span></td><td>−10%, p=0.22 — no prose tax</td></tr>
+  </tbody>
+</table></div>
+<p>The pooling is balanced by design: five cells per arm on 2026-08-26 and fourteen-to-fifteen on 2026-08-29, both arms on both days, because a quality number belongs to the day it was taken. The prose round was run last for a specific reason — this is the paragraph region that broke prose four times during development, so a version that buys correctness by writing more had to be checked for a prose tax before being recommended. There is none: v8 is <em>cheaper</em> on prose, and all five of its samples land under v7's mean. Read that as "it does not pay for correctness with prose", not as a second win: at n=5 the test gives p=0.22. The tool, website and Opus rounds have not been re-run on v8.</p>
+
+<div class="note plain">
+<p><strong>Caveats, stated rather than buried.</strong> Prose rounds are n=5 because n=3 lied once — an intermediate version looked 22% better than <code>modes</code> until two more samples killed the margin, since <code>modes</code>' prose cost is bimodal. Tool rounds are n=3. The web and second-hard rounds were deliberately not run on Opus: both are saturated and would not have said anything about Lea. And no figure here is compared against a stored one: <strong>the price regime changed between the August matrix and these runs</strong>, so every rival was re-measured on the same day as the Lea run it is compared with. Fitting the token prices per era later named the cause: 17-19 August bills at $3.00/$15.03 per M (Sonnet 4.6's list price) and 30 August at <strong>$2.00/$10.00 with 0.00% error</strong> (Sonnet 5's), with Opus at $5.00/$25.00 throughout. Nothing was repriced - the <code>--model sonnet</code> alias moved from Sonnet 4.6 to Sonnet 5. That rule turned out to cover correctness too, not only money: <strong>the same unchanged config re-run on the hard round one day later scored 1/5 instead of 4/5</strong>, its median output down from 1,549 to 979 tokens. Read every quality figure on this page as belonging to the day it was taken. The real-project round is now closed: <code>full</code> was re-run on 2026-08-30 and the price regime was verified unchanged since 2026-08-19, giving Lea a median of <strong>$3.735</strong> against <code>full</code>'s <strong>$5.560</strong> — so "Lea is expensive on real work", which its single $8.10 run seemed to suggest, is measured and false. It is also not a ranking: the exact test gives p=0.70, and the pooled within-config spread (SD of log cost 0.397 over 19 runs) means <strong>n=37 per arm</strong> would be needed to resolve a 30% difference. Any ordering that round has ever produced, this page's included, is sampling noise. One more thing worth stealing: <strong>a row's cost and its own token counts must agree</strong>. Two rows in 286 billed more than their tokens can buy, because the agent loop restarted mid-cell and the summary JSON described only the last leg — one of them logged 1 turn and 29 output tokens while passing the hidden suite 8/8, which would have read as a cheap, correct win. Development cost $10.48 over 216 API calls, a third of it spent re-measuring baselines.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Yukarıdaki her tur, başkasının yayınladığı yapılandırmaları karşılaştırıyor. Lea altıncısı: beşin içinden seçilmedi, matrisin açığa çıkardığı <em>mekanizmalardan</em> tasarlandı, sonra turları teker teker geçirildi ve her adımdan sonra regresyon tekrar ölçüldü.</p>
+
+<p>Tek bir <code>SessionStart</code> hook'u, 226 kelime. <code>caveman</code> + <code>ponytail</code> daha dar bir iş için yaklaşık 6.000 token yüklüyor. Dört kural — ve aralarındaki sıranın, kuralların kendisinden daha çok fark yarattığı ortaya çıktı:</p>
+
+<div class="cards">
+<div class="card"><h4>Sert bir metin bütçesi</h4><p>Cevap başına en fazla 120 kelime açıklama, artı cevabın gerektirdiği kod ya da veri. Cevapla başla; giriş yok, kapanış özeti yok.</p></div>
+<div class="card"><h4>Her uygulama bir kez</h4><p>Değişmemiş kodu asla yeniden yapıştırma — adını ver, farkı söyle. <em>Kurduğun şey</em> muaf: viewport meta'sı, başlık, etiketli kontroller, doğrulama ve hata yönetimi her kesintiden sağ çıkar.</p></div>
+<div class="card"><h4>Tool döngüsü</h4><p>Görevin ihtiyacı olanı oku, değiştir, bir kez kontrol et, raporla. Geçmiş kontrolü tekrar koşturma, sıradaki çağrıyı anlatma. Fatura turlardan geliyor.</p></div>
+<div class="card"><h4>Bütçeyi ezen tek istisna</h4><p>Kod bir sözleşme beyan ediyorsa — docstring, spec, tip — her maddesini uygulamaya karşı denetlemek <em>zorunlu</em>, ve oradaki analiz sınırsız. Yeşil bir test suite'i bu denetimin yerine geçmiyor. Tasarımın tamamı bu madde; burada ölçülen en büyük kalite etkisi de onun yeniden yazılması — aşağıya bak.</p></div>
+</div>
+
+<h3>Sonnet — beş tur, hepsi 2026-08-25'te ölçüldü</h3>
+<div class="tw"><table>
+  <thead><tr><th>Tur</th><th class="num">n</th><th>Lea</th><th>Aynı gün yeniden ölçülen en iyi rakip</th><th>Hüküm</th></tr></thead>
+  <tbody>
+    <tr><td>Metin, tool yok</td><td class="num">5</td><td>0,0626 medyan · 0,0613 ortalama</td><td><code>modes</code> 0,0577 medyan · 0,0730 ortalama</td><td>berabere — medyanı <code>modes</code>, ortalamayı ve yarı yarıya dar dağılımı Lea alıyor</td></tr>
+    <tr><td>Kolay tool bug fix</td><td class="num">3</td><td><span class="win">0,0828</span> · 3/3 doğru</td><td><code>bare</code> 0,0957</td><td><span class="win">−%13</span> — burada <code>bare</code>'i daha önce hiçbir config geçememişti</td></tr>
+    <tr><td>Zor tool bug fix</td><td class="num">5</td><td><span class="win">0,0897</span> · <span class="win">4/5 doğru</span></td><td><code>superpowers</code> 0,1244 · <span class="lose">1/5</span></td><td>iki eksende birden en iyi</td></tr>
+    <tr><td>Website kurma</td><td class="num">3</td><td><span class="win">0,0757</span> · üç kez 7/7</td><td><code>bare</code> 0,0911</td><td><span class="win">−%17</span>, viewport ve başlık yerinde</td></tr>
+    <tr><td>Zor bug fix #2</td><td class="num">3</td><td>0,0815 · 3/3 doğru</td><td><code>bare</code> 0,0799</td><td>+%2, berabere — bu görev her config için doygun</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Opus — üç tur, hepsi 2026-08-26'da ölçüldü</h3>
+<div class="tw"><table>
+  <thead><tr><th>Tur</th><th class="num">n</th><th>Lea</th><th>Aynı gün yeniden ölçülen en iyi rakip</th><th>Hüküm</th></tr></thead>
+  <tbody>
+    <tr><td>Metin, tool yok</td><td class="num">5</td><td><span class="win">0,2032</span> medyan · 0,2581 ortalama</td><td><code>modes</code> 0,3558 medyan · 0,3734 ortalama</td><td><span class="win">−%43</span></td></tr>
+    <tr><td>Kolay tool bug fix</td><td class="num">3</td><td><span class="win">0,1842</span> · 3/3 · <span class="win">6 tur</span></td><td><code>bare</code> 0,2171 · 3/3 · 9 tur</td><td><span class="win">−%15</span></td></tr>
+    <tr><td>Zor tool bug fix</td><td class="num">5</td><td><span class="win">0,2058</span> · 5/5 · 7 tur · 1.870 output</td><td><code>superpowers</code> 0,4366 · 5/5 · 10 tur · 3.620 output</td><td><span class="win">−%53</span></td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+<p><strong>Mekanizma modeller arasında taşınıyor; kalite üstünlüğü iki modelde de tekrarlanmadı.</strong> Tur kesme iki modelde de çalışıyor: kolay fix'te 9 turdan 6'ya, zor fix'te 10'dan 7'ye. Opus'ta doğrulukta hiçbir şey ayrışmıyor — her config 5/5. Bu sayfa uzun süre buna "kalite üstünlüğü Sonnet'e özgü" dedi; o okuma Sonnet rakamına fazla cömertti. Yeniden ölçüldüğünde değiştirilmemiş aynı config üç ayrı günde 4/5, sonra 1/5, sonra 2/14 aldı — yani v7'nin <em>hiçbir modelde</em> tekrarlanmış bir kalite üstünlüğü yok. Tekrarlanan tek kalite sonucu <a href="#lea">v8'inki</a>: iki kol da aynı gün, kol başına n=20. Opus'ta Lea'nın gerekçesi bu yüzden sade — aynı sonucu yarı fiyata almak.</p>
+</div>
+
+<h3>İstisna maddesi neden tasarımın tamamı</h3>
+<p>Matris bir yasa buldu, Lea da onun etrafına kuruldu: zor turda <strong>her yanlış düzeltme 1.596 output token'ın altında, her doğru düzeltme 1.924'ün üstünde kaldı</strong> — 25 koşuda tek istisnasız bir ayrım. Daha çok yazan koşular, kodu docstring'ine karşı denetleyip ikinci, test edilmemiş hatayı yakalayanlar. Kısalık her yerde bedava, tek istisnası bir sözleşme denetimi — istisna maddesinin koruduğu şey tam olarak bu, ve Lea'nın Sonnet'te kalan iki hatası, istisnanın hiç ateşlenmediği koşular.</p>
+<p>Kural setinin içindeki sıra, kuralların kendisinden daha çok oynattı sayıları — dört ayrı kez. Tool-loop paragrafı eklenince tool turu iyileşti, metin 0,0563'ten 0,0760'a çıktı; paragraf tek cümleye indirilip kelime bütçesi <em>en sona</em> alınınca geri geldi. Dört satırlık bir "doğruluk temellerini koru" bloğu metni 0,0879'a çökertti; tek cümleye indirilip yalnızca kurulan dosyalara daraltılınca viewport düzeltmesi %60 yerine ~%15 metin maliyetiyle yerinde kaldı.</p>
+
+<h3>v8 — aynı madde, yükümlülük olarak yeniden yazıldı</h3>
+<p>v7'nin hataları tahmin edilmedi, okundu. Birinde ajan görünen hatayı düzeltti, görünen suite'i koşturdu, yeşili gördü ve işi dört kelimeyle kapattı — <em>"All tests pass."</em> 1.266 output token, gizli suite 5/8, üç başarısızlığın üçü de hiç bakmadığı sona erme sınırında. Kural setinde ona "bak" diyen bir şey yoktu: v7 izin veriyor ("analizin sınırsızdır"), hiç tereddüt etmemiş bir koşu ise izni hiç kullanmaz.</p>
+<p>v8 yalnız o paragrafı değiştiriyor — aynı uzunluk, bütçe satırı yine en sonda, çünkü matris dört kez gösterdi ki buraya <em>eklenen</em> uzunluk metin turuna mal oluyor:</p>
+<pre><code>v7 — izin
+One exception, and it overrides the budget: while debugging, reading unfamiliar code, or checking
+an implementation against a stated contract, your analysis is unlimited - walk the contract clause
+by clause and say what you checked. That analysis is the work, not padding; shortening it is how a
+wrong fix ships as a right one. Explaining a concept in chat is not that exception.
+
+v8 — yükümlülük
+One exception, and it overrides the budget: when the code you are fixing states a contract - a
+docstring, a spec, a type - checking every clause of it against the implementation is required, not
+optional, and your analysis there is unlimited. A green test suite is not that check; it is someone
+else's sample of the contract. Say what you checked. Explaining a concept in chat is not this.</code></pre>
+<div class="tw"><table>
+  <thead><tr><th>Ölçüm</th><th>v7</th><th>v8</th><th>Hüküm</th></tr></thead>
+  <tbody>
+    <tr><td>Zor tur, doğru — <strong>aynı gün</strong>, 2026-08-29</td><td class="num"><span class="lose">2/14</span></td><td class="num"><span class="win">10/15</span></td><td>Fisher p=0,008</td></tr>
+    <tr><td>Zor tur, doğru — havuzlanmış, kol başına n=20</td><td class="num"><span class="lose">4/20</span></td><td class="num"><span class="win">13/20</span></td><td>Fisher p=0,010</td></tr>
+    <tr><td>Medyan maliyet</td><td class="num">0,0954</td><td class="num"><span class="win">0,0888</span></td><td>−%7</td></tr>
+    <tr><td>Medyan duvar saati</td><td class="num">211 sn</td><td class="num"><span class="win">135 sn</span></td><td>−%36</td></tr>
+    <tr><td>Medyan input / output token</td><td class="num">165.608 / 1.188</td><td class="num">132.474 / 1.524</td><td>daha az okuyor, daha çok söylüyor</td></tr>
+    <tr><td>Metin turu medyanı — aynı gün, n=5</td><td class="num">0,0624</td><td class="num"><span class="win">0,0563</span></td><td>−%10, p=0,22 — metin vergisi yok</td></tr>
+  </tbody>
+</table></div>
+<p>Havuzlama tasarımı gereği dengeli: 26 Ağustos'ta kol başına beş hücre, 29 Ağustos'ta on dört ile on beş — iki kol da iki günde. Çünkü bir kalite sayısı alındığı güne aittir. Metin turu en sona bilerek bırakıldı: geliştirme boyunca metni dört kez bozan paragraf bölgesi tam olarak burasıydı, dolayısıyla "daha çok yazarak doğruluk satın alan" bir sürüm önerilmeden önce metin vergisi ödeyip ödemediği ölçülmeliydi. Ödemiyor: v8 metinde de <em>ucuz</em> ve beş örneğinin beşi de v7'nin ortalamasının altında. Bunu "doğruluğu metinden ödemiyor" diye okuyun, ikinci bir zafer diye değil — n=5'te test p=0,22 veriyor. Tool, website ve Opus turları v8 için yeniden koşturulmadı.</p>
+
+<div class="note plain">
+<p><strong>Kısıtlar, gömülmeden söyleniyor.</strong> Metin turları n=5, çünkü n=3 bir kez yalan söyledi: bir ara sürüm <code>modes</code>'u %22 geçmiş gibi göründü, iki örnek daha eklenince fark buhar oldu — <code>modes</code>'un metin maliyeti çift tepeli. Tool turları n=3. Web ve ikinci zor tur Opus'ta bilerek koşturulmadı: ikisi de doygun, Lea hakkında yeni bir şey söylemezlerdi. Ve buradaki hiçbir sayı kayıtlı bir sayıyla karşılaştırılmıyor: <strong>ağustos matrisi ile bu koşular arasında fiyat rejimi değişti</strong>, o yüzden her rakip, karşılaştırıldığı Lea koşusuyla aynı gün yeniden ölçüldü. Token fiyatları sonradan dönem dönem çıkarılınca sebebi de belli oldu: 17–19 Ağustos $3.00/$15.03 per M'ye (Sonnet 4.6 liste fiyatı), 30 Ağustos <strong>%0.00 hatayla $2.00/$10.00</strong>'a (Sonnet 5) oturuyor; Opus üç dönemde de $5.00/$25.00. Hiçbir şey yeniden fiyatlanmadı — <code>--model sonnet</code> takma adı Sonnet 4.6'dan Sonnet 5'e geçmiş. Bu kuralın yalnızca parayı değil doğruluğu da kapsadığı ortaya çıktı: <strong>değiştirilmemiş aynı config zor turda bir gün sonra 4/5 yerine 1/5 aldı</strong>, medyan output'u 1.549'dan 979 token'a düştü. Bu sayfadaki her kalite sayısını, alındığı güne ait oku. Gerçek proje turu artık kapandı: <code>full</code> 30 Ağustos'ta yeniden koşturuldu ve fiyat rejiminin 19 Ağustos'tan beri değişmediği ayrıca doğrulandı; Lea'nın medyanı <strong>3,735 dolar</strong>, <code>full</code>'ünki <strong>5,560 dolar</strong>. Yani tek bir 8,10 dolarlık koşunun düşündürdüğü "Lea gerçek işte pahalı" cümlesi ölçüldü ve yanlış çıktı. Bu bir sıralama da değil: tam test p=0,70 veriyor ve config-içi dağılım (19 koşuda log maliyet SD'si 0,397) %30'luk bir farkı çözmek için <strong>kol başına n=37</strong> gerektiriyor. O turun ürettiği her sıralama — bu sayfadakiler dahil — örnekleme gürültüsü. Çalmaya değer bir şey daha: <strong>bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</strong> 286 satırın ikisi, token'larının satın alabileceğinden fazlasını faturaladı; çünkü ajan döngüsü hücre ortasında yeniden başlamış ve özet JSON yalnız son bacağı anlatmıştı — biri 1 tur ve 29 output token yazarken gizli suite'i 8/8 geçiyordu, yani "ucuz ve doğru" diye okunacaktı. Geliştirme maliyeti 216 API çağrısında 10,48 dolar; üçte biri baseline'ları yeniden ölçmeye gitti.</p>
+</div>
+</div>
+
+<!-- ============ CONFIGS ============ -->
+<h2 id="configs"><span data-lang="en">The five configurations</span><span data-lang="tr">Beş yapılandırma</span></h2>
+
+<div data-lang="en">
+<p>Every round compares the same five setups, isolated with <code>--setting-sources project</code> from a directory with no project settings, plus <code>--settings &lt;config&gt;</code>.</p>
+<div class="cards">
+  <div class="card"><h4><code>bare</code></h4><p>No plugins, no custom hooks.</p></div>
+  <div class="card"><h4><code>hooks</code></h4><p>Only the two hand-rolled <code>SessionStart</code> hooks: verification + lean-context.</p></div>
+  <div class="card"><h4><code>superpowers</code></h4><p>Only the <code>superpowers</code> plugin.</p></div>
+  <div class="card"><h4><code>modes</code></h4><p>Only <code>caveman</code> + <code>ponytail</code> — the terse/minimal output modes.</p></div>
+  <div class="card"><h4><code>full</code></h4><p>All of the above at once.</p></div>
+</div>
+</div>
+
+<div data-lang="tr">
+<p>Her tur aynı beş kurulumu karşılaştırıyor. İzolasyon: proje ayarı bulunmayan bir dizinden <code>--setting-sources project</code>, artı <code>--settings &lt;config&gt;</code>.</p>
+<div class="cards">
+  <div class="card"><h4><code>bare</code></h4><p>Plugin yok, özel hook yok.</p></div>
+  <div class="card"><h4><code>hooks</code></h4><p>Yalnızca elle yazılmış iki <code>SessionStart</code> hook'u: verification + lean-context.</p></div>
+  <div class="card"><h4><code>superpowers</code></h4><p>Yalnızca <code>superpowers</code> plugin'i.</p></div>
+  <div class="card"><h4><code>modes</code></h4><p>Yalnızca <code>caveman</code> + <code>ponytail</code> — kısa/minimal çıktı modları.</p></div>
+  <div class="card"><h4><code>full</code></h4><p>Yukarıdakilerin hepsi bir arada.</p></div>
+</div>
+</div>
+
+<!-- ============ ROUND 1 ============ -->
+<h2 id="r1"><span data-lang="en">Round 1 · Prose, no tools</span><span data-lang="tr">Tur 1 · Metin, tool yok</span></h2>
+
+<div data-lang="en">
+<p class="lede">5 configs × 5 samples × 3 turns, Sonnet, $4.11. Task: token bucket vs leaky bucket plus a Python implementation, then make it thread-safe, then handle a backward clock jump. Every row is the median of 5 samples.</p>
+<p>Validity was checked before the numbers were read — all samples produced code, covered the leaky bucket, used a lock, and reached <code>time.monotonic()</code>. Same job everywhere.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">answer chars</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">97,580</td><td class="num">7,940</td><td class="num">0.175</td><td class="num">12,772</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">100,730</td><td class="num">7,294</td><td class="num">0.184</td><td class="num">12,925</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">103,648</td><td class="num">9,035</td><td class="num">0.210</td><td class="num">12,740</td></tr>
+    <tr><td><code>modes</code></td><td class="num">114,902</td><td class="num">3,074</td><td class="num win">0.096</td><td class="num">4,929</td></tr>
+    <tr><td><code>full</code></td><td class="num">124,051</td><td class="num">2,397</td><td class="num">0.112</td><td class="num">3,990</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Optimising for prompt size was the wrong target</h4>
+<p><code>full</code> reads <strong>27% more input</strong> than <code>bare</code> and still costs <strong>36% less</strong>; <code>modes</code> is <strong>45% cheaper</strong> while reading 18% more. Output fell 61%, output bills roughly 5× input, and most of that extra input is cache reads at a tenth of the input price.</p>
+</div>
+<p>Per component against <code>bare</code>: caveman+ponytail <span class="win">−45%</span>, and −36% once stacked with the rest — the terse pair alone beats the full stack, because superpowers pulls the other way. The hooks alone are <span class="lose">+5%</span> and superpowers alone <span class="lose">+20%</span> — both add fixed input and change output length not at all.</p>
+<p class="lede"><em>Caveats: n=5, one task, tool use deliberately suppressed to keep the configs comparable. This measures prose and code generation only.</em></p>
+</div>
+
+<div data-lang="tr">
+<p class="lede">5 config × 5 örnek × 3 tur, Sonnet, 4,11 dolar. Görev: token bucket ile leaky bucket karşılaştırması ve bir Python implementasyonu, sonra thread-safe hâle getir, sonra geriye giden saat sıçramasını ele al. Her satır 5 örneğin medyanı.</p>
+<p>Sayılar okunmadan önce geçerlilik kontrol edildi — örneklerin hepsi kod üretti, leaky bucket'ı kapsadı, lock kullandı ve <code>time.monotonic()</code>'e ulaştı. Her yerde aynı iş.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">cevap karakteri</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">97.580</td><td class="num">7.940</td><td class="num">0,175</td><td class="num">12.772</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">100.730</td><td class="num">7.294</td><td class="num">0,184</td><td class="num">12.925</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">103.648</td><td class="num">9.035</td><td class="num">0,210</td><td class="num">12.740</td></tr>
+    <tr><td><code>modes</code></td><td class="num">114.902</td><td class="num">3.074</td><td class="num win">0,096</td><td class="num">4.929</td></tr>
+    <tr><td><code>full</code></td><td class="num">124.051</td><td class="num">2.397</td><td class="num">0,112</td><td class="num">3.990</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Prompt boyutunu optimize etmek baştan yanlış hedefti</h4>
+<p><code>full</code>, <code>bare</code>'den <strong>%27 daha fazla input</strong> okuyor ve yine de <strong>%36 daha ucuza</strong> geliyor; <code>modes</code> %18 fazla input okuyup <strong>%45 daha ucuza</strong>. Çıktı %61 düştü, output token'ları input'un yaklaşık 5 katı fiyatlanıyor, ve o fazladan input'un çoğu input fiyatının onda birine gelen cache okuması.</p>
+</div>
+<p>Bileşen bazında, <code>bare</code>'e karşı: caveman+ponytail <span class="win">−%45</span>, geri kalanla yığıldığında −%36 — yani kısa ikili tek başına tam yığını geçiyor, çünkü superpowers ters yöne çekiyor. Hook'lar tek başına <span class="lose">+%5</span>, superpowers tek başına <span class="lose">+%20</span> — ikisi de sabit input ekliyor ve çıktı uzunluğunu hiç değiştirmiyor.</p>
+<p class="lede"><em>Kısıtlar: n=5, tek görev, config'leri karşılaştırılabilir tutmak için tool kullanımı bilerek bastırıldı. Bu tur yalnızca metin ve kod üretimini ölçüyor.</em></p>
+</div>
+
+<!-- ============ ROUND 2 ============ -->
+<h2 id="r2"><span data-lang="en">Round 2 · Easy agentic bug fix</span><span data-lang="tr">Tur 2 · Kolay agentic bug fix</span></h2>
+
+<div data-lang="en">
+<p class="lede">5 configs × 5 samples with real tool use, $4.22. A token bucket whose <code>_refill</code> multiplies elapsed time by <code>capacity</code> instead of <code>refill_rate</code>. Graded objectively: the suite must exit 0 <em>and</em> the test file must stay byte-identical (SHA256). Every row is a median.</p>
+<p>All 25 runs: <code>is_error=False</code>, <code>denials=0</code>, <code>test_exit=0</code>, <code>test_tampered=no</code>. Every config found the same one-line bug, so the costs compare like for like.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">turns</th><th class="num">sec</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">156,547</td><td class="num">616</td><td class="num win">0.119</td><td class="num">6</td><td class="num">116</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">163,607</td><td class="num">777</td><td class="num">0.131</td><td class="num">6</td><td class="num">129</td></tr>
+    <tr><td><code>modes</code></td><td class="num">192,801</td><td class="num">719</td><td class="num">0.173</td><td class="num">6</td><td class="num">118</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">221,373</td><td class="num">1,112</td><td class="num">0.183</td><td class="num">9</td><td class="num">138</td></tr>
+    <tr><td><code>full</code></td><td class="num">267,604</td><td class="num">850</td><td class="num lose">0.234</td><td class="num">8</td><td class="num">121</td></tr>
+  </tbody>
+</table></div>
+<p><strong>On tool work every component costs money and none of them saved any.</strong> Against <code>bare</code>: hooks +10%, modes +45%, superpowers +53%, full +97% — the exact opposite of round 1.</p>
+<p>The mechanism is output volume. A debugging task emits 600–1,200 output tokens in total, so caveman's compression has almost nothing to compress; it still shortens the final answer (90 chars vs 172) but that is rounding error against a 190k input. Meanwhile the fixed ruleset is re-read on all 6–8 turns: input per turn is 26k for <code>bare</code> and 33k for <code>full</code>. Superpowers additionally buys 3 extra turns from its skill-invocation mandate.</p>
+<div class="note"><p><strong>Rule of thumb.</strong> caveman/ponytail pay off in proportion to how much prose the model writes. Long-answer chat wins big; multi-turn agentic tool work loses. Claude Code's normal usage is the second kind.</p></div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Gerçek tool kullanımıyla 5 config × 5 örnek, 4,22 dolar. <code>_refill</code> fonksiyonu geçen süreyi <code>refill_rate</code> yerine <code>capacity</code> ile çarpan bir token bucket. Nesnel notlandırma: suite 0 ile çıkmalı <em>ve</em> test dosyası bayt bayt aynı kalmalı (SHA256). Her satır medyan.</p>
+<p>25 koşunun hepsi: <code>is_error=False</code>, <code>denials=0</code>, <code>test_exit=0</code>, <code>test_tampered=no</code>. Her config aynı tek satırlık hatayı buldu, yani maliyetler birebir karşılaştırılabilir.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">tur</th><th class="num">sn</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">156.547</td><td class="num">616</td><td class="num win">0,119</td><td class="num">6</td><td class="num">116</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">163.607</td><td class="num">777</td><td class="num">0,131</td><td class="num">6</td><td class="num">129</td></tr>
+    <tr><td><code>modes</code></td><td class="num">192.801</td><td class="num">719</td><td class="num">0,173</td><td class="num">6</td><td class="num">118</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">221.373</td><td class="num">1.112</td><td class="num">0,183</td><td class="num">9</td><td class="num">138</td></tr>
+    <tr><td><code>full</code></td><td class="num">267.604</td><td class="num">850</td><td class="num lose">0,234</td><td class="num">8</td><td class="num">121</td></tr>
+  </tbody>
+</table></div>
+<p><strong>Tool işinde her bileşen para harcatıyor ve hiçbiri kazandırmıyor.</strong> <code>bare</code>'e karşı: hooks +%10, modes +%45, superpowers +%53, full +%97 — Tur 1'in tam tersi.</p>
+<p>Mekanizma çıktı hacmi. Bir debugging görevi toplam 600–1.200 output token üretiyor, yani caveman'in sıkıştıracak neredeyse hiçbir şeyi yok; nihai cevabı yine kısaltıyor (172'ye karşı 90 karakter) ama bu 190 binlik input'un yanında yuvarlama hatası. Bu sırada sabit kural seti 6–8 turun hepsinde yeniden okunuyor: tur başına input <code>bare</code> için 26 bin, <code>full</code> için 33 bin. Superpowers ayrıca skill çağırma zorunluluğu yüzünden 3 fazladan tur getiriyor.</p>
+<div class="note"><p><strong>Kural.</strong> caveman/ponytail, modelin ne kadar çok metin yazdığıyla orantılı kazandırır. Uzun cevaplı sohbet büyük kazanç; çok turlu agentic tool işi kayıp. Claude Code'un normal kullanımı ikincisi.</p></div>
+</div>
+
+<!-- ============ ROUND 3 ============ -->
+<h2 id="r3"><span data-lang="en">Round 3 · Hard bug fix — the round that answers the question</span><span data-lang="tr">Tur 3 · Zor bug fix — soruyu asıl cevaplayan tur</span></h2>
+
+<div data-lang="en">
+<p class="lede">The first round that separates <strong>quality</strong> rather than cost. 5 configs × 5 samples, 25 runs, $4.65.</p>
+<h3>The trap</h3>
+<p>A <code>SlidingWindow(limit, window)</code> rate limiter with an injected clock, whose docstring states the full contract — and breaks it in two places:</p>
+<ul>
+<li><strong>Bug A</strong> — <code>allow</code> appends the timestamp <em>before</em> checking, so refused calls occupy a slot and a blocked client pushes its own recovery away. The visible test suite catches this one.</li>
+<li><strong>Bug B</strong> — <code>_prune</code> expires with <code>events[0] &lt; cutoff</code> instead of <code>&lt;=</code>, so events live one instant too long. Documented in the docstring, untouched by any visible test — those deliberately use t=11 and t=10.5 rather than the exact boundary.</li>
+</ul>
+<p>Grading is a hidden suite copied in only after the agent exits; public API only, every assertion traceable to the docstring. The columns that matter are <code>visible_exit=0</code> with <code>hidden_exit=1</code>: the agent's own tests green, the fix still wrong.</p>
+<h3>Results</h3>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">correct 8/8</th><th class="num">false "done"</th><th class="num">output</th><th class="num">USD</th><th class="num">USD per correct fix</th></tr></thead>
+  <tbody>
+    <tr><td><code>superpowers</code></td><td class="num win">3/5</td><td class="num">2</td><td class="num">2,408</td><td class="num">0.209</td><td class="num win">0.34</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">2/5</td><td class="num">3</td><td class="num">1,004</td><td class="num">0.143</td><td class="num">0.38</td></tr>
+    <tr><td><code>full</code></td><td class="num">2/5</td><td class="num">3</td><td class="num">1,164</td><td class="num">0.244</td><td class="num">0.65</td></tr>
+    <tr><td><code>bare</code></td><td class="num">1/5</td><td class="num">4</td><td class="num">803</td><td class="num">0.134</td><td class="num">0.66</td></tr>
+    <tr><td><code>modes</code></td><td class="num lose">0/5</td><td class="num">5</td><td class="num">748</td><td class="num">0.173</td><td class="num lose">never</td></tr>
+  </tbody>
+</table></div>
+<p>Validity: 25/25 runs <code>is_error=False</code>, <code>denials=0</code>, <code>tampered=no</code>, <code>visible_exit=0</code>. Every single run left its own test suite green — so <strong>every failure here is a false completion claim</strong>, not a crash or a refusal.</p>
+<div class="finding">
+<h4>The separator is output volume, with no overlap at all</h4>
+<p>Every wrong fix came in under <strong>1,596</strong> output tokens; every correct one over <strong>1,924</strong> — medians 860 vs 2,690. A perfect split across 25 runs. The runs that wrote more are exactly the runs that checked the code against the docstring and caught bug B.</p>
+</div>
+<p>That makes caveman/ponytail's own mechanism the thing that costs correctness here. Their entire saving in round 1 came from cutting output 69%; on this task, suppressed output means the second contract violation is never examined. <code>modes</code> went 0/5 while costing 30% more than <code>bare</code> — it pays more and gets less. Stacking it with superpowers (<code>full</code>) dragged superpowers from 3/5 down to 2/5, at the highest cost of any config.</p>
+<p>The verification hook is the cheapest quality lever: 2/5 versus bare's 1/5 for +7% cost. Superpowers is the most effective one: 3× bare's correctness for +56%.</p>
+<p class="lede"><em>Caveats: n=5, one task, one model, and the quality signal rests on a single hidden defect. Treat the exact rates as indicative.</em></p>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Maliyeti değil <strong>kaliteyi</strong> ayırt eden ilk tur. 5 config × 5 örnek, 25 koşu, 4,65 dolar.</p>
+<h3>Tuzak</h3>
+<p>Enjekte edilmiş bir saatle çalışan, docstring'i sözleşmenin tamamını yazan bir <code>SlidingWindow(limit, window)</code> rate limiter — ve bu sözleşmeyi iki yerde çiğniyor:</p>
+<ul>
+<li><strong>Bug A</strong> — <code>allow</code>, timestamp'i kontrolden <em>önce</em> ekliyor, yani reddedilen çağrılar da slot işgal ediyor ve engellenmiş bir istemci kendi toparlanmasını ileri itiyor. Görünür test suite'i bunu yakalıyor.</li>
+<li><strong>Bug B</strong> — <code>_prune</code>, <code>events[0] &lt;= cutoff</code> yerine <code>events[0] &lt; cutoff</code> ile süre doldurma yapıyor, yani olaylar bir an fazla yaşıyor. Docstring'de yazılı, hiçbir görünür test buna dokunmuyor — testler tam sınır yerine bilerek t=11 ve t=10,5 kullanıyor.</li>
+</ul>
+<p>Notlandırma, agent çıktıktan sonra kopyalanan gizli bir suite ile; yalnızca public API, her assert docstring'e izlenebilir. Önemli sütunlar: <code>visible_exit=0</code> ile <code>hidden_exit=1</code> — agent'ın kendi testleri yeşil, düzeltme yine de yanlış.</p>
+<h3>Sonuçlar</h3>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">8/8 doğru</th><th class="num">yanlış "bitti"</th><th class="num">output</th><th class="num">USD</th><th class="num">doğru düzeltme başına USD</th></tr></thead>
+  <tbody>
+    <tr><td><code>superpowers</code></td><td class="num win">3/5</td><td class="num">2</td><td class="num">2.408</td><td class="num">0,209</td><td class="num win">0,34</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">2/5</td><td class="num">3</td><td class="num">1.004</td><td class="num">0,143</td><td class="num">0,38</td></tr>
+    <tr><td><code>full</code></td><td class="num">2/5</td><td class="num">3</td><td class="num">1.164</td><td class="num">0,244</td><td class="num">0,65</td></tr>
+    <tr><td><code>bare</code></td><td class="num">1/5</td><td class="num">4</td><td class="num">803</td><td class="num">0,134</td><td class="num">0,66</td></tr>
+    <tr><td><code>modes</code></td><td class="num lose">0/5</td><td class="num">5</td><td class="num">748</td><td class="num">0,173</td><td class="num lose">hiç</td></tr>
+  </tbody>
+</table></div>
+<p>Geçerlilik: 25/25 koşuda <code>is_error=False</code>, <code>denials=0</code>, <code>tampered=no</code>, <code>visible_exit=0</code>. Tek tek her koşu kendi test suite'ini yeşil bıraktı — yani <strong>buradaki her başarısızlık bir yanlış tamamlama iddiası</strong>, çökme veya reddetme değil.</p>
+<div class="finding">
+<h4>Ayırt edici değişken çıktı hacmi, ve hiç örtüşme yok</h4>
+<p>Yanlış düzeltmelerin hepsi <strong>1.596</strong> output token'ın altında kaldı; doğruların hepsi <strong>1.924</strong>'ün üstünde — medyanlar 860'a karşı 2.690. 25 koşuda kusursuz bir ayrım. Daha fazla yazan koşular, kodu docstring'e karşı kontrol edip bug B'yi yakalayanların tam kendileri.</p>
+</div>
+<p>Bu da caveman/ponytail'in kendi mekanizmasını burada kaliteye mal olan şey hâline getiriyor. Tur 1'deki tasarrufun tamamı çıktıyı %69 kesmekten geliyordu; bu görevde bastırılmış çıktı, ikinci sözleşme ihlalinin hiç incelenmemesi demek. <code>modes</code>, <code>bare</code>'den %30 pahalıya gelirken 0/5 yaptı — daha çok ödeyip daha az alıyor. Superpowers ile yığıldığında (<code>full</code>) superpowers'ı 3/5'ten 2/5'e çekti, üstelik tüm config'lerin en yüksek maliyetiyle.</p>
+<p>Verification hook'u en ucuz kalite kaldıracı: +%7 maliyetle bare'in 1/5'ine karşı 2/5. Superpowers en etkili olanı: +%56 ile bare'in 3 katı doğruluk.</p>
+<p class="lede"><em>Kısıtlar: n=5, tek görev, tek model, ve kalite sinyali tek bir gizli kusura dayanıyor. Kesin oranları gösterge sayın.</em></p>
+</div>
+
+<!-- ============ ROUND 4 ============ -->
+<h2 id="r4"><span data-lang="en">Round 4 · Website build from an empty directory</span><span data-lang="tr">Tur 4 · Boş dizinden website kurma</span></h2>
+
+<div data-lang="en">
+<p class="lede">25 runs, $4.71. The first round that grades a <em>built artifact</em> by driving it: a pomodoro timer site that must open straight from <code>index.html</code>. Every row is the median of 5 samples.</p>
+<p>Grading is real Chrome over CDP with no dependencies. Seven checks — loads, initial 25:00, counts down, pause holds, reset restores, auto-break (virtual time advanced 1.7M ms), and no network references. The grader was validated first against three reference sites: the correct one scores 7/7, a broken-pause variant fails only <code>pause_holds</code>, a no-break variant fails only <code>auto_break</code>.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">7/7</th><th class="num">USD</th><th class="num">turns</th><th class="num">lines</th><th class="num">sec</th></tr></thead>
+  <tbody>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">0.134</td><td class="num">2</td><td class="num win">71</td><td class="num win">12</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">0.191</td><td class="num">3</td><td class="num">78</td><td class="num">161</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num lose">4/5</td><td class="num">0.147</td><td class="num">3</td><td class="num">159</td><td class="num">151</td></tr>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num win">0.127</td><td class="num">3</td><td class="num">158</td><td class="num">146</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">0.197</td><td class="num">6</td><td class="num">158</td><td class="num">221</td></tr>
+  </tbody>
+</table></div>
+<p>24 of 25 sites scored 7/7, so <strong>function did not separate the configs</strong> — this task is easy. What separated them was volume, speed, and two failure modes:</p>
+<div class="finding">
+<h4>superpowers produced nothing in one run</h4>
+<p>It wrote a design, then ended with "Sound good to proceed?" — asking permission in a non-interactive run whose prompt said not to ask. Zero files, 1/7; one run in five. The same failure killed the very first benchmark attempt, so it is reproducible and specific to superpowers on generation tasks, not a fluke.</p>
+</div>
+<div class="finding">
+<h4>The verification hook has no cost ceiling</h4>
+<p>One <code>hooks</code> run cost <strong>$0.86</strong> against a $0.197 median — 29 turns, 1.27M input, where its other four runs took 4–10. The hook drove it to build its own headless-Chrome harness and drive the page over CDP before claiming success. That is the hook working exactly as written; the tail risk is that "prove it" has no upper bound.</p>
+</div>
+<p><strong>The volume difference is mostly CSS, not logic.</strong> Comparing two samples directly: the JS is 47 vs 71 lines, the CSS is 6 vs 72. <code>bare</code> spent its extra output on a dark theme, a card, hover states, colour transitions, tabular numerals — and a viewport meta tag. The caveman/ponytail site is functionally identical and visually plain, and it omits <code>&lt;meta name="viewport"&gt;</code>, which is a real mobile defect rather than a matter of taste. The grader measures behaviour, not appearance, so "55% less code at identical quality" is only true for the behaviour it checks.</p>
+</div>
+
+<div data-lang="tr">
+<p class="lede">25 koşu, 4,71 dolar. <em>Kurulmuş bir ürünü</em> çalıştırarak notlandıran ilk tur: doğrudan <code>index.html</code>'den açılması gereken bir pomodoro zamanlayıcı sitesi. Her satır 5 örneğin medyanı.</p>
+<p>Notlandırma, bağımlılıksız biçimde CDP üzerinden gerçek Chrome ile. Yedi kontrol — açılıyor, başlangıç 25:00, geri sayıyor, duraklatma tutuyor, sıfırlama geri getiriyor, otomatik mola (sanal zaman 1,7 milyon ms ileri alınıyor) ve ağ referansı yok. Notlandırıcı önce üç referans siteye karşı doğrulandı: doğru olan 7/7 alıyor, duraklatması bozuk varyant yalnızca <code>pause_holds</code>'ta, molası olmayan varyant yalnızca <code>auto_break</code>'te kalıyor.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">7/7</th><th class="num">USD</th><th class="num">tur</th><th class="num">satır</th><th class="num">sn</th></tr></thead>
+  <tbody>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">0,134</td><td class="num">2</td><td class="num win">71</td><td class="num win">12</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">0,191</td><td class="num">3</td><td class="num">78</td><td class="num">161</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num lose">4/5</td><td class="num">0,147</td><td class="num">3</td><td class="num">159</td><td class="num">151</td></tr>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num win">0,127</td><td class="num">3</td><td class="num">158</td><td class="num">146</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">0,197</td><td class="num">6</td><td class="num">158</td><td class="num">221</td></tr>
+  </tbody>
+</table></div>
+<p>25 sitenin 24'ü 7/7 aldı, yani <strong>işlev config'leri ayırmadı</strong> — bu görev kolay. Ayıran şey hacim, hız ve iki başarısızlık biçimi oldu:</p>
+<div class="finding">
+<h4>superpowers bir koşuda hiçbir şey üretmedi</h4>
+<p>Bir tasarım yazdı, sonra "Sound good to proceed?" diye bitirdi — promptu soru sormayı yasaklayan, etkileşimsiz bir koşuda izin istedi. Sıfır dosya, 1/7; beş koşunun birinde. Aynı başarısızlık en ilk benchmark denemesini de öldürmüştü, yani tekrarlanabilir ve üretim görevlerinde superpowers'a özgü, tesadüf değil.</p>
+</div>
+<div class="finding">
+<h4>Verification hook'unun maliyet tavanı yok</h4>
+<p>Bir <code>hooks</code> koşusu, 0,197 dolarlık medyana karşı <strong>0,86 dolar</strong> tuttu — 29 tur, 1,27 milyon input; aynı config'in diğer dört koşusu 4–10 tur. Hook onu, başarı iddiasında bulunmadan önce kendi headless-Chrome düzeneğini kurup sayfayı CDP üzerinden sürmeye itti. Bu, hook'un tam olarak yazıldığı gibi çalışması; kuyruk riski "kanıtla" talimatının üst sınırının olmaması.</p>
+</div>
+<p><strong>Hacim farkı çoğunlukla CSS, mantık değil.</strong> İki örneği doğrudan karşılaştırınca: JS 47'ye karşı 71 satır, CSS 6'ya karşı 72. <code>bare</code> fazladan çıktısını koyu temaya, bir karta, hover durumlarına, renk geçişlerine, tabular rakamlara — ve bir viewport meta etiketine harcadı. caveman/ponytail sitesi işlevsel olarak birebir aynı ve görsel olarak sade, ve <code>&lt;meta name="viewport"&gt;</code> etiketini atlıyor; bu zevk meselesi değil, gerçek bir mobil kusuru. Notlandırıcı görünümü değil davranışı ölçüyor, yani "aynı kalitede %55 daha az kod" ifadesi yalnızca ölçtüğü davranış için doğru.</p>
+</div>
+
+<!-- ============ ROUND 5 ============ -->
+<h2 id="r5"><span data-lang="en">Round 5 · Hard bug fix #2 — the round built to kill a caveat</span><span data-lang="tr">Tur 5 · Zor bug fix #2 — bir kısıtı öldürmek için kurulan tur</span></h2>
+
+<div data-lang="en">
+<p class="lede">Round 3 rested on a single trap task. That is thin evidence for the sharpest claim in this report, so a second, unrelated trap was written to see whether the split reproduces. 5 configs × 5 samples, Sonnet, $4.37.</p>
+<h3>The trap</h3>
+<p>A <code>Paginator(total, per_page)</code> whose docstring states the contract and whose code breaks it in two places: <code>page_count</code> rounds down so the last partial page disappears, and <code>slice_for</code> clamps an out-of-range page to the last one instead of raising. The visible suite catches the first, never touches the second — the same shape as round 3, on different subject matter.</p>
+<p><strong>It was proven discriminating in the lab before a single dollar was spent:</strong> fixing only bug A leaves the visible suite green and the hidden suite red. The task can tell a real fix from a false "done".</p>
+<h3>Results</h3>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">correct</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">turns</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num">159,713</td><td class="num">943</td><td class="num win">0.130</td><td class="num">6</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">200,624</td><td class="num">1,112</td><td class="num">0.154</td><td class="num">7</td></tr>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">155,033</td><td class="num">896</td><td class="num">0.163</td><td class="num">5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">5/5</td><td class="num">223,841</td><td class="num">1,445</td><td class="num">0.193</td><td class="num">8</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">271,531</td><td class="num">1,279</td><td class="num lose">0.251</td><td class="num">8</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>The caveat did not close — it was confirmed</h4>
+<p><strong>All five configs went 25/25.</strong> A task provably able to separate a real fix from a false one separated nothing here, <code>modes</code> included — the same <code>modes</code> that scored 0/5 in round 3. So the quality finding belongs to <em>that one task</em>, not to "hard tasks" as a class. The cost ordering, meanwhile, reproduced exactly: bare cheapest, full +92%.</p>
+</div>
+<h3>The same task on Opus</h3>
+<p>25 more runs, $6.89. Quality again separates nothing — 25/25 — but the <em>cost</em> ordering does something it does nowhere else in this project:</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">correct</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">turns</th><th class="num">index</th></tr></thead>
+  <tbody>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">111,011</td><td class="num">1,059</td><td class="num win">0.233</td><td class="num win">4</td><td class="num win">92</td></tr>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num">158,700</td><td class="num">2,353</td><td class="num">0.252</td><td class="num">9</td><td class="num">100</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">183,590</td><td class="num">2,638</td><td class="num">0.272</td><td class="num">9</td><td class="num">108</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">153,985</td><td class="num">1,174</td><td class="num">0.287</td><td class="num">5</td><td class="num">114</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">5/5</td><td class="num">189,765</td><td class="num">3,362</td><td class="num lose">0.355</td><td class="num">8</td><td class="num lose">141</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>On Opus the terse pair is the cheapest way to fix this bug</h4>
+<p><code>modes</code> lands at <strong>92</strong> — below <code>bare</code> — and <code>full</code> at 114 instead of Sonnet's 192. The mechanism is turns, not tokens: <code>modes</code> closes the task in <strong>4 turns</strong> and <code>full</code> in 5, where <code>bare</code> and <code>hooks</code> take 9. On Sonnet the same configs needed 5–8 turns and the ruleset never paid for itself. It is the one place in 45 tool-work cells besides the Opus website round where a configuration beats <code>bare</code>, and it says the terseness tax depends on the model as much as on the task.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Tur 3 tek bir tuzak göreve dayanıyordu. Bu, rapordaki en keskin iddia için ince bir kanıt; o yüzden ayrımın tekrarlanıp tekrarlanmadığını görmek için ikinci ve ilgisiz bir tuzak yazıldı. 5 config × 5 örnek, Sonnet, 4,37 dolar.</p>
+<h3>Tuzak</h3>
+<p>Sözleşmesi docstring'de yazılı bir <code>Paginator(total, per_page)</code>, kodu o sözleşmeyi iki yerde çiğniyor: <code>page_count</code> aşağı yuvarlıyor, yani son yarım sayfa kayboluyor; <code>slice_for</code> aralık dışı sayfayı hata vermek yerine sonuncuya kırpıyor. Görünen suite ilkini yakalıyor, ikincisine hiç dokunmuyor — tur 3'ün aynı biçimi, farklı konuda.</p>
+<p><strong>Tek kuruş harcanmadan önce ayırt edici olduğu yerelde kanıtlandı:</strong> sadece A hatasını düzeltmek görünen suite'i yeşil, gizli suite'i kırmızı bırakıyor. Görev, gerçek düzeltmeyi yalancı "bitti"den ayırabiliyor.</p>
+<h3>Sonuçlar</h3>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">doğru</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">tur</th></tr></thead>
+  <tbody>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num">159.713</td><td class="num">943</td><td class="num win">0,130</td><td class="num">6</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">200.624</td><td class="num">1.112</td><td class="num">0,154</td><td class="num">7</td></tr>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">155.033</td><td class="num">896</td><td class="num">0,163</td><td class="num">5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">5/5</td><td class="num">223.841</td><td class="num">1.445</td><td class="num">0,193</td><td class="num">8</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">271.531</td><td class="num">1.279</td><td class="num lose">0,251</td><td class="num">8</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Kısıt kapanmadı — doğrulandı</h4>
+<p><strong>Beş config de 25/25 yaptı.</strong> Gerçek düzeltmeyi yalancısından ayırabildiği kanıtlanmış bir görev burada hiçbir şeyi ayırmadı; <code>modes</code> dahil — tur 3'te 0/5 alan aynı <code>modes</code>. Yani kalite bulgusu <em>o tek göreve</em> ait, bir sınıf olarak "zor görevlere" değil. Maliyet sıralaması ise birebir tekrarlandı: en ucuz bare, full +%92.</p>
+</div>
+<h3>Aynı görev Opus'ta</h3>
+<p>25 koşu daha, 6,89 dolar. Kalite yine hiçbir şeyi ayırmıyor — 25/25 — ama <em>maliyet</em> sıralaması bu projede başka hiçbir yerde yapmadığı şeyi yapıyor:</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">doğru</th><th class="num">input</th><th class="num">output</th><th class="num">USD</th><th class="num">tur</th><th class="num">endeks</th></tr></thead>
+  <tbody>
+    <tr><td><code>modes</code></td><td class="num">5/5</td><td class="num">111.011</td><td class="num">1.059</td><td class="num win">0,233</td><td class="num win">4</td><td class="num win">92</td></tr>
+    <tr><td><code>bare</code></td><td class="num">5/5</td><td class="num">158.700</td><td class="num">2.353</td><td class="num">0,252</td><td class="num">9</td><td class="num">100</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">5/5</td><td class="num">183.590</td><td class="num">2.638</td><td class="num">0,272</td><td class="num">9</td><td class="num">108</td></tr>
+    <tr><td><code>full</code></td><td class="num">5/5</td><td class="num">153.985</td><td class="num">1.174</td><td class="num">0,287</td><td class="num">5</td><td class="num">114</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">5/5</td><td class="num">189.765</td><td class="num">3.362</td><td class="num lose">0,355</td><td class="num">8</td><td class="num lose">141</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Opus'ta bu bug'ı en ucuza kısa ikili düzeltiyor</h4>
+<p><code>modes</code> <strong>92</strong>'de kalıyor — <code>bare</code>'in altında — ve <code>full</code> Sonnet'teki 192 yerine 114. Mekanizma token değil, tur sayısı: <code>modes</code> görevi <strong>4 turda</strong>, <code>full</code> 5 turda kapatıyor; <code>bare</code> ile <code>hooks</code> 9 tur harcıyor. Sonnet'te aynı configler 5–8 tur sürüyordu ve kural seti kendini hiç amorti etmiyordu. Bu, 45 tool-iş hücresinde Opus web turu dışında bir yapılandırmanın <code>bare</code>'i yendiği tek yer — ve kısalık vergisinin göreve olduğu kadar modele de bağlı olduğunu söylüyor.</p>
+</div>
+</div>
+
+<!-- ============ MODEL COMPARISON ============ -->
+<h2 id="models"><span data-lang="en">Sonnet vs Opus — the same configs on a stronger model</span><span data-lang="tr">Sonnet ve Opus — aynı configler, daha güçlü modelde</span></h2>
+
+<div data-lang="en">
+<p class="lede">Every round above was first measured on Sonnet. Repeating them on Opus asks a different question: are these findings about the configurations, or about the model that was carrying them?</p>
+<p>Cost index, <code>bare</code> = 100, medians. Two tables, one per model, same task columns:</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">prose</th><th class="num">easy tool</th><th class="num">hard tool</th><th class="num">hard #2</th><th class="num">web</th><th>quality, hard round</th></tr></thead>
+  <tbody>
+    <tr><td colspan="7" class="sub-head"><strong>Sonnet</strong> — prose/easy/web n=5, both hard rounds n=5</td></tr>
+    <tr><td><code>bare</code></td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">1/5</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">106</td><td class="num">110</td><td class="num">107</td><td class="num">118</td><td class="num">155</td><td class="num">2/5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">121</td><td class="num">153</td><td class="num">156</td><td class="num">148</td><td class="num">115</td><td class="num win">3/5</td></tr>
+    <tr><td><code>modes</code></td><td class="num win">55</td><td class="num">145</td><td class="num">130</td><td class="num">125</td><td class="num">105</td><td class="num lose">0/5</td></tr>
+    <tr><td><code>full</code></td><td class="num">64</td><td class="num lose">197</td><td class="num lose">182</td><td class="num lose">192</td><td class="num">150</td><td class="num">2/5</td></tr>
+    <tr><td colspan="7" class="sub-head"><strong>Opus</strong> — prose/easy/web n=3, both hard rounds n=5</td></tr>
+    <tr><td><code>bare</code></td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num win">5/5</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">102</td><td class="num">112</td><td class="num">107</td><td class="num">108</td><td class="num lose">209</td><td class="num win">5/5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">120</td><td class="num">144</td><td class="num">175</td><td class="num">141</td><td class="num">161</td><td class="num win">5/5</td></tr>
+    <tr><td><code>modes</code></td><td class="num win">56</td><td class="num">132</td><td class="num">118</td><td class="num win">92</td><td class="num win">84</td><td class="num win">5/5</td></tr>
+    <tr><td><code>full</code></td><td class="num">76</td><td class="num">155</td><td class="num">152</td><td class="num">114</td><td class="num">142</td><td class="num win">5/5</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Cost transfers between models. Quality does not.</h4>
+<p>The cost pattern is mostly the same shape twice: the terse pair wins prose on both models (−45% / −44%), and on tool work almost everything still loses to <code>bare</code>. The one place the ordering genuinely moves is the second hard round, where Opus lets <code>modes</code> finish in 4 turns against bare's 9 and it comes out <em>cheapest</em> (92) — the Sonnet run of the same task had it at 125. <strong>The quality column, by contrast, collapses completely.</strong> On Sonnet the hard round spreads from 0/5 to 3/5; on Opus all five configs are 5/5, so nothing separates them. The sentence "caveman + ponytail hurt correctness" is a statement about Sonnet on one task, not a property of the plugins.</p>
+</div>
+<p>Two Opus-only oddities are worth naming. <code>hooks</code> is the most expensive cell in the entire matrix on the website round — <strong>209</strong> against bare — because the verification hook drives Opus into building its own browser harness. And <code>modes</code> is the only configuration anywhere in this project that comes out <em>cheaper</em> than bare on tool work, in both Opus cells where it does so (web 84, hard #2 92) for the same reason: fewer turns, not shorter prose.</p>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Yukarıdaki turların hepsi önce Sonnet'te ölçüldü. Aynılarını Opus'ta tekrarlamak başka bir soru soruyor: bu bulgular yapılandırmalar hakkında mı, yoksa onları taşıyan model hakkında mı?</p>
+<p>Maliyet endeksi, <code>bare</code> = 100, medyanlar. Aynı görev sütunlarıyla iki tablo:</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">metin</th><th class="num">kolay tool</th><th class="num">zor tool</th><th class="num">zor #2</th><th class="num">web</th><th>zor turda kalite</th></tr></thead>
+  <tbody>
+    <tr><td colspan="7" class="sub-head"><strong>Sonnet</strong> — metin/kolay/web n=5, iki zor tur da n=5</td></tr>
+    <tr><td><code>bare</code></td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">1/5</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">106</td><td class="num">110</td><td class="num">107</td><td class="num">118</td><td class="num">155</td><td class="num">2/5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">121</td><td class="num">153</td><td class="num">156</td><td class="num">148</td><td class="num">115</td><td class="num win">3/5</td></tr>
+    <tr><td><code>modes</code></td><td class="num win">55</td><td class="num">145</td><td class="num">130</td><td class="num">125</td><td class="num">105</td><td class="num lose">0/5</td></tr>
+    <tr><td><code>full</code></td><td class="num">64</td><td class="num lose">197</td><td class="num lose">182</td><td class="num lose">192</td><td class="num">150</td><td class="num">2/5</td></tr>
+    <tr><td colspan="7" class="sub-head"><strong>Opus</strong> — metin/kolay/web n=3, iki zor tur da n=5</td></tr>
+    <tr><td><code>bare</code></td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num win">5/5</td></tr>
+    <tr><td><code>hooks</code></td><td class="num">102</td><td class="num">112</td><td class="num">107</td><td class="num">108</td><td class="num lose">209</td><td class="num win">5/5</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num">120</td><td class="num">144</td><td class="num">175</td><td class="num">141</td><td class="num">161</td><td class="num win">5/5</td></tr>
+    <tr><td><code>modes</code></td><td class="num win">56</td><td class="num">132</td><td class="num">118</td><td class="num win">92</td><td class="num win">84</td><td class="num win">5/5</td></tr>
+    <tr><td><code>full</code></td><td class="num">76</td><td class="num">155</td><td class="num">152</td><td class="num">114</td><td class="num">142</td><td class="num win">5/5</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Maliyet modeller arasında taşınıyor. Kalite taşınmıyor.</h4>
+<p>Maliyet deseni büyük ölçüde iki kez aynı biçimde çıkıyor: kısa ikili metin turunu iki modelde de kazanıyor (−%45 / −%44), tool işinde neredeyse her şey yine <code>bare</code>'e kaybediyor. Sıralamanın gerçekten oynadığı tek yer ikinci zor tur: Opus'ta <code>modes</code> görevi bare'in 9 turuna karşı 4 turda bitiriyor ve <em>en ucuz</em> çıkıyor (92) — aynı görevin Sonnet koşusunda 125'ti. <strong>Kalite sütunu ise tamamen çöküyor.</strong> Sonnet'te zor tur 0/5 ile 3/5 arasında dağılıyor; Opus'ta beş config de 5/5, yani hiçbir şey ayrışmıyor. "caveman + ponytail doğruluğu bozuyor" cümlesi, tek bir görevde Sonnet hakkında bir tespit; plugin'lerin bir özelliği değil.</p>
+</div>
+<p>Opus'a özgü iki tuhaflığı ayrıca söylemek gerek. Web turunda <code>hooks</code>, tüm matrisin en pahalı hücresi — bare'e karşı <strong>209</strong> — çünkü verification hook'u Opus'u kendi tarayıcı düzeneğini kurmaya itiyor. Ve <code>modes</code>, bu projede tool işinde bare'den <em>ucuz</em> çıkan tek yapılandırma; bunu yaptığı iki Opus hücresinde de (web 84, zor #2 92) sebep aynı: daha kısa metin değil, daha az tur.</p>
+</div>
+
+<!-- ============ PROJECT ROUND ============ -->
+<h2 id="project"><span data-lang="en">The real project round — five configs on a live site</span><span data-lang="tr">Gerçek proje turu — canlı bir sitede beş config</span></h2>
+
+<div data-lang="en">
+<p class="lede">Every round above is a toy: a fresh directory or a single file. This one is not. Each config got its own copy of a live, seven-language, ~6,900-line production site, had to understand it <strong>from code alone</strong>, then pick and ship one improvement of its own choosing and write up the decision. Opus, 15 runs, $78.28.</p>
+<p>Reading any Markdown was forbidden — no <code>README.md</code>, no handover notes — and that rule was itself graded. All 15 runs obeyed it.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">median USD</th><th class="num">lowest</th><th class="num">highest</th><th class="num">median turns</th><th class="num">median min</th><th>build</th></tr></thead>
+  <tbody>
+    <tr><td><code>hooks</code></td><td class="num win">4.15</td><td class="num">2.78</td><td class="num">9.39</td><td class="num">40</td><td class="num">34.8</td><td class="num">3/3</td></tr>
+    <tr><td><code>full</code></td><td class="num">4.43</td><td class="num">2.90</td><td class="num">5.73</td><td class="num">52</td><td class="num">35.3</td><td class="num">3/3</td></tr>
+    <tr><td><code>modes</code></td><td class="num">4.52</td><td class="num">3.59</td><td class="num">5.91</td><td class="num">48</td><td class="num">41.0</td><td class="num">3/3</td></tr>
+    <tr><td><code>bare</code></td><td class="num">4.82</td><td class="num">3.72</td><td class="num">5.99</td><td class="num">51</td><td class="num">28.9</td><td class="num">3/3</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num lose">6.99</td><td class="num">5.72</td><td class="num">7.64</td><td class="num">71</td><td class="num">48.0</td><td class="num lose">2/3</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>On real work, four of five configurations are indistinguishable</h4>
+<p>The medians of <code>hooks</code>, <code>full</code>, <code>modes</code> and <code>bare</code> span 16% — while <em>one config's own runs</em> span far more than that: <code>hooks</code> ran from $2.78 to $9.39, <code>full</code> from $2.90 to $5.73. Within-config variance swamps between-config difference, so ranking those four is reading noise. Only <code>superpowers</code> separates, and upward: a $6.99 median whose best run still costs more than everyone else's typical one, and 71 turns to get there.</p>
+</div>
+<div class="note">
+<p><strong>A published claim this round retracted.</strong> The first pass ran one sample per config and reported "<code>full</code> is cheapest at $2.90, 60% of bare" — with an n=1 warning attached. Three samples later that warning turned out to be the accurate part: <code>full</code> $4.43 against <code>bare</code> $4.82 is a coin toss. The single quality event is <code>superpowers</code>' third run, which edited source without rebuilding: build check failed, 7 generated files left stale.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Yukarıdaki turların hepsi oyuncak: boş bir dizin ya da tek bir dosya. Bu tur değil. Her config, canlı, 7 dilli, ~6.900 satırlık bir üretim sitesinin kendi kopyasını aldı, sistemi <strong>yalnızca koddan</strong> anlamak zorundaydı, sonra kendi seçtiği tek bir iyileştirmeyi uygulayıp kararını yazdı. Opus, 15 koşu, 78,28 dolar.</p>
+<p>Markdown okumak yasaktı — <code>README.md</code> yok, devir notu yok — ve bu kuralın kendisi de notlandı. 15 koşunun hepsi kurala uydu.</p>
+<div class="tw"><table>
+  <thead><tr><th>config</th><th class="num">medyan USD</th><th class="num">en düşük</th><th class="num">en yüksek</th><th class="num">medyan tur</th><th class="num">medyan dk</th><th>build</th></tr></thead>
+  <tbody>
+    <tr><td><code>hooks</code></td><td class="num win">4,15</td><td class="num">2,78</td><td class="num">9,39</td><td class="num">40</td><td class="num">34,8</td><td class="num">3/3</td></tr>
+    <tr><td><code>full</code></td><td class="num">4,43</td><td class="num">2,90</td><td class="num">5,73</td><td class="num">52</td><td class="num">35,3</td><td class="num">3/3</td></tr>
+    <tr><td><code>modes</code></td><td class="num">4,52</td><td class="num">3,59</td><td class="num">5,91</td><td class="num">48</td><td class="num">41,0</td><td class="num">3/3</td></tr>
+    <tr><td><code>bare</code></td><td class="num">4,82</td><td class="num">3,72</td><td class="num">5,99</td><td class="num">51</td><td class="num">28,9</td><td class="num">3/3</td></tr>
+    <tr><td><code>superpowers</code></td><td class="num lose">6,99</td><td class="num">5,72</td><td class="num">7,64</td><td class="num">71</td><td class="num">48,0</td><td class="num lose">2/3</td></tr>
+  </tbody>
+</table></div>
+<div class="finding">
+<h4>Gerçek işte beş yapılandırmanın dördü ayırt edilemiyor</h4>
+<p><code>hooks</code>, <code>full</code>, <code>modes</code> ve <code>bare</code> medyanları %16'lık bir bantta — oysa <em>tek bir config'in kendi koşuları</em> bundan çok daha geniş bir aralıkta: <code>hooks</code> 2,78 dolardan 9,39 dolara, <code>full</code> 2,90'dan 5,73'e. Config içi değişkenlik configler arası farkı yutuyor; yani o dördünü sıralamak gürültü okumak demek. Ayrılan tek config <code>superpowers</code>, o da yukarı yönde: 6,99 dolar medyan, en iyi koşusu bile diğerlerinin tipik koşusundan pahalı ve oraya 71 turda varıyor.</p>
+</div>
+<div class="note">
+<p><strong>Bu turun geri çektiği bir iddia.</strong> İlk geçiş config başına tek örnek koşturdu ve "<code>full</code> en ucuzu, 2,90 dolar, bare'in %60'ı" dedi — yanına n=1 uyarısı iliştirilmişti. Üç örnek sonra doğru çıkan kısım o uyarı oldu: <code>full</code> 4,43 dolara karşı <code>bare</code> 4,82 dolar, yazı tura. Tek kalite olayı <code>superpowers</code>'ın üçüncü koşusu: kaynağı düzenledi ama yeniden build etmedi, build kontrolü düştü ve 7 üretilmiş dosya bayat kaldı.</p>
+</div>
+</div>
+
+<!-- TIMELINE:START -->
+<h2 id="timeline"><span data-lang="en">How it unfolded — fifteen days</span><span data-lang="tr">Nasıl ilerledi — on beş gün</span></h2>
+
+<div data-lang="en">
+<p class="lede">The project did not start as a benchmark. It started as two broken hooks, and every round after that exists because a previous answer turned out to be unsafe to believe.</p>
+
+<ol class="tl">
+  <li class="tl-key">
+    <time>2026-08-16 · the accident</time>
+    <h4>Two outages, and a question nobody could answer</h4>
+    <p>Skills stopped auto-loading. Two separate causes: every <code>SessionStart</code> hook shares one timeout window, so one slow hook cancels the whole batch — and <code>enabledPlugins</code> had drifted out of sync with <code>installed_plugins.json</code>. Both were fixed in an afternoon.</p>
+    <p>The uncomfortable part was the question that came out of it: eleven plugins were enabled, and nobody could say what any of them cost or whether it helped. That question is the whole project.</p>
+  </li>
+  <li>
+    <time>2026-08-17 · the audit</time>
+    <h4>Eleven plugins cut to three, then a harness to check the cut</h4>
+    <p>The token audit came first — measure what each plugin injects before you type anything — and it removed eight of eleven. But an audit only measures cost, never benefit, so the harness followed: five configurations, identical tasks, identical prompts, identical repository copies, and grading the agent cannot reach — a hidden test suite copied in after it exits.</p>
+  </li>
+  <li>
+    <time>2026-08-18 · the first answer</time>
+    <h4>A real project, one run per config — and a headline that did not survive</h4>
+    <p>Toy tasks answer toy questions, so each config was given a copy of a live seven-language site and told to improve it. The first result read <strong>"</strong><code>full</code><strong> is cheapest at $2.90, 60% of bare"</strong>. It was written down with an n=1 warning attached, and that warning turned out to be the only durable part of it.</p>
+  </li>
+  <li>
+    <time>2026-08-19 → 08-24 · the caveats fight back</time>
+    <h4>A second trap task, a second model, and n=3</h4>
+    <p>Quality had separated in exactly one round, so a second trap task (Paginator) was written specifically to reproduce that split. It failed to: every config passed. Then every round was re-run on Opus, where the quality difference vanished entirely and the cost ordering reversed in two cells.</p>
+    <p>The project round went to three samples per config. The $2.90 headline died there: four of five configs landed inside a 16% band while a single config's own runs ranged from $2.78 to $9.39.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-25 · the design</time>
+    <h4>Instead of picking a config, build one from the mechanisms</h4>
+    <p>The matrix had exposed three: prose savings come from shorter output, tool-work losses come from a fixed ruleset re-read every turn, and correctness tracks output volume during a contract audit. Lea was written against those three and taken from v1 to v7 in a day, re-measuring every round after every change — which is how the discovery landed that <em>where a sentence sits</em> in the ruleset moved the numbers more than the sentence did, four separate times.</p>
+    <p>The same day produced the rule that governs everything since: <strong>never compare a new run against a stored dollar figure.</strong> Re-running an unchanged baseline gave a different implied price than August's — the regime had moved underneath the whole table.</p>
+  </li>
+  <li>
+    <time>2026-08-26 · live, and a warning</time>
+    <h4>Lea goes live; the headline result fails to replicate</h4>
+    <p>Opus confirmed the mechanism (−42% prose, −53% on the hard fix at identical correctness), the live config was switched over, and a v8 candidate was drafted by <em>reading</em> the one failing run instead of guessing at it.</p>
+    <p>Then the same unchanged config was re-measured on the hard round and scored <strong>1/5 where it had scored 4/5 the day before</strong>. Cost barely moved; output volume did. The August lesson about prices turned out to apply to correctness too.</p>
+  </li>
+  <li>
+    <time>2026-08-27 → 08-29 · three days of nothing</time>
+    <h4>A usage limit with no reset time, and a blind five-hour sleep</h4>
+    <p>The runner hit a 429 whose message carried no parseable reset time and fell back to sleeping five hours — four times over, against a quota that came back inside the hour. Then the machine went down. The queue did not move for three days.</p>
+    <p>The fix is in the harness now: probe on a short ladder instead of guessing, because a failed probe costs about fifteen seconds and no tokens, which is strictly cheaper than one long guess.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-29 · the decisive round</time>
+    <h4>v7 against v8, twenty samples each, same day</h4>
+    <p>At n=5 the two versions had looked like a tie (1/5 against 3/5, p=0.52). At n=20 per arm they did not: <strong>4/20 against 13/20</strong>, Fisher p=0.010, with v8 also 7% cheaper and 36% faster. One paragraph, rewritten from permission into obligation.</p>
+    <p>The same day turned up a row that would have quietly poisoned it: a cell logging one turn and 29 output tokens while passing the hidden suite 8/8. Its transcript held fifteen turns — the agent loop had restarted mid-cell and the summary JSON described only the last leg. It was caught by arithmetic: a row's cost and its own token counts must agree.</p>
+  </li>
+  <li>
+    <time>2026-08-30 · closing it out</time>
+    <h4>The last unknown, and the switch</h4>
+    <p>The real-project round finally got a same-day rival, which contradicted the one fear left about Lea: its median is <strong>$3.735</strong> against <code>full</code>'s <strong>$5.560</strong>. The same day measured what that round can and cannot say — <strong>n=37 per arm</strong> to resolve a 30% difference, so none of its rankings were ever real.</p>
+    <p>v8 was checked for a prose tax before being recommended (there is none), every report was rewritten, and the live hook was switched to v8. Measurement closed at 232 cells, 0 failed, 286 graded runs.</p>
+  </li>
+</ol>
+
+<div class="note plain">
+<p><strong>The shape of it.</strong> Five of the nine entries above are a previous conclusion being withdrawn: the $2.90 headline, the quality ranking, the 4/5 hard-round result, the trap task that was supposed to settle things, and every ordering the project round produced. What survived is not the numbers but the rules that killed them — measure the baseline the same day, distrust a quality figure from a single day, and make a row prove its own cost.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Proje bir benchmark olarak başlamadı; iki bozuk hook olarak başladı. Sonraki her tur da, bir önceki cevabın güvenilmez çıkması yüzünden var.</p>
+
+<ol class="tl">
+  <li class="tl-key">
+    <time>2026-08-16 · kaza</time>
+    <h4>İki arıza ve kimsenin cevaplayamadığı bir soru</h4>
+    <p>Skill'ler kendiliğinden yüklenmez oldu. İki ayrı sebep: bütün <code>SessionStart</code> hook'ları tek bir zaman aşımı penceresini paylaşıyor, yani yavaş bir hook bütün grubu iptal ediyor — ve <code>enabledPlugins</code> ile <code>installed_plugins.json</code> birbirinden kaymış. İkisi de bir öğleden sonrada düzeldi.</p>
+    <p>Rahatsız edici kısım ardından gelen soruydu: on bir plugin açıktı ve hiçbirinin ne kadara mal olduğunu ya da işe yarayıp yaramadığını kimse söyleyemiyordu. Bütün proje o soru.</p>
+  </li>
+  <li>
+    <time>2026-08-17 · denetim</time>
+    <h4>On bir plugin üçe indi, sonra bu kesintiyi sınayacak harness</h4>
+    <p>Önce token denetimi geldi — sen bir şey yazmadan her plugin'in ne yüklediğini ölç — ve on birin sekizini eledi. Ama denetim yalnızca maliyeti ölçer, faydayı asla; o yüzden harness onu izledi: beş yapılandırma, aynı görevler, aynı prompt'lar, aynı repo kopyaları ve ajanın erişemeyeceği bir notlama — o çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i.</p>
+  </li>
+  <li>
+    <time>2026-08-18 · ilk cevap</time>
+    <h4>Gerçek bir proje, config başına tek koşu — ve yaşamayan bir başlık</h4>
+    <p>Oyuncak görevler oyuncak soruları cevaplar; o yüzden her config'e canlı, yedi dilli bir sitenin kopyası verilip "iyileştir" dendi. İlk sonuç şuydu: <strong>"full en ucuzu, $2.90, bare'in %60'ı"</strong>. Yanına bir n=1 uyarısı iliştirilmişti ve o uyarı, cümlenin kalıcı olan tek parçası çıktı.</p>
+  </li>
+  <li>
+    <time>2026-08-19 → 08-24 · kısıtlar geri saldırıyor</time>
+    <h4>İkinci bir tuzak görev, ikinci bir model ve n=3</h4>
+    <p>Kalite tam olarak bir turda ayrışmıştı; o ayrımı tekrarlamak için özel bir ikinci tuzak görev (Paginator) yazıldı. Tekrarlayamadı: bütün configler geçti. Ardından her tur Opus'ta yeniden koşturuldu — kalite farkı tamamen kayboldu, maliyet sıralaması iki hücrede tersine döndü.</p>
+    <p>Proje turu config başına üç örneğe çıktı ve $2.90 başlığı orada öldü: beş config'in dördü %16'lık bir bantta toplanırken tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyordu.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-25 · tasarım</time>
+    <h4>Config seçmek yerine, mekanizmalardan bir tane kurmak</h4>
+    <p>Matris üç mekanizma açığa çıkarmıştı: metin tasarrufu kısalan çıktıdan gelir, araçlı iş kaybı her turda yeniden okunan sabit kural setinden gelir, doğruluk ise sözleşme denetimi sırasındaki çıktı hacmini izler. Lea bu üçüne karşı yazıldı ve bir günde v1'den v7'ye getirildi; her değişiklikten sonra her tur yeniden ölçüldü. Bir cümlenin <em>nerede durduğunun</em> cümlenin kendisinden daha çok fark yarattığı da böyle görüldü — dört ayrı kez.</p>
+    <p>Aynı gün bugüne kadar her şeyi yöneten kural doğdu: <strong>yeni bir koşuyu asla kayıtlı bir dolar rakamıyla karşılaştırma.</strong> Değiştirilmemiş bir baseline yeniden koşturulunca ağustostakinden farklı bir örtük fiyat verdi — rejim, tablonun altından kaymıştı.</p>
+  </li>
+  <li>
+    <time>2026-08-26 · canlıya geçiş ve bir uyarı</time>
+    <h4>Lea canlıya alınıyor; başlık sonuç tekrarlanmıyor</h4>
+    <p>Opus mekanizmayı doğruladı (metinde −%42, zor fix'te aynı doğrulukla −%53), canlı yapılandırma Lea'ya geçirildi ve tek başarısız koşu <em>okunarak</em> — tahmin edilerek değil — bir v8 adayı yazıldı.</p>
+    <p>Sonra değiştirilmemiş aynı config zor turda yeniden ölçüldü ve <strong>bir gün önce 4/5 aldığı yerde 1/5</strong> aldı. Maliyet neredeyse hiç oynamadı; oynayan çıktı hacmiydi. Fiyatlar için öğrenilen ders, doğruluk için de geçerliymiş.</p>
+  </li>
+  <li>
+    <time>2026-08-27 → 08-29 · üç gün hiçbir şey</time>
+    <h4>Reset saati olmayan bir kullanım limiti ve kör beş saatlik uyku</h4>
+    <p>Runner, mesajında ayrıştırılabilir bir reset saati taşımayan bir 429'a çarptı ve beş saat uyumaya geçti — üstelik dört kez, bir saat içinde geri gelen bir kota karşısında. Ardından makine kapandı. Kuyruk üç gün kımıldamadı.</p>
+    <p>Düzeltme artık harness'in içinde: tahmin etmek yerine kısa bir merdivende yokla; başarısız bir yoklama on beş saniye ve sıfır token, bu da tek bir uzun tahminden kesinlikle ucuz.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-29 · belirleyici tur</time>
+    <h4>v7'ye karşı v8, kol başına yirmi örnek, aynı gün</h4>
+    <p>n=5'te iki sürüm berabere görünüyordu (1/5'e karşı 3/5, p=0,52). Kol başına n=20'de görünmediler: <strong>4/20'ye karşı 13/20</strong>, Fisher p=0,010; üstelik v8 %7 ucuz ve %36 hızlı. Tek bir paragraf, izinden yükümlülüğe yeniden yazıldı.</p>
+    <p>Aynı gün, bunu sessizce zehirleyecek bir satır da çıktı: 1 tur ve 29 output token yazan, ama gizli suite'i 8/8 geçen bir hücre. Transcript'inde on beş tur vardı — ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. Aritmetikle yakalandı: bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</p>
+  </li>
+  <li>
+    <time>2026-08-30 · kapanış</time>
+    <h4>Son bilinmeyen ve geçiş</h4>
+    <p>Gerçek proje turu nihayet aynı gün ölçülmüş bir rakip kazandı ve Lea hakkındaki son korkuyu çürüttü: medyanı <strong>$3.735</strong>, <code>full</code>'ünki <strong>$5.560</strong>. Aynı gün, o turun ne söyleyip ne söyleyemeyeceği de ölçüldü — %30'luk bir farkı çözmek için <strong>kol başına n=37</strong>; yani ürettiği hiçbir sıralama, hiçbir zaman gerçek değildi.</p>
+    <p>v8 önerilmeden önce metin vergisi ödeyip ödemediği sınandı (ödemiyor), bütün raporlar yeniden yazıldı ve canlı hook v8'e geçirildi. Ölçüm 232 hücre, 0 başarısız, 286 notlandırılmış koşuyla kapandı.</p>
+  </li>
+</ol>
+
+<div class="note plain">
+<p><strong>Bunun biçimi.</strong> Yukarıdaki dokuz maddenin beşi, önceki bir sonucun geri çekilmesi: $2.90 başlığı, kalite sıralaması, zor turdaki 4/5, meseleyi çözmesi beklenen tuzak görev ve proje turunun ürettiği her sıralama. Hayatta kalan şey sayılar değil, onları öldüren kurallar — baseline'ı aynı gün ölç, tek güne dayanan kalite rakamına güvenme, ve bir satıra kendi maliyetini kanıtlat.</p>
+</div>
+</div>
+<!-- TIMELINE:END -->
+
+<!-- ============ METHOD ============ -->
+<h2 id="method"><span data-lang="en">Method notes worth reusing</span><span data-lang="tr">Tekrar kullanmaya değer yöntem notları</span></h2>
+
+<div data-lang="en">
+<ul>
+<li><strong>Config isolation:</strong> <code>--setting-sources project</code> from a directory with no project settings, plus <code>--settings &lt;config&gt;</code>. Note that <code>--setting-sources ""</code> is rejected and silently eats the next argument.</li>
+<li><strong>Force <code>InvariantCulture</code> before writing any CSV.</strong> Under a comma-decimal locale the cost field wrote <code>0,05</code> and split the column.</li>
+<li><strong>Launch long rounds detached</strong>, not through an agent tool harness — background runs launched that way were killed twice mid-round.</li>
+<li><strong>Grade with a hidden suite, and hash the visible tests.</strong> Without the tamper check, "all tests pass" includes the runs that edited the tests.</li>
+<li><strong>Make every row prove its own cost.</strong> A run's billed cost and its reported token counts must agree. Two rows in 286 did not, because the agent loop restarted mid-cell and the summary JSON described only the last leg — one of them logged 1 turn and 29 output tokens while passing the hidden suite, which reads as a cheap correct win. Fit the four token prices from a clean day by least squares (they reproduce that day to ~0.15%) and flag any row billed more than 3% above what its own tokens buy.</li>
+<li><strong>Check the price regime by prediction, not by re-running a baseline.</strong> Prices move underneath a long benchmark. Instead of re-measuring a whole rival arm, price a few new runs with an older day's fitted vector: if the prediction lands within a fraction of a percent, the regime held. Three runs and about $0.54 replaced a full re-baseline here.</li>
+<li><strong>Measure a round's resolution before you rank anything with it.</strong> The real-project round's within-config spread is an SD of 0.397 in log cost over 19 runs, which puts the 80%-power sample size at <strong>n=37 per arm</strong> for a 30% difference. Every ordering that round ever produced was below its own noise floor. One power calculation would have saved three ranking claims.</li>
+</ul>
+<div class="finding">
+<h4>An invalidated benchmark, kept as a warning</h4>
+<p>An earlier attempt produced dramatic numbers — 30,379 median input tokens for <code>bare</code> against 167,624 for all three plugins. Reading the actual outputs showed the configs did three <em>different jobs</em>. superpowers-only asked a clarifying question instead of doing the task; modes-only tried to write files, hit permission-denied in <code>-p</code> mode, and retried — and every denied tool call is another round trip re-reading the whole prefix. The input explosion measured permission denials and behavioural divergence, not efficiency.</p>
+<p><strong>Always read the outputs before reading the aggregates.</strong></p>
+</div>
+</div>
+
+<div data-lang="tr">
+<ul>
+<li><strong>Config izolasyonu:</strong> proje ayarı olmayan bir dizinden <code>--setting-sources project</code>, artı <code>--settings &lt;config&gt;</code>. Not: <code>--setting-sources ""</code> reddediliyor ve sessizce bir sonraki argümanı yutuyor.</li>
+<li><strong>Herhangi bir CSV yazmadan önce <code>InvariantCulture</code> zorla.</strong> Virgüllü ondalık kullanan bir yerelde maliyet alanı <code>0,05</code> yazdı ve sütunu ikiye böldü.</li>
+<li><strong>Uzun turları detached başlat</strong>, agent tool harness'ı üzerinden değil — o şekilde başlatılan arka plan koşuları tur ortasında iki kez öldürüldü.</li>
+<li><strong>Gizli bir suite ile notlandır ve görünür testleri hash'le.</strong> Kurcalama kontrolü olmadan "tüm testler geçti" ifadesine testleri düzenleyen koşular da dahil olur.</li>
+<li><strong>Her satıra kendi maliyetini kanıtlat.</strong> Bir koşunun faturalanan maliyeti ile raporladığı token sayıları birbirini tutmalı. 286 satırın ikisi tutmuyordu: ajan döngüsü hücre ortasında yeniden başlamış ve özet JSON yalnız son bacağı anlatmıştı — biri 1 tur ve 29 output token yazarken gizli suite'i geçiyordu, yani "ucuz ve doğru" gibi okunuyordu. Temiz bir günün dört token fiyatını en küçük karelerle çıkar (o günü ~%0.15 hatayla yeniden üretiyorlar) ve kendi token'larının satın alabileceğinden %3'ten fazla faturalanan her satırı işaretle.</li>
+<li><strong>Fiyat rejimini baseline koşarak değil, tahmin ederek sına.</strong> Uzun bir benchmark'ın altından fiyatlar kayar. Bütün bir rakip kolunu yeniden ölçmek yerine birkaç yeni koşuyu eski günün fiyat vektörüyle fiyatla: tahmin yüzdenin küçük bir kesri kadar tutuyorsa rejim değişmemiştir. Burada üç koşu ve yaklaşık $0.54, tam bir yeniden ölçümün yerine geçti.</li>
+<li><strong>Bir turla sıralama yapmadan önce o turun çözünürlüğünü ölç.</strong> Gerçek proje turunun config-içi dağılımı, 19 koşuda log maliyet için 0.397 standart sapma — %30'luk bir farkı %80 güçle görmek için <strong>kol başına n=37</strong> demek. O turun ürettiği her sıralama kendi gürültü tabanının altındaydı. Tek bir güç hesabı üç sıralama iddiasını kurtarırdı.</li>
+</ul>
+<div class="finding">
+<h4>Uyarı olarak saklanan geçersiz bir benchmark</h4>
+<p>Daha erken bir deneme çarpıcı sayılar üretti — <code>bare</code> için 30.379 medyan input token'a karşı üç plugin birden için 167.624. Gerçek çıktıları okuyunca config'lerin üç <em>farklı iş</em> yaptığı görüldü. Yalnızca-superpowers, görevi yapmak yerine açıklayıcı bir soru sordu; yalnızca-modes dosya yazmayı denedi, <code>-p</code> modunda izin reddi aldı ve tekrar denedi — ve reddedilen her tool çağrısı, tüm ön eki yeniden okuyan başka bir gidiş-dönüş demek. Input patlaması verimliliği değil, izin reddi ile davranış sapmasını ölçtü.</p>
+<p><strong>Toplamları okumadan önce her zaman çıktıları oku.</strong></p>
+</div>
+</div>
+
+<!-- ============ COST AUDIT ============ -->
+<h2 id="cost"><span data-lang="en">The token audit — what a plugin costs before you type anything</span><span data-lang="tr">Token denetimi — bir plugin sen yazmadan önce neye mal oluyor</span></h2>
+
+<div data-lang="en">
+<p class="lede">Every enabled plugin costs tokens on <em>every</em> session: its <code>SessionStart</code> hook output, plus one line per skill and per agent in the listings the model receives.</p>
+<div class="tw"><table>
+  <thead><tr><th>Config (<code>claude -p</code>, Haiku, identical prompt)</th><th class="num">Prompt tokens</th></tr></thead>
+  <tbody>
+    <tr><td>no plugins, no custom hooks</td><td class="num">22,651</td></tr>
+    <tr><td>caveman+ponytail off, superpowers on</td><td class="num">24,842</td></tr>
+    <tr><td><strong>3-plugin config (this setup)</strong></td><td class="num"><strong>27,803</strong></td></tr>
+    <tr><td>old 11-plugin config</td><td class="num">29,137</td></tr>
+  </tbody>
+</table></div>
+<p>Saved 1,334 tokens per session — 4.6% of the total prompt, 20.6% of the plugin+hook stack. caveman+ponytail's own fixed input cost is <strong>2,961 tokens/session</strong>.</p>
+<h3>How the cuts were chosen</h3>
+<p><code>~/.claude.json</code> records real usage in <code>pluginUsage</code> and <code>skillUsage</code>. Across 22 startups, seven plugins sat at <code>usageCount: 0</code>. Three of those duplicated a built-in that ships with the CLI anyway, so disabling them cost no capability at all.</p>
+<pre><code>node -e "const c=require(process.env.USERPROFILE+'/.claude.json'); console.log(c.pluginUsage)"</code></pre>
+<div class="finding">
+<h4><code>security-guidance</code> was disabled for cost, not because it misbehaved</h4>
+<p>Its hooks fire a 111 KB Python script on every <code>UserPromptSubmit</code>, every edit-shaped <code>PostToolUse</code>, every <code>Bash</code>, and every <code>Stop</code> — six Python spawns inside one second in the log. Outside a git repo it exits early. <strong>Inside a git repo the <code>Stop</code> hook runs an Agent SDK security review per turn, billed to the same quota as the session itself.</strong> That is the single largest recurring cost in this setup. The on-demand replacements are the built-in <code>/security-review</code> and <code>/code-review</code>.</p>
+</div>
+<div class="finding">
+<h4>Trimming the skill list saves nothing — the listing is capped</h4>
+<p>The whole skill listing costs ~2,588 tokens and is capped by <code>skillListingBudgetFraction</code> (default 1% of the context window, in characters). When the listing exceeds the cap, descriptions are shortened to fit — so removing a skill does <strong>not</strong> shrink the total, it just lets the survivors keep longer descriptions. Trimming buys triggering accuracy, not tokens.</p>
+</div>
+<div class="finding">
+<h4><code>skillOverrides</code> cannot hide plugin skills, by design</h4>
+<p>The resolver reads <code>if (e.type !== "prompt" || e.source === "plugin") return "on"</code> — a plugin-sourced skill short-circuits before the setting is consulted. An attempt with 13 entries saved <strong>zero</strong> tokens because 12 of them were plugin skills. It works only on your own skills under <code>~/.claude/skills/</code>. The only lever on a plugin skill is disabling the whole plugin.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Etkin her plugin <em>her</em> oturumda token harcar: <code>SessionStart</code> hook çıktısı, artı modele giden listelerde her skill ve her agent için birer satır.</p>
+<div class="tw"><table>
+  <thead><tr><th>Config (<code>claude -p</code>, Haiku, aynı prompt)</th><th class="num">Prompt token</th></tr></thead>
+  <tbody>
+    <tr><td>plugin yok, özel hook yok</td><td class="num">22.651</td></tr>
+    <tr><td>caveman+ponytail kapalı, superpowers açık</td><td class="num">24.842</td></tr>
+    <tr><td><strong>3 plugin'li config (bu kurulum)</strong></td><td class="num"><strong>27.803</strong></td></tr>
+    <tr><td>eski 11 plugin'li config</td><td class="num">29.137</td></tr>
+  </tbody>
+</table></div>
+<p>Oturum başına 1.334 token tasarruf — toplam promptun %4,6'sı, plugin+hook yığınının %20,6'sı. caveman+ponytail'in kendi sabit input maliyeti: oturum başına <strong>2.961 token</strong>.</p>
+<h3>Kesintiler nasıl seçildi</h3>
+<p><code>~/.claude.json</code> gerçek kullanımı <code>pluginUsage</code> ve <code>skillUsage</code> altında kaydediyor. 22 başlangıç boyunca yedi plugin <code>usageCount: 0</code> idi. Bunların üçü zaten CLI ile gelen bir built-in'i tekrarlıyordu, yani kapatmak hiçbir yetenek kaybı doğurmadı.</p>
+<pre><code>node -e "const c=require(process.env.USERPROFILE+'/.claude.json'); console.log(c.pluginUsage)"</code></pre>
+<div class="finding">
+<h4><code>security-guidance</code> kötü çalıştığı için değil, maliyeti yüzünden kapatıldı</h4>
+<p>Hook'ları 111 KB'lık bir Python scriptini her <code>UserPromptSubmit</code>'te, her düzenleme biçimli <code>PostToolUse</code>'da, her <code>Bash</code>'te ve her <code>Stop</code>'ta çalıştırıyor — logda bir saniye içinde altı Python spawn'ı. Bir git reposu dışında erken çıkıyor. <strong>Bir git reposu içinde ise <code>Stop</code> hook'u her turda Agent SDK ile bir güvenlik incelemesi çalıştırıyor, faturası oturumun kendisiyle aynı kotaya yazılıyor.</strong> Bu kurulumdaki tek en büyük tekrarlayan maliyet bu. İstek üzerine çalışan karşılıkları: built-in <code>/security-review</code> ve <code>/code-review</code>.</p>
+</div>
+<div class="finding">
+<h4>Skill listesini kısaltmak hiçbir şey kazandırmıyor — liste zaten tavanlı</h4>
+<p>Skill listesinin tamamı ~2.588 token tutuyor ve <code>skillListingBudgetFraction</code> ile sınırlanıyor (varsayılan: bağlam penceresinin %1'i, karakter cinsinden). Liste tavanı aştığında açıklamalar sığacak şekilde kısaltılıyor — yani bir skill'i kaldırmak toplamı <strong>küçültmüyor</strong>, sadece kalanların daha uzun açıklama tutmasına izin veriyor. Kısaltmak tetikleme isabetini artırır, token kazandırmaz.</p>
+</div>
+<div class="finding">
+<h4><code>skillOverrides</code> plugin skill'lerini gizleyemez, tasarım gereği</h4>
+<p>Çözümleyici şunu okuyor: <code>if (e.type !== "prompt" || e.source === "plugin") return "on"</code> — plugin kaynaklı bir skill, ayar danışılmadan kısa devre yapıyor. 13 girdilik bir deneme <strong>sıfır</strong> token tasarruf etti, çünkü 12'si plugin skill'iydi. Yalnızca <code>~/.claude/skills/</code> altındaki kendi skill'lerinde çalışıyor. Bir plugin skill'i üzerindeki tek kaldıraç plugin'in tamamını kapatmak.</p>
+</div>
+</div>
+
+<!-- ============ GOTCHAS ============ -->
+<h2 id="gotchas"><span data-lang="en">Gotchas that cost real debugging time</span><span data-lang="tr">Gerçek hata ayıklama zamanına mal olmuş tuzaklar</span></h2>
+
+<div data-lang="en">
+<div class="finding">
+<h4>One slow <code>SessionStart</code> hook kills every other one</h4>
+<p>They share a single timeout window. When it expires the whole batch is cancelled and <strong>no</strong> hook output is injected — so a slow custom hook silently takes every plugin's activation down with it, and the session looks like nothing was ever installed. Observed: a PowerShell hook took 5738 ms against a 5000 ms budget (<code>hook_cancelled</code>, <code>timedOut: true</code> in the transcript) and three modes went missing at once.</p>
+<p><strong>Never put PowerShell in a <code>SessionStart</code> hook</strong> — cold start alone is ~2–3 s. Node starts in ~200 ms. Diagnose by grepping <code>~/.claude/projects/&lt;slug&gt;/&lt;session-id&gt;.jsonl</code> for <code>hook_cancelled</code> versus <code>hook_success</code>.</p>
+</div>
+<div class="finding">
+<h4>Enabled ≠ installed</h4>
+<p><code>settings.json</code> can list a plugin under <code>enabledPlugins</code> while <code>~/.claude/plugins/installed_plugins.json</code> has no entry for it — a marketplace refresh dropped two plugins from that registry in one observed case. Symptom: <code>claude plugin list</code> omits the plugin even though its skills still load. Fix with <code>claude plugin install &lt;plugin&gt;@&lt;marketplace&gt; -y</code>.</p>
+</div>
+<div class="finding">
+<h4>A stray <code>.md</code> in a plugin's <code>agents/</code> directory becomes a phantom agent</h4>
+<p>caveman ships <code>agents/AGENTS.md</code> and <code>agents/CLAUDE.md</code> as contributor docs. Missing YAML frontmatter does not exclude them — they surface in the roster as <code>caveman:AGENTS</code> and <code>caveman:CLAUDE</code>, each spawnable with <strong>All tools</strong>. Fix by renaming both to <code>.doc.txt</code>. There is no <code>agentOverrides</code> setting, so this is a cache edit and a plugin update restores the files.</p>
+</div>
+<div class="finding">
+<h4>A loose skill file silently shadows the plugin version</h4>
+<p>A stray <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code> left over from an old manual install overrides the plugin copy even though <code>settings.json</code> looks correct — the plugin shows as installed but behaves wrong. <code>diff</code> it against the cached copy and delete or overwrite the loose one.</p>
+</div>
+<div class="finding">
+<h4>Scripted <code>claude -p</code> runs silently lose their flags on Windows</h4>
+<p>If <code>claude</code> on <code>PATH</code> is a <code>claude.cmd</code> batch shim forwarding with <code>%*</code>, <code>cmd.exe</code> truncates the command line at the first newline inside an argument. A multi-line <code>-p</code> prompt therefore drops every flag after it — <code>--output-format json</code> and <code>--permission-mode</code> both vanish, and the run comes back as prose with every tool call denied. It looks like a permissions bug and is not. Call the real <code>.exe</code> directly from scripts.</p>
+</div>
+<div class="finding">
+<h4><code>/code-review ultra</code> is billed, not configured</h4>
+<p>It is built into the CLI binary, not supplied by the <code>code-review</code> plugin, so enabling or disabling plugins has no effect on it. A 5-agent Opus fleet takes ~5–10 min and costs <strong>$5–$25 per run</strong>, charged to extra usage credits. It appears and disappears with credit state, not settings: when <code>~/.claude.json</code> shows <code>cachedExtraUsageDisabledReason: "out_of_credits"</code>, the option is simply hidden and there is no toggle to flip.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<div class="finding">
+<h4>Yavaş tek bir <code>SessionStart</code> hook'u diğerlerinin hepsini öldürür</h4>
+<p>Tek bir timeout penceresi paylaşıyorlar. Süre dolduğunda tüm grup iptal edilir ve <strong>hiçbir</strong> hook çıktısı enjekte edilmez — yani yavaş bir özel hook, her plugin'in aktivasyonunu da sessizce yanında götürür ve oturum hiçbir şey kurulmamış gibi görünür. Gözlenen: PowerShell tabanlı bir hook 5000 ms bütçeye karşı 5738 ms sürdü (transcript'te <code>hook_cancelled</code>, <code>timedOut: true</code>) ve üç mod birden kayboldu.</p>
+<p><strong><code>SessionStart</code> hook'una asla PowerShell koyma</strong> — soğuk başlangıç tek başına ~2–3 sn. Node ~200 ms'de açılıyor. Teşhis: <code>~/.claude/projects/&lt;slug&gt;/&lt;session-id&gt;.jsonl</code> içinde <code>hook_cancelled</code> ile <code>hook_success</code> aramak.</p>
+</div>
+<div class="finding">
+<h4>Etkin ≠ kurulu</h4>
+<p><code>settings.json</code>, <code>enabledPlugins</code> altında bir plugin'i listelerken <code>~/.claude/plugins/installed_plugins.json</code> içinde ona ait kayıt olmayabilir — gözlenen bir vakada marketplace yenilemesi iki plugin'i o kayıttan düşürdü. Belirti: skill'leri hâlâ yüklenmesine rağmen <code>claude plugin list</code> plugin'i göstermiyor. Çözüm: <code>claude plugin install &lt;plugin&gt;@&lt;marketplace&gt; -y</code>.</p>
+</div>
+<div class="finding">
+<h4>Bir plugin'in <code>agents/</code> klasöründeki başıboş <code>.md</code>, hayalet agent'a dönüşür</h4>
+<p>caveman, <code>agents/AGENTS.md</code> ve <code>agents/CLAUDE.md</code> dosyalarını katkı dokümanı olarak gönderiyor. YAML frontmatter'ın olmaması bunları dışarıda bırakmıyor — listede <code>caveman:AGENTS</code> ve <code>caveman:CLAUDE</code> olarak, her biri <strong>All tools</strong> ile spawn edilebilir şekilde çıkıyorlar. Çözüm: ikisini de <code>.doc.txt</code> olarak yeniden adlandır. <code>agentOverrides</code> diye bir ayar yok, yani bu bir cache düzenlemesi ve plugin güncellemesi dosyaları geri getirir.</p>
+</div>
+<div class="finding">
+<h4>Başıboş bir skill dosyası plugin sürümünü sessizce gölgeler</h4>
+<p>Eski bir elle kurulumdan kalan <code>~/.claude/skills/&lt;ad&gt;/SKILL.md</code>, <code>settings.json</code> doğru görünse bile plugin kopyasını geçersiz kılar — plugin kurulu görünür ama yanlış davranır. Önbellekteki kopyayla <code>diff</code>'le, sonra başıboş olanı sil veya üzerine yaz.</p>
+</div>
+<div class="finding">
+<h4>Scriptli <code>claude -p</code> koşuları Windows'ta bayraklarını sessizce kaybediyor</h4>
+<p><code>PATH</code> üzerindeki <code>claude</code>, <code>%*</code> ile yönlendiren bir <code>claude.cmd</code> batch shim'iyse, <code>cmd.exe</code> komut satırını bir argümanın içindeki ilk satır sonunda keser. Çok satırlı bir <code>-p</code> promptu bu yüzden kendisinden sonraki tüm bayrakları düşürür — <code>--output-format json</code> ve <code>--permission-mode</code> ikisi de kaybolur, koşu düz metin olarak döner ve her tool çağrısı reddedilir. İzin hatası gibi görünür ama değildir. Scriptlerden doğrudan gerçek <code>.exe</code> dosyasını çağır.</p>
+</div>
+<div class="finding">
+<h4><code>/code-review ultra</code> faturalıdır, yapılandırma değildir</h4>
+<p>CLI binary'sinin içinde gömülü, <code>code-review</code> plugin'inden gelmiyor, yani plugin açıp kapatmak onu etkilemiyor. 5 agent'lı bir Opus filosu ~5–10 dakika sürüyor ve <strong>çalıştırma başına 5–25 dolar</strong>, ekstra kullanım kredisine yazılıyor. Ayarlarla değil kredi durumuyla görünüp kayboluyor: <code>~/.claude.json</code> içinde <code>cachedExtraUsageDisabledReason: "out_of_credits"</code> görünüyorsa seçenek gizlenir ve çevrilecek bir anahtar yoktur.</p>
+</div>
+</div>
+
+<!-- ============ PLUGIN MAP ============ -->
+<h2 id="map"><span data-lang="en">What was actually removed — the 11 → 3 map</span><span data-lang="tr">Neler silindi — 11 → 3 haritası</span></h2>
+
+<div data-lang="en">
+<p class="lede">"Eleven plugins cut to three" is the sentence this whole report starts from, so here is the inventory behind it: which eleven, which three survived, why the other eight went, and what the survivors actually put into every session.</p>
+<svg class="map" viewBox="0 0 1000 660" role="img" aria-label="Eleven plugins reduced to three, with the contents of each survivor">
+  <title>11 plugins → 3 enabled, and what each contains</title>
+  <path class="link link-drop" d="M194,340 C216,340 216,142 240,142"/>
+  <path class="link" d="M194,340 C216,340 216,385 240,385"/>
+  <path class="link" d="M420,385 C440,385 440,350 460,350"/>
+  <path class="link" d="M420,385 C440,385 440,460 460,460"/>
+  <path class="link" d="M420,385 C440,385 440,570 460,570"/>
+  <path class="link" d="M194,470 C216,470 216,490 240,490"/>
+
+  <rect class="box" x="14" y="300" width="180" height="80" rx="10"/>
+  <text class="t-title" x="30" y="330">11 plugins enabled</text>
+  <text class="t-item" x="30" y="352">the setup before</text>
+  <text class="t-item" x="30" y="368">anything was measured</text>
+
+  <rect class="box box-drop" x="240" y="16" width="420" height="252" rx="10"/>
+  <text class="t-title" x="258" y="44">8 turned off</text>
+  <text class="t-note" x="258" y="62">kept as <tspan class="t-mono">false</tspan>, not deleted — one edit brings any back</text>
+  <text class="t-item" x="258" y="90"><tspan class="t-mono">code-simplifier</tspan> — same job as built-in simplify</text>
+  <text class="t-item" x="258" y="112"><tspan class="t-mono">code-review</tspan> — same job as built-in code-review</text>
+  <text class="t-item" x="258" y="134"><tspan class="t-mono">skill-creator</tspan> — superpowers has writing-skills</text>
+  <text class="t-item" x="258" y="156"><tspan class="t-mono">security-guidance</tspan> — per-turn LLM review, own quota</text>
+  <text class="t-item" x="258" y="178"><tspan class="t-mono">frontend-design</tspan> — usageCount 0 in 22 startups</text>
+  <text class="t-item" x="258" y="200"><tspan class="t-mono">claude-md-management</tspan> — usageCount 0</text>
+  <text class="t-item" x="258" y="222"><tspan class="t-mono">feature-dev</tspan> — usageCount 0</text>
+  <text class="t-item" x="258" y="244"><tspan class="t-mono">github</tspan> — MCP env var unset, doomed connection</text>
+
+  <rect class="box box-keep" x="240" y="350" width="180" height="70" rx="10"/>
+  <text class="t-title" x="258" y="380">3 kept enabled</text>
+  <text class="t-note" x="258" y="400">these are the ones measured</text>
+
+  <rect class="box box-keep" x="460" y="300" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="328"><tspan class="t-mono">superpowers</tspan> 6.3.0 · official marketplace</text>
+  <text class="t-item keep" x="478" y="352">14 skills + a SessionStart hook that loads using-superpowers</text>
+  <text class="t-item" x="478" y="374">brainstorming · systematic-debugging · test-driven-development ·</text>
+  <text class="t-item" x="478" y="392">verification-before-completion · writing-plans · +9 more</text>
+
+  <rect class="box box-keep" x="460" y="410" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="438"><tspan class="t-mono">caveman</tspan> · third-party</text>
+  <text class="t-item keep" x="478" y="462">21 skills + 3 subagents (cavecrew investigator / builder / reviewer)</text>
+  <text class="t-item" x="478" y="484">terse-output mode, levels lite → ultra, plus commit / review /</text>
+  <text class="t-item" x="478" y="502">compress / stats commands</text>
+
+  <rect class="box box-keep" x="460" y="520" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="548"><tspan class="t-mono">ponytail</tspan> 4.9.0 · third-party</text>
+  <text class="t-item keep" x="478" y="572">6 skills + its own activation hooks and statusline</text>
+  <text class="t-item" x="478" y="594">laziest-solution mode: ponytail-review · audit · debt · gain ·</text>
+  <text class="t-item" x="478" y="612">help</text>
+
+  <rect class="box" x="14" y="430" width="180" height="90" rx="10"/>
+  <text class="t-title" x="30" y="460">2 hooks</text>
+  <text class="t-item" x="30" y="482">not plugins — written</text>
+  <text class="t-item" x="30" y="498">here, no marketplace</text>
+
+  <rect class="box" x="240" y="450" width="180" height="80" rx="10"/>
+  <text class="t-item keep" x="258" y="478"><tspan class="t-mono">verification-activate</tspan></text>
+  <text class="t-item keep" x="258" y="500"><tspan class="t-mono">lean-context-activate</tspan></text>
+  <text class="t-note" x="258" y="520">fire on SessionStart</text>
+</svg>
+<p>The five benchmarked configurations are built out of exactly this map: <code>bare</code> switches all of it off, <code>hooks</code> keeps only the two hook files, <code>superpowers</code> only that plugin, <code>modes</code> only <code>caveman</code> + <code>ponytail</code>, and <code>full</code> is the whole right-hand side at once — this machine's real setup.</p>
+<div class="note plain">
+<p><strong>How the eight were judged.</strong> Three were dropped for duplicating something already built into Claude Code or into superpowers, three for a plugin-level <code>usageCount</code> of 0 across 22 recorded startups, one for opening an MCP connection that could never succeed, and one — <code>security-guidance</code> — for running an LLM review on every turn inside git repositories, billed to the same session quota as the work itself.</p>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">"On bir plugin üçe indirildi" cümlesi bu raporun başladığı yer; işte arkasındaki envanter: hangi on bir, hangi üçü kaldı, diğer sekizi neden gitti ve kalanlar her oturuma gerçekte ne koyuyor.</p>
+<svg class="map" viewBox="0 0 1000 660" role="img" aria-label="On bir plugin üçe indi, her kalanın içeriğiyle">
+  <title>11 plugin → 3 etkin, ve her birinin içeriği</title>
+  <path class="link link-drop" d="M194,340 C216,340 216,142 240,142"/>
+  <path class="link" d="M194,340 C216,340 216,385 240,385"/>
+  <path class="link" d="M420,385 C440,385 440,350 460,350"/>
+  <path class="link" d="M420,385 C440,385 440,460 460,460"/>
+  <path class="link" d="M420,385 C440,385 440,570 460,570"/>
+  <path class="link" d="M194,470 C216,470 216,490 240,490"/>
+
+  <rect class="box" x="14" y="300" width="180" height="80" rx="10"/>
+  <text class="t-title" x="30" y="330">11 plugin etkin</text>
+  <text class="t-item" x="30" y="352">hiçbir şey ölçülmeden</text>
+  <text class="t-item" x="30" y="368">önceki kurulum</text>
+
+  <rect class="box box-drop" x="240" y="16" width="420" height="252" rx="10"/>
+  <text class="t-title" x="258" y="44">8'i kapatıldı</text>
+  <text class="t-note" x="258" y="62">silinmedi, <tspan class="t-mono">false</tspan> bırakıldı — tek düzenleme geri açar</text>
+  <text class="t-item" x="258" y="90"><tspan class="t-mono">code-simplifier</tspan> — built-in simplify ile aynı iş</text>
+  <text class="t-item" x="258" y="112"><tspan class="t-mono">code-review</tspan> — built-in code-review ile aynı iş</text>
+  <text class="t-item" x="258" y="134"><tspan class="t-mono">skill-creator</tspan> — superpowers'ta writing-skills var</text>
+  <text class="t-item" x="258" y="156"><tspan class="t-mono">security-guidance</tspan> — her turda LLM incelemesi, aynı kota</text>
+  <text class="t-item" x="258" y="178"><tspan class="t-mono">frontend-design</tspan> — 22 başlangıçta usageCount 0</text>
+  <text class="t-item" x="258" y="200"><tspan class="t-mono">claude-md-management</tspan> — usageCount 0</text>
+  <text class="t-item" x="258" y="222"><tspan class="t-mono">feature-dev</tspan> — usageCount 0</text>
+  <text class="t-item" x="258" y="244"><tspan class="t-mono">github</tspan> — MCP env değişkeni yok, bağlantı düşüyor</text>
+
+  <rect class="box box-keep" x="240" y="350" width="180" height="70" rx="10"/>
+  <text class="t-title" x="258" y="380">3'ü açık kaldı</text>
+  <text class="t-note" x="258" y="400">ölçülenler bunlar</text>
+
+  <rect class="box box-keep" x="460" y="300" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="328"><tspan class="t-mono">superpowers</tspan> 6.3.0 · resmî marketplace</text>
+  <text class="t-item keep" x="478" y="352">14 skill + using-superpowers'ı yükleyen bir SessionStart hook'u</text>
+  <text class="t-item" x="478" y="374">brainstorming · systematic-debugging · test-driven-development ·</text>
+  <text class="t-item" x="478" y="392">verification-before-completion · writing-plans · +9 tane daha</text>
+
+  <rect class="box box-keep" x="460" y="410" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="438"><tspan class="t-mono">caveman</tspan> · üçüncü parti</text>
+  <text class="t-item keep" x="478" y="462">21 skill + 3 subagent (cavecrew investigator / builder / reviewer)</text>
+  <text class="t-item" x="478" y="484">kısa çıktı modu, lite → ultra seviyeleri, artı commit / review /</text>
+  <text class="t-item" x="478" y="502">compress / stats komutları</text>
+
+  <rect class="box box-keep" x="460" y="520" width="524" height="100" rx="10"/>
+  <text class="t-title" x="478" y="548"><tspan class="t-mono">ponytail</tspan> 4.9.0 · üçüncü parti</text>
+  <text class="t-item keep" x="478" y="572">6 skill + kendi aktivasyon hook'ları ve statusline'ı</text>
+  <text class="t-item" x="478" y="594">en tembel çözüm modu: ponytail-review · audit · debt · gain ·</text>
+  <text class="t-item" x="478" y="612">help</text>
+
+  <rect class="box" x="14" y="430" width="180" height="90" rx="10"/>
+  <text class="t-title" x="30" y="460">2 hook</text>
+  <text class="t-item" x="30" y="482">plugin değil — burada</text>
+  <text class="t-item" x="30" y="498">yazıldı, marketplace yok</text>
+
+  <rect class="box" x="240" y="450" width="180" height="80" rx="10"/>
+  <text class="t-item keep" x="258" y="478"><tspan class="t-mono">verification-activate</tspan></text>
+  <text class="t-item keep" x="258" y="500"><tspan class="t-mono">lean-context-activate</tspan></text>
+  <text class="t-note" x="258" y="520">SessionStart'ta çalışır</text>
+</svg>
+<p>Ölçülen beş yapılandırma tam olarak bu haritadan kuruldu: <code>bare</code> hepsini kapatıyor, <code>hooks</code> yalnızca iki hook dosyasını tutuyor, <code>superpowers</code> yalnızca o plugin'i, <code>modes</code> yalnızca <code>caveman</code> + <code>ponytail</code>'i, <code>full</code> ise sağ tarafın tamamını birden — bu makinenin gerçek kurulumu.</p>
+<div class="note plain">
+<p><strong>Sekizi nasıl elendi.</strong> Üçü Claude Code'da ya da superpowers'ta zaten olan bir şeyi tekrarladığı için, üçü 22 kayıtlı başlangıç boyunca plugin düzeyinde <code>usageCount</code> 0 olduğu için, biri hiçbir zaman kurulamayacak bir MCP bağlantısı açtığı için, biri de — <code>security-guidance</code> — git repoları içinde her turda LLM incelemesi koşturduğu ve bunu işin kendisiyle aynı oturum kotasına faturaladığı için.</p>
+</div>
+</div>
+
+<!-- ============ PLUGIN ROSTER ============ -->
+<h2 id="plugins"><span data-lang="en">The plugin roster</span><span data-lang="tr">Plugin listesi</span></h2>
+
+<div data-lang="en">
+<p class="lede">Three enabled, eight disabled. The <code>false</code> entries are kept rather than deleted, so the decision stays recorded and one edit re-enables any of them.</p>
+<div class="tw"><table>
+  <thead><tr><th>Plugin</th><th>State</th><th>Reason</th></tr></thead>
+  <tbody>
+    <tr><td><code>superpowers</code></td><td class="win">enabled</td><td>Best measured correctness lever on hard agentic work — 3× bare for +56% cost</td></tr>
+    <tr><td><code>ponytail</code></td><td class="win">enabled</td><td>Lazy/minimal-code mode. Worth it for prose, a liability for hard debugging</td></tr>
+    <tr><td><code>caveman</code></td><td class="win">enabled</td><td>Terse output mode. Same trade-off as ponytail</td></tr>
+    <tr><td><code>security-guidance</code></td><td>disabled</td><td>Per-turn LLM review inside git repos, billed to the session's own quota</td></tr>
+    <tr><td><code>code-simplifier</code></td><td>disabled</td><td>Duplicates the built-in <code>simplify</code> skill</td></tr>
+    <tr><td><code>code-review</code></td><td>disabled</td><td>Duplicates the built-in <code>code-review</code> skill. <code>ultra</code> is unaffected</td></tr>
+    <tr><td><code>skill-creator</code></td><td>disabled</td><td>Duplicates superpowers' <code>writing-skills</code></td></tr>
+    <tr><td><code>frontend-design</code></td><td>disabled</td><td><code>usageCount: 0</code> across 22 startups</td></tr>
+    <tr><td><code>claude-md-management</code></td><td>disabled</td><td><code>usageCount: 0</code></td></tr>
+    <tr><td><code>github</code></td><td>disabled</td><td>Its MCP server needs an env var nothing sets — a doomed connection every startup</td></tr>
+    <tr><td><code>feature-dev</code></td><td>disabled</td><td><code>usageCount: 0</code></td></tr>
+  </tbody>
+</table></div>
+<p class="lede"><em>Nothing here is affiliated with Anthropic. <code>superpowers</code> is an official marketplace plugin; <a href="https://github.com/DietrichGebert/ponytail">ponytail</a> and <a href="https://github.com/JuliusBrussee/caveman">caveman</a> are third-party plugins by their respective authors — this report only measures and configures them.</em></p>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Üçü etkin, sekizi kapalı. <code>false</code> girdileri silinmek yerine bırakıldı; böylece karar kayıtlı kalıyor ve tek bir düzenleme herhangi birini tekrar açıyor.</p>
+<div class="tw"><table>
+  <thead><tr><th>Plugin</th><th>Durum</th><th>Gerekçe</th></tr></thead>
+  <tbody>
+    <tr><td><code>superpowers</code></td><td class="win">etkin</td><td>Zor agentic işte ölçülen en iyi doğruluk kaldıracı — +%56 maliyetle bare'in 3 katı</td></tr>
+    <tr><td><code>ponytail</code></td><td class="win">etkin</td><td>Tembel/minimum kod modu. Metinde değer, zor debugging'de risk</td></tr>
+    <tr><td><code>caveman</code></td><td class="win">etkin</td><td>Kısa çıktı modu. ponytail ile aynı ödünleşim</td></tr>
+    <tr><td><code>security-guidance</code></td><td>kapalı</td><td>Git repoları içinde her turda LLM incelemesi, oturumun kendi kotasına faturalanıyor</td></tr>
+    <tr><td><code>code-simplifier</code></td><td>kapalı</td><td>Built-in <code>simplify</code> skill'i ile aynı iş</td></tr>
+    <tr><td><code>code-review</code></td><td>kapalı</td><td>Built-in <code>code-review</code> skill'i ile aynı iş. <code>ultra</code> etkilenmiyor</td></tr>
+    <tr><td><code>skill-creator</code></td><td>kapalı</td><td>superpowers'ın <code>writing-skills</code> skill'i ile aynı iş</td></tr>
+    <tr><td><code>frontend-design</code></td><td>kapalı</td><td>22 başlangıç boyunca <code>usageCount: 0</code></td></tr>
+    <tr><td><code>claude-md-management</code></td><td>kapalı</td><td><code>usageCount: 0</code></td></tr>
+    <tr><td><code>github</code></td><td>kapalı</td><td>MCP sunucusu hiçbir yerde ayarlanmayan bir env değişkeni istiyor — her başlangıçta başarısız bağlantı</td></tr>
+    <tr><td><code>feature-dev</code></td><td>kapalı</td><td><code>usageCount: 0</code></td></tr>
+  </tbody>
+</table></div>
+<p class="lede"><em>Buradaki hiçbir şey Anthropic ile bağlantılı değildir. <code>superpowers</code> resmî marketplace plugin'i; <a href="https://github.com/DietrichGebert/ponytail">ponytail</a> ve <a href="https://github.com/JuliusBrussee/caveman">caveman</a> kendi yazarlarına ait üçüncü parti plugin'ler — bu rapor onları yalnızca ölçüyor ve yapılandırıyor.</em></p>
+</div>
+
+<!-- ============ INSTALL ============ -->
+<h2 id="install"><span data-lang="en">Install it</span><span data-lang="tr">Kurulum</span></h2>
+
+<div data-lang="en">
+<p class="lede">What the repository installs is <strong>Lea</strong>: one <code>SessionStart</code> hook file, ~180 tokens of rules, no plugins and nothing to download. It is the configuration this whole benchmark ended up producing, not one of the five it measured.</p>
+<pre><code>git clone Project-Lea.zip
+cd Project-Lea</code></pre>
+<p>Then start a session in the clone and say:</p>
+<pre><code>Read INSTALL.md and install Lea for me.</code></pre>
+<p>Or do it by hand — it is two steps: copy <code>config/hooks/lea.js</code> to <code>~/.claude/hooks/</code>, then add it as a <code>SessionStart</code> command hook in <code>~/.claude/settings.json</code> with an absolute path. Restart the CLI and the session should open with <code>LEA ACTIVE</code>.</p>
+<div class="note plain">
+<p><strong>This replaces the plugin install, it does not accompany it.</strong> If <code>caveman</code>, <code>ponytail</code> or <code>superpowers</code> are already enabled, set them to <code>false</code> under <code>enabledPlugins</code> before running Lea: the rule sets stack, the instructions contradict, and the measured gain disappears. Their combined ~6,000 tokens is what Lea's ~180 replaces.</p>
+</div>
+<p>Two things the install file will insist on, and they are worth doing by hand too: back up <code>~/.claude/settings.json</code> first, and <em>merge</em> the hook entry rather than overwriting the file — it may already hold permissions, MCP config, or hooks that must survive.</p>
+<div class="btns">
+  <a class="btn primary" href="install.html">Full install guide</a>
+  <a class="btn" href="Project-Lea.zip">Download the report (.zip)</a>
+</div>
+</div>
+
+<div data-lang="tr">
+<p class="lede">Reponun kurduğu şey <strong>Lea</strong>: tek bir <code>SessionStart</code> hook dosyası, ~180 token kural, plugin yok, indirilecek hiçbir şey yok. Bu benchmark'ın ölçtüğü beş yapılandırmadan biri değil — sonunda <em>ürettiği</em> yapılandırma.</p>
+<pre><code>git clone Project-Lea.zip
+cd Project-Lea</code></pre>
+<p>Sonra klon içinde bir oturum başlat ve şunu söyle:</p>
+<pre><code>INSTALL.tr.md dosyasını oku ve Lea'yı bana kur.</code></pre>
+<p>Elle de yapabilirsin, iki adım: <code>config/hooks/lea.js</code> dosyasını <code>~/.claude/hooks/</code> altına kopyala, sonra <code>~/.claude/settings.json</code> içine mutlak yolla bir <code>SessionStart</code> komut hook'u olarak ekle. CLI'ı yeniden başlat; oturum <code>LEA ACTIVE</code> satırıyla açılmalı.</p>
+<div class="note plain">
+<p><strong>Bu, plugin kurulumunun yerine geçer; yanına eklenmez.</strong> <code>caveman</code>, <code>ponytail</code> ya da <code>superpowers</code> açıksa Lea'yı çalıştırmadan önce <code>enabledPlugins</code> altında hepsini <code>false</code> yap: kural setleri üst üste biner, talimatlar çelişir ve ölçülen kazanç kaybolur. Lea'nın ~180 token'ı tam olarak onların birlikte yüklediği ~6.000 token'ın yerine geçiyor.</p>
+</div>
+<p>Kurulum dosyasının ısrar edeceği ve elle yaparken de yapmaya değer iki şey: önce <code>~/.claude/settings.json</code> dosyasını yedekle, ve dosyanın üzerine yazmak yerine hook girdisini <em>birleştir</em> — içinde korunması gereken izinler, MCP config'i veya başka hook'lar olabilir.</p>
+<div class="btns">
+  <a class="btn primary" href="kurulum.html">Tam kurulum rehberi</a>
+  <a class="btn" href="Project-Lea.zip">Raporu indir (.zip)</a>
+</div>
+</div>
+
+<footer>
+  <p data-lang="en">Measured on one machine, one model (Sonnet), 3–5 samples per cell. The directions are consistent across rounds and the round-3 output-volume split is clean, but treat exact percentages as indicative. Cost figures are API pricing at the time of the runs. · <a href="./">Source on GitHub</a></p>
+  <p data-lang="tr">Tek makinede, tek modelle (Sonnet), hücre başına 3–5 örnekle ölçüldü. Yönler turlar arasında tutarlı ve Tur 3'teki çıktı hacmi ayrımı temiz, ama kesin yüzdeleri gösterge sayın. Maliyet rakamları koşu anındaki API fiyatlarıdır. · <a href="./">GitHub'da kaynak</a></p>
+</footer>
+
+</main>
+</div>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll('.langswitch button');
+
+  function apply(lang) {
+    root.setAttribute('data-active', lang);
+    root.setAttribute('lang', lang);
+    buttons.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.set === lang));
+    });
+    try { localStorage.setItem('ccsl-lang', lang); } catch (e) {}
+  }
+
+  var stored = null;
+  try { stored = localStorage.getItem('ccsl-lang'); } catch (e) {}
+  if (stored !== 'en' && stored !== 'tr') {
+    stored = (navigator.language || '').toLowerCase().indexOf('tr') === 0 ? 'tr' : 'en';
+  }
+  apply(stored);
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { apply(b.dataset.set); });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  var PASS_HASH = '5b5d60e378756c8f45e60013c5c69940946d2d4b147e840031bae87ed7d13a9d';
+
+  function unlock() {
+    document.body.classList.remove('locked');
+    var gate = document.getElementById('gate');
+    if (gate) gate.remove();
+  }
+
+  try {
+    if (sessionStorage.getItem('ccsl-open') === '1') { unlock(); return; }
+  } catch (e) {}
+
+  var form = document.getElementById('gateForm');
+  var input = document.getElementById('gateInput');
+  var error = document.getElementById('gateError');
+  input.focus();
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(input.value)).then(function (buf) {
+      var hex = Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+      if (hex === PASS_HASH) {
+        try { sessionStorage.setItem('ccsl-open', '1'); } catch (e) {}
+        unlock();
+        return;
+      }
+      error.hidden = false;
+      input.value = '';
+      input.focus();
+      form.classList.remove('shake');
+      void form.offsetWidth;   // restart the animation
+      form.classList.add('shake');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

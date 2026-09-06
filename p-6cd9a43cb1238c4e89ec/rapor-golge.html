@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gölge kolu durumu</title>
+<style>
+:root {
+  --bg: #fbfbfa; --raised: #ffffff; --sunken: #f2f2ef;
+  --text: #1f1f1d; --dim: #5f5f58; --faint: #8a8a80;
+  --border: #e2e2dc; --strong: #cfcfc6; --accent: #b4531f;
+  --good: #2f6f43; --bad: #a8341f;
+  --s-sonnet: #2a78d6; --s-opus: #eb6834;
+  --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+    --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+    --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+    --good: #6cc08a; --bad: #e2705b;
+    --s-sonnet: #3987e5; --s-opus: #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+  --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+  --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+  --good: #6cc08a; --bad: #e2705b;
+  --s-sonnet: #3987e5; --s-opus: #d95926;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.2rem 5rem; }
+h1 { font-size: 1.6rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; margin: 3rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+h3 { font-size: 0.95rem; margin: 1.6rem 0 0.4rem; color: var(--dim); }
+p { margin: 0.7rem 0; }
+.sub { color: var(--dim); margin: 0 0 2rem; }
+.lead { font-size: 1.02rem; }
+strong { font-weight: 650; }
+code { font-family: var(--mono); font-size: 0.87em; background: var(--sunken);
+  padding: 0.1em 0.35em; border-radius: 4px; }
+figure { margin: 1.4rem 0 0.6rem; padding: 1rem 0.8rem 0.6rem; background: var(--raised);
+  border: 1px solid var(--border); border-radius: 10px; }
+figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 0.5rem; padding: 0 0.4rem; }
+.chart { display: block; width: 100%; height: auto; }
+.grid { stroke: var(--border); stroke-width: 1; }
+.tick, .cat, .val, .axis, .missing, .ser { font-family: var(--sans); fill: var(--dim); }
+.tick { font-size: 11px; }
+.cat { font-size: 12px; fill: var(--text); font-weight: 600; }
+/* Which bar is which model, written under the bar itself. A legend two hues wide is one glance
+   too many, and it fails outright for a reader who cannot tell the hues apart. */
+.ser { font-size: 9.5px; letter-spacing: 0.02em; }
+.ser-sonnet { fill: var(--s-sonnet); }
+.ser-opus { fill: var(--s-opus); }
+.val { font-size: 11px; fill: var(--dim); }
+.axis { font-size: 11px; fill: var(--faint); }
+.missing { font-size: 13px; fill: var(--faint); }
+.dot-ok { fill: var(--good); stroke: var(--raised); stroke-width: 2; }
+.dot-bad { fill: var(--bad); stroke: var(--raised); stroke-width: 2; }
+.legend { display: flex; gap: 1rem; padding: 0.2rem 0.4rem 0; font-size: 0.82rem; color: var(--dim); }
+.key { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.scroll { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.note { background: var(--sunken); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1.2rem 0; font-size: 0.92rem; }
+.pending { color: var(--faint); font-style: italic; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  color: var(--faint); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Gölge kolu: ne topladı, neden bu kadar az</h1>
+<p class="sub">Her istemi ikinci kez, stok bir config ile, dizinin bir kopyasında cevaplayan
+arka plan kolu. 2026-09-05 20:08 tarihinde <code>savings.py</code> tarafından üretildi.</p>
+
+<div class="note">
+<strong>234 istem kaydedildi, 12 tanesi koştu, $11.29 harcandı,
+karşılaştırılabilir çift sayısı <em>4</em>.</strong>
+Yani tasarruf rakamı hâlâ bir izdüşüm. 4 çift aynı istemi iki kola sordu, ama <strong>oran taşıyabilen 0</strong>: bir kolun iş yapıp diğerinin yapmadığı bir çiftten çıkan oran ölçüm değil. Hedef ~20, sayaç 0/20. Bu, ölçüm düzeneğinin bozuk olduğu anlamına gelmiyor &mdash; kabul kriterleri
+kasıtlı olarak sıkı, çünkü 31 Ağustos&rsquo;ta gevşek kriterle toplanan 5 çiftin 5&rsquo;i de
+karşılaştırılamazdı ve $5,74 boşa gitti.
+</div>
+
+<h2>Gün gün: kaç koşu, ne eledi</h2>
+<div class="scroll"><table>
+<thead><tr><th>gün</th><th>koştu</th><th>Oturum ortasında geldi</th><th>İstem çok kısa</th><th>Ev dizininde ajanslı istem (eski kural)</th><th>Onay kalıbı</th><th>Başka koşu sürüyor</th><th>Diğer</th><th>Kuyruğa alındı</th></tr></thead>
+<tbody><tr><td>2026-08-30</td><td><b>3</b></td><td></td><td>3</td><td>8</td><td></td><td></td><td></td><td></td></tr><tr><td>2026-08-31</td><td><b>4</b></td><td>22</td><td>11</td><td></td><td></td><td>1</td><td></td><td>1</td></tr><tr><td>2026-09-01</td><td><b>0</b></td><td>31</td><td>6</td><td></td><td>2</td><td></td><td></td><td></td></tr><tr><td>2026-09-02</td><td><b>1</b></td><td>44</td><td>1</td><td>2</td><td></td><td></td><td>1</td><td></td></tr><tr><td>2026-09-03</td><td><b>3</b></td><td>24</td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>2026-09-04</td><td><b>1</b></td><td>45</td><td>1</td><td></td><td>1</td><td></td><td></td><td></td></tr><tr><td>2026-09-05</td><td><b>0</b></td><td>17</td><td>1</td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+
+<h2>Elemelerin dökümü</h2>
+<div class="scroll"><table>
+<thead><tr><th>sebep</th><th>istem</th><th>neden eleniyor</th></tr></thead>
+<tbody><tr><td>Oturum ortasında geldi</td><td>183</td><td>Gölge kolunun çözebileceği bir konuşma yok: aynı istem iki kola aynı problemi vermiyor.</td></tr><tr><td>İstem çok kısa</td><td>23</td><td>min_prompt_chars altında. "ok" türü onayları defterden uzak tutmak için.</td></tr><tr><td>Ev dizininde ajanslı istem (eski kural)</td><td>10</td><td>2026-09-02 öncesi: cwd ev diziniyse istem atılıyordu. Artık project_roots devreye giriyor.</td></tr><tr><td>Onay kalıbı</td><td>3</td><td>evet / tamam / devam gibi; zaten bir ölçüm değil.</td></tr><tr><td>Başka koşu sürüyor</td><td>1</td><td>Aynı anda tek koşu - her biri durum dosyasının tamamını yeniden yazıyor.</td></tr><tr><td>Diğer</td><td>1</td><td></td></tr></tbody></table></div>
+
+<div class="note"><strong>2026-09-02&rsquo;de bulunan hata: oturumu açan istem, tam da
+kaçırılması garanti olan istemdi.</strong> Hook <code>UserPromptSubmit</code>&rsquo;te
+&ldquo;bu oturum daha önce cevap verdi mi&rdquo; sorusunu transcript&rsquo;i okuyarak
+cevaplıyordu &mdash; ama bir oturumun <em>ilk</em> isteminde Claude Code o dosyayı çoğu zaman
+henüz yazmamış oluyor, okuma hata veriyor ve &ldquo;okunamadı&rdquo; <em>&ldquo;oturum başı
+değil&rdquo;</em> diye çözülüyordu. Kural 31 Ağustos&rsquo;ta devreye girdikten sonra gelen
+<strong>3 oturum açıcının 2&rsquo;si</strong> bu yüzden &ldquo;oturum ortası&rdquo; diye elendi;
+üçüncüsünü ev dizini eledi. Yani kuralın yürürlükte olduğu süre boyunca verim tam olarak sıfırdı.
+Artık soruyu transcript değil, hook&rsquo;un kendi <code>.sessions/&lt;id&gt;.json</code> işaret
+dosyası cevaplıyor: yokluğu, bu oturumun daha önce görülmediğinin kanıtı ve dosya sistemi
+zamanlamasına bağlı değil. Beş durumda da doğrulandı.</div>
+
+<h2>Verimi ne kilitliyor</h2>
+<ol>
+<li><strong>Oturum başına tek şans.</strong> Yalnızca bir oturumu <em>açan</em> istem
+karşılaştırılabilir; sonrasında istem, konuşmanın ona yüklediği anlamı taşır ve gölge kolunun
+o konuşması yoktur. Bu kural doğru, ama uzun oturum = az örnek demek: Lea defterinde
+194 satır var ve bir oturum 400 turu geçebiliyor. Ölçüldü: kayıtlı istemlerin
+transcript&rsquo;lerle eşleşen 90 tanesinin <strong>yalnızca 10&rsquo;u</strong> bir oturum
+açmıştı. &ldquo;Onlarca koşu birikmiş olmalı&rdquo; beklentisinin cevabı bu: tavan zaten
+istem sayısı değil, <em>oturum</em> sayısı.</li>
+<li><strong>Ev dizininden başlatılan oturumlar &mdash; artık kayıp değil.</strong> Lea defterindeki
+194 satırdan 121 tanesi bir <em>ev dizininden</em> geldi
+ve 2026-09-02&rsquo;ye kadar hepsi eleniyordu. Artık çalışma dizini limitlere
+sığmadığında koşucu <code>project_roots</code>&rsquo;taki ilk uygun dizine düşüyor ve satıra
+<code>tree_root</code> yazıyor; <code>report.py</code> bunu Lea&rsquo;nın kendi dizini ile
+karşılaştırıp iki kolu farklı ağaçtan başlamış çiftleri ayrı raporluyor. Ölçüldü: bir proje
+885 dosya / 56 MB, <em>bir üst dizini</em> 1.649 dosya / 399 MB &mdash; ikisi de sığıyor; ev
+dizinlerinden biri 1.473 dosyada 600 MB tavanına çarpıyor, diğeri 20 saniyelik ön taramayı
+bitiremiyor.</li>
+<li><strong>Açıcı istem kısa olduğunda kaybediliyor.</strong> Bir oturumun tek şansı, o oturumun
+ilk istemidir; kısa yazılırsa <code>min_prompt_chars</code> onu eler ve o oturum defterde yer
+almaz.</li>
+</ol>
+
+<h2>Lea&rsquo;nın kendisinde ne değişti</h2>
+<p><strong>Hiçbir şey, ve bu kasıtlı.</strong> v8&rsquo;in kazandığı, kol başına n=20 ile sabit
+bir görev kümesinde ölçülmüştü (4/20&rsquo;ye karşı 13/20, Fisher p=0,010). Bu koldan bugüne
+kadar gelen veri 4 karşılaştırılabilir çift; bir v9&rsquo;u destekleyecek hiçbir
+şey yok. Bu turda yapılan geliştirme kurala değil <em>düzeneğe</em> yapıldı, üç maddede:</p>
+<ol>
+<li><strong>Oturum başı tespiti artık işaret dosyasından</strong> (yukarıdaki kutu). Verimi
+sıfırdan oturum başına bire çıkaran değişiklik bu.</li>
+<li><strong>Çalışma dizini artık kural değil, ölçüm.</strong> Kopyalanabilirliğe bir ön tarama
+karar veriyor &mdash; hem de kopyalama fonksiyonunun kendisi, yani kopyalamanın reddedeceği bir
+ağaca evet diyemiyor. Sığmazsa <code>project_roots</code> devreye giriyor ve istem atılmıyor.</li>
+<li><strong>Transcript okuması sınırlandı.</strong> Hook dosyanın tamamını iki kez okuyordu;
+artık sondan 1 MB&rsquo;lık pencerelerle geriye okuyup ilk asistan kaydında duruyor &mdash;
+46,9 MB&rsquo;lık bir transcript&rsquo;te <strong>1.100 ms yerine 5 ms</strong>, ve konuşma
+uzadıkça büyümüyor. 10 saniyelik <code>UserPromptSubmit</code> zaman aşımını üreten şey buydu.
+Aynı değişiklik <code>&lt;synthetic&gt;</code> kayıtlarını da eliyor; eskiden bunlardan biri en
+yenisi olduğunda runner&rsquo;a model kimliği diye <code>&lt;synthetic&gt;</code> geçiliyordu.</li>
+<li><strong>Eleme sırası düzeltildi.</strong> <code>min_prompt_chars</code> oturum-başı
+testinden önce bakılıyordu, yani kısa bir açıcı istem defterde &ldquo;çok kısa&rdquo; diye
+görünüp o oturumun tek şansını sessizce harcıyordu. Artık oturum-başı testi ilk sırada.</li>
+</ol>
+
+<footer>Kaynak: <code>shadow/shadow.csv</code> (234 satır) ve
+<code>shadow/lea.csv</code> (194 satır). Ayrıntılı eşleme için
+<code>python shadow/report.py</code>. Bu sayfayı tazelemek için <code>python savings.py</code>.</footer>
+
+</div>
+</body>
+</html>

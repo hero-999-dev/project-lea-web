@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lea ne kazandırdı — tasarruf hesabı</title>
+<style>
+:root {
+  --bg: #fbfbfa; --raised: #ffffff; --sunken: #f2f2ef;
+  --text: #1f1f1d; --dim: #5f5f58; --faint: #8a8a80;
+  --border: #e2e2dc; --strong: #cfcfc6; --accent: #b4531f;
+  --good: #2f6f43; --bad: #a8341f;
+  --s-sonnet: #2a78d6; --s-opus: #eb6834;
+  --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+    --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+    --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+    --good: #6cc08a; --bad: #e2705b;
+    --s-sonnet: #3987e5; --s-opus: #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+  --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+  --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+  --good: #6cc08a; --bad: #e2705b;
+  --s-sonnet: #3987e5; --s-opus: #d95926;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.2rem 5rem; }
+h1 { font-size: 1.6rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; margin: 3rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+h3 { font-size: 0.95rem; margin: 1.6rem 0 0.4rem; color: var(--dim); }
+p { margin: 0.7rem 0; }
+.sub { color: var(--dim); margin: 0 0 2rem; }
+.lead { font-size: 1.02rem; }
+strong { font-weight: 650; }
+code { font-family: var(--mono); font-size: 0.87em; background: var(--sunken);
+  padding: 0.1em 0.35em; border-radius: 4px; }
+figure { margin: 1.4rem 0 0.6rem; padding: 1rem 0.8rem 0.6rem; background: var(--raised);
+  border: 1px solid var(--border); border-radius: 10px; }
+figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 0.5rem; padding: 0 0.4rem; }
+.chart { display: block; width: 100%; height: auto; }
+.grid { stroke: var(--border); stroke-width: 1; }
+.tick, .cat, .val, .axis, .missing, .ser { font-family: var(--sans); fill: var(--dim); }
+.tick { font-size: 11px; }
+.cat { font-size: 12px; fill: var(--text); font-weight: 600; }
+/* Which bar is which model, written under the bar itself. A legend two hues wide is one glance
+   too many, and it fails outright for a reader who cannot tell the hues apart. */
+.ser { font-size: 9.5px; letter-spacing: 0.02em; }
+.ser-sonnet { fill: var(--s-sonnet); }
+.ser-opus { fill: var(--s-opus); }
+.val { font-size: 11px; fill: var(--dim); }
+.axis { font-size: 11px; fill: var(--faint); }
+.missing { font-size: 13px; fill: var(--faint); }
+.dot-ok { fill: var(--good); stroke: var(--raised); stroke-width: 2; }
+.dot-bad { fill: var(--bad); stroke: var(--raised); stroke-width: 2; }
+.legend { display: flex; gap: 1rem; padding: 0.2rem 0.4rem 0; font-size: 0.82rem; color: var(--dim); }
+.key { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.scroll { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.note { background: var(--sunken); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1.2rem 0; font-size: 0.92rem; }
+.pending { color: var(--faint); font-style: italic; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  color: var(--faint); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Lea ne kazandırdı</h1>
+<p class="sub">Ölçülmüş harcama &times; ölçülmüş oran. 2026-09-05 20:08 tarihinde
+<code>savings.py</code> tarafından üretildi.</p>
+
+<div class="note">
+<strong>$362 &mdash; yani &minus;26%.</strong>
+Lea 148 gerçek istemde $1,007.74 harcadı
+(2026-08-30 &rarr; 2026-09-04, 3,705 tur, hepsi Opus).
+Aynı iş <code>full</code> ile <strong>$1,370</strong> tutardı.
+Bu <em>alt</em> sınır; ölçülen en iyi tur aynı hesapta $1,065
+(&minus;51%) veriyor.
+</div>
+
+<p><strong>Bunu kanıtlamanın maliyeti:</strong> gölge kolu bugüne kadar <b>$11.29</b> harcadı &mdash; 12 koşu, 234 istem kaydedildi. Manşetten düşülmedi ve düşülmemeli: manşet kural setinin gerçek işte kazandırdığı, bu ise onu ölçen deneyin bedeli. Aynı cüzdandan çıkıyor olmaları onları aynı şey yapmıyor &mdash; ama rakamı yanına yazmadan tasarruf rakamı yarım kalır.</p>
+
+<h2>Karşılaştırma neye karşı</h2>
+<p><code>full</code> = superpowers + ponytail + caveman, artı iki SessionStart hook&rsquo;u. Bu
+config keyfi seçilmedi: <strong>Lea&rsquo;dan önce bu hesapta gerçekten çalışan config oydu.</strong>
+17 Ağustos token denetimi on bir eklentiyi bu üçe indirdi ve kararı &ldquo;full kalsın&rdquo; oldu;
+26 Ağustos&rsquo;ta Lea hepsinin yerini alana kadar da öyle kaldı. <code>bare</code> ile
+karşılaştırmak, kullanıcının hiç çalıştırmadığı bir config ile karşılaştırmak olurdu.</p>
+
+<h2>Ölçülen oranlar (Opus)</h2>
+<div class="scroll"><table>
+<thead><tr><th>tur</th><th>Lea USD medyan</th><th>full USD medyan</th><th>oran</th>
+<th>kesinti</th><th>n (Lea/full)</th></tr></thead>
+<tbody><tr><td>Metin (araç yok)</td><td>0.2032</td><td>0.4180</td><td>0.486</td><td>&minus;51.4%</td><td>5 / 3</td></tr><tr><td>Gerçek proje turu</td><td>3.7349</td><td>5.5595</td><td>0.672</td><td>&minus;32.8%</td><td>3 / 3</td></tr><tr><td>Zor bug fix</td><td>0.2058</td><td>0.2923</td><td>0.704</td><td>&minus;29.6%</td><td>5 / 5</td></tr><tr><td>Kolay bug fix</td><td>0.1842</td><td>0.2503</td><td>0.736</td><td>&minus;26.4%</td><td>3 / 3</td></tr></tbody></table></div>
+<p>Manşet bu dört satırın <strong>en kötüsünü</strong> kullanıyor. Dolayısıyla alıntılanan rakamı
+korpüsteki hiçbir ölçüm altına çekmiyor; bant yukarı doğru açık.</p>
+
+
+
+<h2>Hangi kurulum ne kadarını yazdı</h2>
+<p>Tek defter, birden çok kurulum. Her satır hangi Windows kullanıcısının yazdığını taşıyor;
+taşımasaydı iki kurulum arasındaki fark bir config farkı gibi okunurdu.</p>
+<div class="scroll"><table>
+<thead><tr><th>kullanıcı</th><th>istem</th><th>USD</th><th>pay</th></tr></thead>
+<tbody><tr><td><code>A</code></td><td>146</td><td>$1,001.81</td><td>99%</td></tr><tr><td><code>B</code></td><td>2</td><td>$5.94</td><td>1%</td></tr></tbody></table></div>
+<div class="note"><strong>46 satır hesabın dışında bırakıldı</strong> &mdash; o kurulum Lea çalıştırmıyordu (other, other-carried-lea). Eklentileri açık bir oturum Lea değildir; satırı Lea&rsquo;nın adı altına yazmak, bir benchmark&rsquo;ın kaldıramayacağı tek hatadır &mdash; çünkü satır hâlâ kanıt gibi görünür.</div>
+
+<h2>Gerçek işin maliyeti nereye gidiyor</h2>
+<p>148 istemin token dökümü, aynı fiyat vektörleriyle:</p>
+<div class="scroll"><table>
+<thead><tr><th>kalem</th><th>token</th><th>USD</th><th>pay</th></tr></thead>
+<tbody>
+<tr><td>cache okuma (konuşmayı yeniden okumak)</td><td>1,407,083,698</td>
+    <td>$704.95</td><td>70%</td></tr>
+<tr><td>girdi + cache yazma</td><td>18,816,228</td>
+    <td>$187.97</td><td>19%</td></tr>
+<tr><td>çıktı</td><td>4,760,804</td>
+    <td>$119.12</td><td>12%</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Gerçek oturumlarda paranın üçte ikisi konuşmayı yeniden okumaya
+gidiyor, çıktıya değil.</strong> Lea&rsquo;nın 120 kelimelik bütçesinin doğrudan kestiği kalem
+maliyetin yalnızca %12&rsquo;i. Asıl kaldıraç <em>tur sayısı</em>: her tur bütün
+konuşmayı yeniden okur, ve benchmark&rsquo;ta Lea turu kısaltıyor (zor bug turunda Opus&rsquo;ta 7
+tur, superpowers 9,5). Bu, buradaki manşetin neden muhafazakâr olduğunun da cevabı: oranlar tek
+görevlik başsız koşulardan geliyor, gerçek oturum ise 20&ndash;46 turluk.</div>
+
+<h2>Neye güvenilmemeli</h2>
+<ul>
+<li><strong>Bu ölçülmüş bir tasarruf değil, bir izdüşüm.</strong> Ölçülmüş oran &times; ölçülmüş
+harcama. Tasarrufu doğrudan ölçecek şey gölge kolu, ve gölge kolu bugüne kadar
+<em>tek bir karşılaştırılabilir çift</em> üretmedi.</li>
+<li><strong>Oranlar başsız tek görevlik koşulardan.</strong> Gerçek oturumun maliyet yapısı
+farklı (yukarıdaki tablo); oran yukarı da aşağı da kayabilir.</li>
+<li><strong>Kalite bu sayfanın konusu değil.</strong> Opus&rsquo;ta beş config de test görevlerini
+doğru çözüyor; ucuzluk iddiası &ldquo;aynı sonuç, daha az para&rdquo; demek, &ldquo;daha iyi
+sonuç&rdquo; demek değil.</li>
+<li><strong>Dolar rakamları liste fiyatıyla token maliyeti,</strong> fatura değil. Pro
+aboneliğinde bağlayıcı kısıt oturum limiti; bu sayfa o limitin ne kadarının harcandığını
+gösteriyor, ne kadar ödendiğini değil.</li>
+</ul>
+
+<footer>Kaynaklar: <code>shadow/lea.csv</code> (148 satır) &middot;
+<code>merged.csv</code> (386 koşu) &middot;
+<code>project-round/results.csv</code>. Her rakam <code>savings.json</code>&rsquo;da açık.
+Sayfayı tazelemek için <code>python savings.py</code>.</footer>
+
+</div>
+</body>
+</html>

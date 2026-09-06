@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v9 denendi, geçemedi</title>
+<style>
+:root {
+  --bg: #fbfbfa; --raised: #ffffff; --sunken: #f2f2ef;
+  --text: #1f1f1d; --dim: #5f5f58; --faint: #8a8a80;
+  --border: #e2e2dc; --strong: #cfcfc6; --accent: #b4531f;
+  --good: #2f6f43; --bad: #a8341f;
+  --s-sonnet: #2a78d6; --s-opus: #eb6834;
+  --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+    --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+    --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+    --good: #6cc08a; --bad: #e2705b;
+    --s-sonnet: #3987e5; --s-opus: #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+  --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+  --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+  --good: #6cc08a; --bad: #e2705b;
+  --s-sonnet: #3987e5; --s-opus: #d95926;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.2rem 5rem; }
+h1 { font-size: 1.6rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; margin: 3rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+h3 { font-size: 0.95rem; margin: 1.6rem 0 0.4rem; color: var(--dim); }
+p { margin: 0.7rem 0; }
+.sub { color: var(--dim); margin: 0 0 2rem; }
+.lead { font-size: 1.02rem; }
+strong { font-weight: 650; }
+code { font-family: var(--mono); font-size: 0.87em; background: var(--sunken);
+  padding: 0.1em 0.35em; border-radius: 4px; }
+figure { margin: 1.4rem 0 0.6rem; padding: 1rem 0.8rem 0.6rem; background: var(--raised);
+  border: 1px solid var(--border); border-radius: 10px; }
+figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 0.5rem; padding: 0 0.4rem; }
+.chart { display: block; width: 100%; height: auto; }
+.grid { stroke: var(--border); stroke-width: 1; }
+.tick, .cat, .val, .axis, .missing, .ser { font-family: var(--sans); fill: var(--dim); }
+.tick { font-size: 11px; }
+.cat { font-size: 12px; fill: var(--text); font-weight: 600; }
+/* Which bar is which model, written under the bar itself. A legend two hues wide is one glance
+   too many, and it fails outright for a reader who cannot tell the hues apart. */
+.ser { font-size: 9.5px; letter-spacing: 0.02em; }
+.ser-sonnet { fill: var(--s-sonnet); }
+.ser-opus { fill: var(--s-opus); }
+.val { font-size: 11px; fill: var(--dim); }
+.axis { font-size: 11px; fill: var(--faint); }
+.missing { font-size: 13px; fill: var(--faint); }
+.dot-ok { fill: var(--good); stroke: var(--raised); stroke-width: 2; }
+.dot-bad { fill: var(--bad); stroke: var(--raised); stroke-width: 2; }
+.legend { display: flex; gap: 1rem; padding: 0.2rem 0.4rem 0; font-size: 0.82rem; color: var(--dim); }
+.key { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.scroll { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.note { background: var(--sunken); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1.2rem 0; font-size: 0.92rem; }
+.pending { color: var(--faint); font-style: italic; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  color: var(--faint); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>v9 denendi, geçemedi</h1>
+<p class="lede"><b>v9 yok.</b> Aday geçemedi ve <code>lea.js</code> değişmedi. Aynı gün koşan kontrol <b>32/40</b>, aday
+<b>36/40</b>, iki yanlı Fisher <b>p&nbsp;=&nbsp;0.3482</b>. Bu kontrol için
+baraj <b>39/40</b>&rsquo;tı ve baraj tur koşmadan <em>önce</em> yazılmıştı.
+Tur: 92 hücre, $9.23 değerinde kota, 0 hata.</p>
+
+<h2>Turun asıl bulgusu adayla ilgili değil</h2>
+<p>v9 fikri tek bir cümleden doğdu: &ldquo;lea-v8 hard/sonnet turunda
+13/20.&rdquo; O cümle bir <em>oran</em> sanıldı. Aynı bayt-aynı
+config üç blokta şunları aldı:</p>
+<table><thead><tr><th>blok</th><th>skor</th><th>oran</th></tr></thead>
+<tbody><tr><td>benchmark s1–20</td><td>13/20</td><td>0.65</td></tr><tr><td>1. aşama s21–40</td><td>15/20</td><td>0.75</td></tr><tr><td>2. aşama s41–60</td><td>17/20</td><td>0.85</td></tr></tbody></table>
+<p>Havuzda <b>45/60 = 0.75</b>. Ve bu bir sürüklenme değil, gürültü: 60 örneklik
+bir 0.75 oranının n=20&rsquo;deki standart sapması
+1.94 başarı, yani gözlenen skorlar
+ortalamanın bir standart sapması içinde. <b>13/20 bir oran
+değil, düşük bir çekilişti.</b></p>
+
+<h2>Aynı gün kontrolü neyi durdurdu</h2>
+<p>Aday <em>tarihsel</em> 13/20&rsquo;ye karşı ölçülseydi
+p&nbsp;=&nbsp;0.0315 çıkardı &mdash; yani
+&ldquo;kazandı&rdquo; diye okunurdu. Aynı gün koşan kontrole karşı p&nbsp;=&nbsp;0.3482.
+Aradaki fark kolun değil, <em>günün</em> farkıydı.</p>
+
+<h2>&ldquo;Kanıtlanamadı&rdquo; ile &ldquo;işe yaramıyor&rdquo; aynı şey değil</h2>
+<p>Aday 0.90, kontrol 0.80. Bu fark gerçek olabilir; bu
+düzenek onu söyleyemez. 0.75 ile 0.90 arasını çözmek kol başına
+n&asymp;100 ister. Tur bunu satın almadı, ve almaması gerektiğini söyleyen şey de yine bu
+sayfadaki üç bloktu.</p>
+
+<h2>Uzunluğun bedeli</h2>
+<p>Aday banner&rsquo;a kelime ekliyor. Aynı gün, aynı görevde maliyet oranı: hard turunda
+<b>1.056</b>, düzyazı turunda <b>1.041</b>. Düzyazı kolu kol
+başına n=6, ki bu yalnızca kabaca %35&rsquo;in üstündeki bir bozulmayı görebilir:
+büyük bir bedel <em>yok</em>, küçük bir bedelin yokluğu <em>kanıtlanmadı</em>.</p>
+
+<footer>Kaynak: <code>merged.csv</code>, hard/sonnet turu. Satırlar <b>2026-09-05</b> gecesine
+sabitli: 40 kontrol + 40 aday hücresi,
+6+6 düzyazı. Yukarıdaki karşılaştırma
+satırı (20 örnek) turun dışından, benchmark&rsquo;ın kendi bloğu. Sayfa bir
+<em>turun kaydı</em>, hücrenin canlı toplamı değil &mdash; sonradan eklenen satır barajı önceden
+yazılmış bir testi geçersiz kılardı. Sayıların hiçbiri elle yazılmadı; tazelemek için
+<code>python savings.py</code>.</footer>
+
+</div>
+</body>
+</html>

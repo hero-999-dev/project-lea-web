@@ -1,0 +1,114 @@
+{
+  "generated": "2026-09-05 20:08",
+  "baseline": "full",
+  "model": "opus",
+  "lea": {
+    "prompts": 148,
+    "total_usd": 1007.7419639999999,
+    "median_usd": 2.628375,
+    "turns": 3705,
+    "output_tokens": 4760804,
+    "input_tokens": 18816228,
+    "cache_read_tokens": 1407083698,
+    "first": "2026-08-30 18:02:51",
+    "last": "2026-09-04 10:14:05",
+    "models": [
+      "claude-opus-5"
+    ],
+    "by_user": {
+      "A": {
+        "prompts": 146,
+        "usd": 1001.8068629999996
+      },
+      "B": {
+        "prompts": 2,
+        "usd": 5.935101
+      }
+    },
+    "excluded_rows": 46,
+    "excluded_configs": [
+      "other",
+      "other-carried-lea"
+    ],
+    "pooled": {},
+    "pooled_unknown": 0
+  },
+  "matrix_rows": 386,
+  "rounds": [
+    {
+      "round": "prose",
+      "label": "Metin (araç yok)",
+      "lea_usd": 0.203235,
+      "base_usd": 0.41803599999999996,
+      "n_lea": 5,
+      "n_base": 3,
+      "ratio": 0.4861662631926437,
+      "cut_pct": 51.38337368073562
+    },
+    {
+      "round": "tools",
+      "label": "Kolay bug fix",
+      "lea_usd": 0.184161,
+      "base_usd": 0.250278,
+      "n_lea": 3,
+      "n_base": 3,
+      "ratio": 0.7358257617529307,
+      "cut_pct": 26.41742382470693
+    },
+    {
+      "round": "hard",
+      "label": "Zor bug fix",
+      "lea_usd": 0.205777,
+      "base_usd": 0.292316,
+      "n_lea": 5,
+      "n_base": 5,
+      "ratio": 0.7039539402564348,
+      "cut_pct": 29.604605974356524
+    },
+    {
+      "round": "project",
+      "label": "Gerçek proje turu",
+      "lea_usd": 3.7348774999999996,
+      "base_usd": 5.559510499999999,
+      "n_lea": 3,
+      "n_base": 3,
+      "ratio": 0.6717997025097804,
+      "cut_pct": 32.82002974902196
+    }
+  ],
+  "headline": {
+    "ratio": 0.7358257617529307,
+    "would_be_usd": 1369.5388451734732,
+    "saved_usd": 361.79688117347325,
+    "saved_pct": 26.41742382470693,
+    "source": "Kolay bug fix",
+    "n": "3/3"
+  },
+  "ceiling": {
+    "ratio": 0.4861662631926437,
+    "would_be_usd": 2072.834008230393,
+    "saved_usd": 1065.0920442303932,
+    "saved_pct": 51.38337368073562,
+    "source": "Metin (araç yok)",
+    "n": "5/3"
+  },
+  "shadow": {
+    "rows": 234,
+    "ok": 12,
+    "truncated": 0,
+    "deferred": 1,
+    "spent_usd": 11.290763499999999,
+    "buckets": {
+      "home directory": 10,
+      "shorter than min_prompt_chars": 23,
+      "in flight": 1,
+      "mid-conversation": 183,
+      "skip pattern": 3,
+      "other": 1
+    },
+    "comparable": 4,
+    "usable": 0,
+    "lea_rows": 194,
+    "home_cwd": 121
+  }
+}

@@ -1,0 +1,795 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Config Ölçüm Defteri</title>
+<style>
+  :root {
+    --paper:   #e9ecef;
+    --card:    #f7f8f9;
+    --sunk:    #dfe4e8;
+    --ink:     #131a20;
+    --ink-2:   #5c6873;
+    --ink-3:   #7d8892;
+    --rule:    #cdd4da;
+    --accent:  #0a6e8c;
+    --accent-soft: #0a6e8c22;
+    --good:    #2c6e49;
+    --bad:     #9b2c2c;
+    --warn:    #8a5a00;
+    --good-bg: #2c6e4919;
+    --bad-bg:  #9b2c2c19;
+    --warn-bg: #8a5a0019;
+
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --data: "Cascadia Mono", ui-monospace, Consolas, "SF Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #101519;
+      --card:    #171e24;
+      --sunk:    #0b1014;
+      --ink:     #e4eaef;
+      --ink-2:   #93a1ac;
+      --ink-3:   #74828d;
+      --rule:    #26313a;
+      --accent:  #4fb3d1;
+      --accent-soft: #4fb3d128;
+      --good:    #63b37e;
+      --bad:     #e0716b;
+      --warn:    #d9a340;
+      --good-bg: #63b37e1f;
+      --bad-bg:  #e0716b1f;
+      --warn-bg: #d9a3401f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #101519;
+    --card:    #171e24;
+    --sunk:    #0b1014;
+    --ink:     #e4eaef;
+    --ink-2:   #93a1ac;
+    --ink-3:   #74828d;
+    --rule:    #26313a;
+    --accent:  #4fb3d1;
+    --accent-soft: #4fb3d128;
+    --good:    #63b37e;
+    --bad:     #e0716b;
+    --warn:    #d9a340;
+    --good-bg: #63b37e1f;
+    --bad-bg:  #e0716b1f;
+    --warn-bg: #d9a3401f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem) 6rem; }
+  .col { max-width: 74ch; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.1rem); line-height: 1.1; margin: 0; }
+  h2 { font-size: clamp(1.5rem, 3vw, 1.95rem); line-height: 1.2; margin: 0; }
+  h3 { font-size: 1.12rem; margin: 2.4rem 0 0.6rem; }
+  p { margin: 0 0 1rem; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  code, .mono { font-family: var(--data); font-size: 0.88em; }
+  code { background: var(--sunk); padding: 0.1em 0.36em; border-radius: 3px; }
+
+  header.masthead {
+    border-bottom: 1px solid var(--rule);
+    padding: clamp(3rem, 8vw, 5.5rem) 0 2.2rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .eyebrow {
+    font-family: var(--data); font-size: 0.72rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 68ch; margin: 0; }
+
+  .kpis {
+    display: grid; gap: 1px; background: var(--rule);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    border: 1px solid var(--rule); margin: 2.5rem 0 0;
+  }
+  .kpi { background: var(--card); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.15rem; }
+  .kpi b { font-family: var(--data); font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .kpi span { font-size: 0.82rem; color: var(--ink-2); }
+
+  nav.toc { margin: 2.5rem 0 0; font-size: 0.92rem; }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+  nav.toc a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  nav.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  section { padding-top: 3.6rem; }
+  .sec-head { display: flex; align-items: baseline; gap: 0.9rem; margin-bottom: 1.4rem; }
+  .marker {
+    font-family: var(--data); font-size: 0.78rem; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 2px; padding: 0.1rem 0.42rem;
+    letter-spacing: 0.05em; flex: none;
+  }
+
+  .scroller { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--rule); background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { padding: 0.58rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  thead th {
+    font-family: var(--data); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--ink-3); font-weight: 500; background: var(--sunk);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
+  td.cfg { font-family: var(--data); font-weight: 600; }
+  tr.hl td { background: var(--accent-soft); }
+
+  .meter { display: grid; grid-template-columns: 1fr 3.6rem; align-items: center; gap: 0.6rem; min-width: 9rem; }
+  .meter .track { height: 7px; background: var(--sunk); border-radius: 2px; overflow: hidden; }
+  .meter .fill { display: block; height: 100%; background: var(--accent); border-radius: 0 2px 2px 0; }
+  .meter .val { font-family: var(--data); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.86rem; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.32rem; font-family: var(--data);
+    font-size: 0.76rem; padding: 0.08rem 0.42rem; border-radius: 2px; border: 1px solid;
+  }
+  .tag.ok   { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+  .tag.no   { color: var(--bad);  border-color: var(--bad);  background: var(--bad-bg); }
+  .tag.mid  { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+
+  .verdict {
+    border-left: 3px solid var(--accent); background: var(--card);
+    padding: 0.9rem 1.2rem; margin: 1.6rem 0; max-width: 74ch;
+  }
+  .verdict b { font-family: var(--data); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.25rem; }
+  .verdict p { margin: 0; }
+
+  .note { color: var(--ink-2); font-size: 0.92rem; max-width: 74ch; }
+  ul.tight { max-width: 74ch; padding-left: 1.1rem; margin: 0 0 1rem; }
+  ul.tight li { margin-bottom: 0.5rem; }
+
+  details.trap { border-top: 1px solid var(--rule); padding: 0.9rem 0; max-width: 78ch; }
+  details.trap summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; gap: 0.7rem; align-items: baseline; }
+  details.trap summary::-webkit-details-marker { display: none; }
+  details.trap summary::before { content: "+"; font-family: var(--data); color: var(--accent); }
+  details.trap[open] summary::before { content: "\2212"; }
+  details.trap > div { padding: 0.7rem 0 0 1.4rem; color: var(--ink-2); }
+  details.trap p { margin: 0 0 0.7rem; }
+
+  pre {
+    font-family: var(--data); font-size: 0.82rem; line-height: 1.55; background: var(--card);
+    border: 1px solid var(--rule); padding: 0.9rem 1rem; overflow-x: auto; margin: 0 0 1rem;
+  }
+  footer { border-top: 1px solid var(--rule); margin-top: 4rem; padding-top: 1.4rem; color: var(--ink-3); font-size: 0.86rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* TIMELINE:CSS:START */
+.tl { list-style: none; margin: 1.4rem 0 0; padding-inline-start: 1.5rem; border-inline-start: 2px solid var(--rule); }
+.tl > li { position: relative; padding-bottom: 1.5rem; }
+.tl > li:last-child { padding-bottom: 0; }
+.tl > li::before {
+  content: ""; position: absolute; inset-inline-start: calc(-1.5rem - 6px); top: 0.4rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--rule);
+}
+.tl > li.tl-key::before  /* namespaced: one report styles a chart legend .key */ { background: var(--accent); border-color: var(--accent); }
+.tl time { display: block; font-family: var(--data); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.tl h4 { margin: 0.15rem 0 0.35rem; font-size: 1rem; font-weight: 640; color: var(--ink); }
+.tl p { margin: 0 0 0.4rem; color: var(--ink-2); max-width: 68ch; }
+.tl p:last-child { margin-bottom: 0; }
+/* TIMELINE:CSS:END */
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Claude Code · 17 Ağustos 2026, 30 Ağustos'ta güncellendi · 286 ölçülen koşu</div>
+  <h1>Hangi config gerçekten işe yarıyor?</h1>
+  <p class="lede">
+    Bu makinedeki Claude Code kurulumunun beş varyantı, beş farklı iş tipinde ölçüldü:
+    prose üretimi, kolay bug fix, ince bug fix, ikinci bir ince bug fix ve sıfırdan web sitesi.
+    Hepsi hem Sonnet'te hem Opus'ta koşturuldu. Maliyet her turda ölçüldü; kalite, sonucu
+    gerçekten çalıştıran nesnel testlerle notlandı. Aşağıdaki dört tur bölümü Sonnet'i
+    anlatıyor; ikinci ince tur ile iki modelin karşılaştırması <em>Karar</em> bölümünde.
+  </p>
+
+  <div class="kpis">
+    <div class="kpi"><b>5</b><span>ölçüm turu</span></div>
+    <div class="kpi"><b>286</b><span>koşu (Sonnet + Opus)</span></div>
+    <div class="kpi"><b>$63.6</b><span>toplam maliyet</span></div>
+    <div class="kpi"><b>5+2</b><span>config: beş aday, artı Lea v7/v8</span></div>
+  </div>
+
+  <nav class="toc">
+    <ol>
+      <li><a href="#configs">Configler</a></li>
+      <li><a href="#yontem">Yöntem</a></li>
+      <li><a href="#tur1">1 · Prose</a></li>
+      <li><a href="#tur2">2 · Kolay bug</a></li>
+      <li><a href="#tur3">3 · İnce bug</a></li>
+      <li><a href="#tur4">4 · Web sitesi</a></li>
+      <li><a href="#karar">Karar</a></li>
+      <li><a href="#zaman">Nasıl ilerledi</a></li>
+      <li><a href="#tuzaklar">Tuzaklar</a></li>
+      <li><a href="#dosyalar">Dosyalar</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="configs">
+  <div class="sec-head"><span class="marker">A</span><h2>Karşılaştırılan beş config</h2></div>
+  <p class="col">
+    Her config ayrı bir <code>--settings</code> dosyası. Ölçüm sırasında hiçbiri diğerinin
+    ayarını görmüyor: çağrılar proje ayarı bulunmayan bir dizinden
+    <code>--setting-sources project</code> ile yapıldı.
+  </p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>config</th><th>eklenti</th><th>hook</th><th>modele ulaşan banner</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="cfg">bare</td><td>yok</td><td>yok</td><td class="mono">NONE</td></tr>
+        <tr><td class="cfg">hooks</td><td>yok</td><td><span class="mono">verification-activate.js</span> + <span class="mono">lean-context-activate.js</span></td><td class="mono">LEAN-CONTEXT, VERIFICATION</td></tr>
+        <tr><td class="cfg">superpowers</td><td><span class="mono">superpowers</span></td><td>yok</td><td class="mono">NONE (banner basmıyor)</td></tr>
+        <tr><td class="cfg">modes</td><td><span class="mono">caveman</span> + <span class="mono">ponytail</span></td><td>yok</td><td class="mono">CAVEMAN, PONYTAIL</td></tr>
+        <tr class="hl"><td class="cfg">full</td><td>üçü birden</td><td>ikisi de</td><td class="mono">dördü de</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">
+    <strong>full</strong> = bu makinedeki mevcut kurulumun aynısı. Banner sütunu tahmin değil:
+    her config'e “sistem bağlamındaki ALL-CAPS aktivasyon satırlarını aynen listele” diye
+    sorulup doğrulandı. <code>superpowers</code> banner basmıyor ama yükleniyor — aynı probe'da
+    çağrılabilir skill sayısı <span class="mono">bare</span>'de 6, <span class="mono">superpowers</span>'ta 26.
+  </p>
+
+  <h3>Sabit başlangıç maliyeti</h3>
+  <p class="col">Ayrı ölçüm: aynı prompt, aynı model, sadece config değişiyor. Bu tablo yalnızca sabit yükü gösterir, tüketimi değil.</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>kurulum</th><th class="num">prompt tokeni</th></tr></thead>
+      <tbody>
+        <tr><td>eklenti yok, custom hook yok</td><td class="num">22,651</td></tr>
+        <tr><td>caveman + ponytail kapalı, superpowers açık</td><td class="num">24,842</td></tr>
+        <tr><td>mevcut config, tüm skill'ler kapalı</td><td class="num">25,215</td></tr>
+        <tr class="hl"><td>mevcut config</td><td class="num">27,803</td></tr>
+        <tr><td>eski 11 eklentili config</td><td class="num">29,137</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">caveman + ponytail'in kendi sabit input maliyeti: <strong>2,961 token/oturum</strong>.</p>
+</section>
+
+<section id="yontem">
+  <div class="sec-head"><span class="marker">B</span><h2>Yöntem</h2></div>
+  <ul class="tight">
+    <li>Model her turda Sonnet. Çağrılar <code>-p</code> ile başsız, <code>--output-format json</code>, <code>--permission-mode bypassPermissions</code>, koşu başına <code>--max-budget-usd 2</code> tavanı.</li>
+    <li>Her koşu kendi boş çalışma dizininde. Görev dosyaları her koşuda şablondan yeniden kopyalanıyor.</li>
+    <li>Kalite notlaması nesnel: kod turlarında test suite'in çıkış kodu, web turunda sayfayı gerçek Chrome'da sürerek. Modelin “bitti” demesi hiçbir turda kanıt sayılmadı.</li>
+    <li>Geçerlilik kapıları her satırda kayıtlı: <code>is_error</code>, <code>permission_denials</code>, ve kod turlarında test dosyasının SHA256'sı (agent testi değiştirdiyse koşu geçersiz).</li>
+    <li>Medyanlar raporlanıyor, ortalama değil — koşu içi dağılım geniş.</li>
+  </ul>
+</section>
+
+<section id="tur1">
+  <div class="sec-head"><span class="marker">TUR 1</span><h2>Prose üretimi, araç kullanımı yok</h2></div>
+  <p class="col">
+    Üç turluk tek sohbet: token bucket ile leaky bucket farkı + Python implementasyonu, sonra
+    thread-safe hâle getirme, sonra saatin geriye atlaması. Prompt dosya yazmayı, araç
+    kullanmayı ve soru sormayı yasaklıyor — böylece sadece üretim tarzı ölçülüyor.
+    5 config × 5 örnek × 3 tur; aşağıdaki her satır 5 örneğin medyanı.
+  </p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>config</th><th class="num">input</th><th class="num">output</th><th>maliyet (USD)</th><th class="num">cevap karakteri</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">modes</td><td class="num">114,902</td><td class="num">3,074</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:46%"></span></span><span class="val">0.096</span></span></td><td class="num">4,929</td></tr>
+        <tr><td class="cfg">full</td><td class="num">124,051</td><td class="num">2,397</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:53%"></span></span><span class="val">0.112</span></span></td><td class="num">3,990</td></tr>
+        <tr><td class="cfg">bare</td><td class="num">97,580</td><td class="num">7,940</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:83%"></span></span><span class="val">0.175</span></span></td><td class="num">12,772</td></tr>
+        <tr><td class="cfg">hooks</td><td class="num">100,730</td><td class="num">7,294</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:88%"></span></span><span class="val">0.184</span></span></td><td class="num">12,925</td></tr>
+        <tr><td class="cfg">superpowers</td><td class="num">103,648</td><td class="num">9,035</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">0.210</span></span></td><td class="num">12,740</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Sonuç</b>
+    <p><strong>full, bare'den %27 daha çok input okuyor ve yine de %36 daha ucuz;
+    <span class="mono">modes</span> ise %45 ucuz.</strong>
+    Sebep output: caveman cevabı %61 kısaltıyor, output tokeni input'un yaklaşık 5 katı fiyatta
+    ve input'un çoğu zaten onda bir fiyatlı cache okuması. Prompt boyutunu küçültmeye çalışmak
+    baştan beri yanlış hedefmiş.</p>
+  </div>
+</section>
+
+<section id="tur2">
+  <div class="sec-head"><span class="marker">TUR 2</span><h2>Kolay bug fix, gerçek araç kullanımı</h2></div>
+  <p class="col">
+    Token bucket'ın <code>_refill</code> metodu geçen süreyi <code>refill_rate</code> yerine
+    <code>capacity</code> ile çarpıyor. Tek kelimelik gerçek hata, 3 assert'lik görünen test
+    suite'i onu yakalıyor. Agent testi koşturuyor, dosyayı düzenliyor, tekrar koşturuyor.
+    5 config × 5 örnek, her satır medyan.
+  </p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">input</th><th class="num">output</th><th>maliyet (USD)</th><th class="num">tur</th><th class="num">sn</th><th>doğru</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">bare</td><td class="num">156,547</td><td class="num">616</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:51%"></span></span><span class="val">0.119</span></span></td><td class="num">6</td><td class="num">116</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">hooks</td><td class="num">163,607</td><td class="num">777</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:56%"></span></span><span class="val">0.131</span></span></td><td class="num">6</td><td class="num">129</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">modes</td><td class="num">192,801</td><td class="num">719</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:74%"></span></span><span class="val">0.173</span></span></td><td class="num">6</td><td class="num">118</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">superpowers</td><td class="num">221,373</td><td class="num">1,112</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:78%"></span></span><span class="val">0.183</span></span></td><td class="num">9</td><td class="num">138</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">full</td><td class="num">267,604</td><td class="num">850</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">0.234</span></span></td><td class="num">8</td><td class="num">121</td><td><span class="tag ok">5/5</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Sonuç</b>
+    <p><strong>Tur 1'in tam tersi.</strong> 25 koşunun 25'i bug'ı düzeltti, yani kalite farkı yok;
+    geriye sadece maliyet kaldı ve orada hiçbir bileşen kendini amorti etmiyor. Araçlı görev
+    toplam 600–1,200 output tokeni üretiyor, caveman'in sıkıştıracak prose'u yok — buna karşılık
+    sabit ruleset 6–8 turun her birinde yeniden okunuyor. Tur başına input: bare 26k, full 33k.</p>
+  </div>
+</section>
+
+<section id="tur3">
+  <div class="sec-head"><span class="marker">TUR 3</span><h2>İnce bug fix — gizli suite ile notlanan tur</h2></div>
+  <p class="col">
+    İlk iki tur eşit kalitede maliyet ölçtü. Bu tur kaliteyi ayırmak için tasarlandı:
+    <code>SlidingWindow</code> limiter'ı, sözleşmesi docstring'de yazılı, ve o sözleşmeyi
+    <strong>iki yerde</strong> ihlal ediyor. 5 config × 5 örnek.
+  </p>
+
+  <ul class="tight">
+    <li><strong>A hatası</strong> — <code>allow</code> reddedilen çağrıyı da kaydediyor, bloklu client kendi kurtuluşunu erteliyor. Görünen test suite'i bunu yakalıyor.</li>
+    <li><strong>B hatası</strong> — <code>_prune</code> sınırı <code>&lt; cutoff</code> ile karşılaştırıyor, <code>&lt;=</code> olmalı; olaylar bir an fazla yaşıyor. Docstring'de yazılı ama görünen testlerin hiç dokunmadığı yer.</li>
+  </ul>
+
+  <p class="col">
+    Not veren şey gizli suite: agent çıktıktan <em>sonra</em> dizine kopyalanıyor, sadece public
+    API kullanıyor, her assert docstring'den türüyor. İlginç hücre <span class="mono">görünen=0,
+    gizli=1</span> — agent'ın kendi testi yeşil, fix yanlış. Yani yalancı tamamlanma iddiası.
+  </p>
+
+  <p class="col">Para harcanmadan önce notlamanın gerçekten ayrıştırdığı yerelde kanıtlandı:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>varyant</th><th>görünen suite</th><th>gizli suite</th></tr></thead>
+      <tbody>
+        <tr><td>shipped (A + B)</td><td><span class="tag no">fail</span></td><td><span class="tag no">fail</span></td></tr>
+        <tr class="hl"><td>sadece A düzeltildi</td><td><span class="tag ok">pass</span></td><td><span class="tag no">5/8</span></td></tr>
+        <tr><td>sadece B düzeltildi</td><td><span class="tag no">fail</span></td><td><span class="tag no">fail</span></td></tr>
+        <tr class="hl"><td>fixed-window'a yeniden yazım</td><td><span class="tag ok">pass</span></td><td><span class="tag no">5/8</span></td></tr>
+        <tr><td>doğru fix</td><td><span class="tag ok">pass</span></td><td><span class="tag ok">8/8</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Sonuçlar</h3>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>doğru</th><th class="num">yalancı bitti</th><th class="num">input</th><th class="num">output</th><th>maliyet (USD)</th><th class="num">doğru başına</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">superpowers</td><td><span class="tag ok">3/5</span></td><td class="num">2</td><td class="num">223,755</td><td class="num">2,408</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:86%"></span></span><span class="val">0.209</span></span></td><td class="num">$0.34</td></tr>
+        <tr><td class="cfg">hooks</td><td><span class="tag mid">2/5</span></td><td class="num">3</td><td class="num">165,992</td><td class="num">1,004</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:59%"></span></span><span class="val">0.143</span></span></td><td class="num">$0.38</td></tr>
+        <tr><td class="cfg">full</td><td><span class="tag mid">2/5</span></td><td class="num">3</td><td class="num">269,471</td><td class="num">1,164</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">0.244</span></span></td><td class="num">$0.65</td></tr>
+        <tr><td class="cfg">bare</td><td><span class="tag mid">1/5</span></td><td class="num">4</td><td class="num">160,048</td><td class="num">803</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:55%"></span></span><span class="val">0.134</span></span></td><td class="num">$0.66</td></tr>
+        <tr><td class="cfg">modes</td><td><span class="tag no">0/5</span></td><td class="num">5</td><td class="num">193,357</td><td class="num">748</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:71%"></span></span><span class="val">0.173</span></span></td><td class="num">hiç</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Ayrıştırıcı değişken</b>
+    <p><strong>Output hacmi, hem de sıfır örtüşmeyle.</strong> Yanlış fixlerin hepsi 1,596 output
+    tokeninin altında, doğruların hepsi 1,924'ün üstünde (medyan 860'a karşı 2,690). 25 koşuda
+    tek istisna yok. Fazla yazan koşular, kodu docstring'e karşı denetleyip B hatasını bulanlar.</p>
+  </div>
+
+  <p class="col">
+    Bu, caveman/ponytail'in kendi mekanizmasını suçlu yapıyor: prose turundaki tasarrufun tamamı
+    output'u kısmaktan geliyordu, burada kısılan output ikinci ihlalin hiç incelenmemesi demek.
+    <span class="mono">modes</span> 0/5 alırken bare'den %30 pahalı. superpowers ile birleştiğinde
+    (<span class="mono">full</span>) superpowers'ı 3/5'ten 2/5'e çekiyor.
+  </p>
+  <p class="note">
+    25/25 koşu <code>is_error=False</code>, <code>denials=0</code>, test dosyası değiştirilmemiş ve
+    <strong>görünen suite yeşil</strong>. Yani buradaki her başarısızlık çökme değil, yanlış
+    “tamamlandı” beyanı.
+  </p>
+
+  <h3>30 Ağustos eki — aynı görev, Lea'nın iki sürümü</h3>
+  <p class="col">
+    Bu tur 29–30 Ağustos'ta bir kez daha koşturuldu, ama <strong>yukarıdaki beş satırla
+    karşılaştırmak için değil</strong>: onlar 17 Ağustos'a ait ve bu projenin kendi kuralı başka
+    günün kalite rakamıyla kıyas yapmayı yasaklıyor (nedeni aşağıda, ilk caveat). Karşılaştırılan
+    şey Lea'nın kendi iki sürümü: aynı görev, aynı gün, kol başına n=20.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>sürüm</th><th>doğru</th><th class="num">medyan maliyet</th><th class="num">medyan output</th><th class="num">medyan input</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">Lea v7</td><td><span class="tag no">4/20</span></td><td class="num">0.0954</td><td class="num">1,188</td><td class="num">165,608</td></tr>
+        <tr class="hl"><td class="cfg">Lea v8</td><td><span class="tag ok">13/20</span></td><td class="num">0.0888</td><td class="num">1,524</td><td class="num">132,474</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    Fisher p=0.010; yalnız aynı günün alt kümesinde (29 Ağustos, n=14 ve n=15) 2/14'e karşı 10/15,
+    p=0.008. Aradaki tek fark istisna paragrafının kipi: v7 “analizin sınırsızdır” diye
+    <em>izin</em> veriyor, v8 sözleşme denetimini <em>zorunlu</em> kılıyor ve yeşil test suite'ini
+    o denetimin yerine saymayı açıkça yasaklıyor. Ayrıntı ve paragrafların tam metni Lea raporunda.
+  </p>
+</section>
+
+<section id="tur4">
+  <div class="sec-head"><span class="marker">TUR 4</span><h2>Sıfırdan web sitesi</h2></div>
+  <p class="col">
+    Boş dizin, tek görev: <code>index.html</code> açılınca çalışan bir pomodoro sitesi. Notlanan
+    beş davranış prompt'ta açıkça yazılı, yani hiçbir config bilmediği kuraldan sorumlu tutulmuyor.
+    5 config × 5 örnek, her satır medyan.
+  </p>
+  <p class="col">
+    Notlama gerçek Chrome'u CDP üzerinden sürüyor, bağımlılık yok: sayfa yükleniyor mu, 25:00
+    gösteriyor mu, Start geri sayıyor mu, Pause donduruyor mu, Reset 25:00'e dönüyor mu, sanal
+    zaman iş seansının ötesine sarıldığında 5 dakikalık mola başlıyor mu, ve dışarıya ağ isteği
+    var mı. Grader önce üç referans siteyle sınandı: doğru site 7/7, pause'u kırık varyant sadece
+    <span class="mono">pause_holds</span>, molası olmayan varyant sadece <span class="mono">auto_break</span> düşüyor.
+  </p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th>7/7</th><th class="num">input</th><th class="num">output</th><th>maliyet (USD)</th><th class="num">tur</th><th class="num">satır</th><th class="num">sn</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">bare</td><td><span class="tag ok">5/5</span></td><td class="num">94,500</td><td class="num">2,100</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:64%"></span></span><span class="val">0.127</span></span></td><td class="num">3</td><td class="num">158</td><td class="num">146</td></tr>
+        <tr><td class="cfg">modes</td><td><span class="tag ok">5/5</span></td><td class="num">75,895</td><td class="num">963</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:68%"></span></span><span class="val">0.134</span></span></td><td class="num">2</td><td class="num">71</td><td class="num">12</td></tr>
+        <tr><td class="cfg">superpowers</td><td><span class="tag no">4/5</span></td><td class="num">101,105</td><td class="num">2,449</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:75%"></span></span><span class="val">0.147</span></span></td><td class="num">3</td><td class="num">159</td><td class="num">151</td></tr>
+        <tr><td class="cfg">full</td><td><span class="tag ok">5/5</span></td><td class="num">124,991</td><td class="num">1,925</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:97%"></span></span><span class="val">0.191</span></span></td><td class="num">3</td><td class="num">78</td><td class="num">161</td></tr>
+        <tr><td class="cfg">hooks</td><td><span class="tag ok">5/5</span></td><td class="num">203,179</td><td class="num">3,536</td>
+          <td><span class="meter"><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">0.197</span></span></td><td class="num">6</td><td class="num">158</td><td class="num">221</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>İki anomali</h3>
+  <p class="col">
+    <strong>superpowers hiçbir şey üretmedi (5 koşunun 1'inde).</strong> Tasarımı yazdı, sonunda
+    <em>“Sound good to proceed?”</em> diye sordu — prompt soru sormayı yasakladığı ve
+    <code>-p</code> modunda cevaplayacak kimse olmadığı hâlde. Sıfır dosya. Aynı arıza bu projedeki
+    ilk benchmark denemesini de bozmuştu, yani tekrarlanabilir.
+  </p>
+  <p class="col">
+    <strong>hooks tek koşuda $0.86 yaktı.</strong> 29 tur, 1.27M input, 17,888 output; aynı config'in
+    medyanı $0.197, diğer dört koşusu 4–10 tur. Verification hook onu kendi headless Chrome'unu
+    ayağa kaldırıp sayfayı CDP ile sürmeye itti. Hook yazdığı işi yapıyor — sorun “kanıtla”nın
+    maliyet tavanının olmaması. 4.4 kat.
+  </p>
+
+  <div class="verdict">
+    <b>Hacim farkı çoğunlukla CSS, mantık değil</b>
+    <p>modes/full ~71–78 satır, diğerleri ~158–159. Ama iki siteyi doğrudan karşılaştırınca:
+    JS 47'ye 71 satır, <strong>CSS 6'ya 72</strong>. bare fazladan output'u koyu temaya, karta,
+    hover/active durumlarına, mod renk geçişine ve viewport meta'sına harcamış. modes sitesi
+    davranışsal olarak birebir aynı, görsel olarak çıplak — ve <code>&lt;meta name="viewport"&gt;</code>
+    yok, bu zevk meselesi değil gerçek bir mobil kusur. Grader görünümü ölçmüyor, o yüzden
+    “%55 az kod, aynı kalite” cümlesi sadece ölçülen davranış için doğru.</p>
+  </div>
+</section>
+
+<section id="karar">
+  <div class="sec-head"><span class="marker">C</span><h2>Karar</h2></div>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>iş tipi</th><th>en ucuz</th><th>en kaliteli</th><th>mevcut <span class="mono">full</span></th></tr></thead>
+      <tbody>
+        <tr><td>prose / uzun açıklama</td><td class="cfg">modes</td><td>ölçülmedi (hepsi doğru)</td><td><span class="tag ok">bare'den %36 ucuz</span></td></tr>
+        <tr><td>kolay araçlı bug fix</td><td class="cfg">bare</td><td>fark yok (25/25)</td><td><span class="tag no">+%97 maliyet</span></td></tr>
+        <tr><td>ince araçlı bug fix</td><td class="cfg">bare</td><td class="cfg">superpowers 3/5</td><td><span class="tag mid">2/5, +%82 maliyet</span></td></tr>
+        <tr><td>ince araçlı bug fix #2</td><td class="cfg">bare</td><td>fark yok (50/50)</td><td><span class="tag mid">5/5, +%92 maliyet</span></td></tr>
+        <tr><td>web sitesi üretimi</td><td class="cfg">bare</td><td>fark yok (24/25)</td><td><span class="tag mid">7/7, +%50 maliyet</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="col">
+    Maliyet endeksi (bare = 100), turlar arası tersine dönüş burada tek bakışta görünüyor.
+    <strong>Sonnet</strong>, her hücre 5 koşunun medyanı:
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">prose</th><th class="num">kolay araçlı</th><th class="num">ince araçlı</th><th class="num">ince #2</th><th class="num">web</th><th>ince turda kalite</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">bare</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td><span class="tag mid">1/5</span></td></tr>
+        <tr><td class="cfg">hooks</td><td class="num">106</td><td class="num">110</td><td class="num">107</td><td class="num">118</td><td class="num">155</td><td><span class="tag mid">2/5</span></td></tr>
+        <tr><td class="cfg">superpowers</td><td class="num">121</td><td class="num">153</td><td class="num">156</td><td class="num">148</td><td class="num">115</td><td><span class="tag ok">3/5</span></td></tr>
+        <tr><td class="cfg">modes</td><td class="num">55</td><td class="num">145</td><td class="num">130</td><td class="num">125</td><td class="num">105</td><td><span class="tag no">0/5</span></td></tr>
+        <tr class="hl"><td class="cfg">full</td><td class="num">64</td><td class="num">197</td><td class="num">182</td><td class="num">192</td><td class="num">150</td><td><span class="tag mid">2/5</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="col">
+    Aynı endeks <strong>Opus</strong>'ta (prose/kolay/web n=3, ince n=5). Sıralama korunuyor,
+    büyüklükler biraz sıkışıyor — ama kalite sütunu tamamen kayboluyor:
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">prose</th><th class="num">kolay araçlı</th><th class="num">ince araçlı</th><th class="num">ince #2</th><th class="num">web</th><th>ince turda kalite</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">bare</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td class="num">100</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">hooks</td><td class="num">102</td><td class="num">112</td><td class="num">107</td><td class="num">108</td><td class="num">209</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">superpowers</td><td class="num">120</td><td class="num">144</td><td class="num">175</td><td class="num">141</td><td class="num">161</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr><td class="cfg">modes</td><td class="num">56</td><td class="num">132</td><td class="num">118</td><td class="num">92</td><td class="num">84</td><td><span class="tag ok">5/5</span></td></tr>
+        <tr class="hl"><td class="cfg">full</td><td class="num">76</td><td class="num">155</td><td class="num">152</td><td class="num">114</td><td class="num">142</td><td><span class="tag ok">5/5</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <b>Opus ölçüldü: kalite farkı Opus'ta yok — ve Sonnet'te de tekrarlanmadı</b>
+    <p>
+      İnce turda Sonnet 0/5 ile 3/5 arasında dağılırken <strong>Opus'ta beş config de 5/5</strong>.
+      Bu uzun süre "kalite farkı Sonnet'e özgü" diye okundu; doğrusu daha dar. Sonradan aynı görev
+      Sonnet'te tekrar tekrar ölçüldü ve <strong>değiştirilmemiş bir config üç ayrı günde 4/5, 1/5
+      ve 2/14 aldı</strong>. Yani buradaki dağılım da o günün fotoğrafı: "caveman + ponytail
+      doğruluğu bozuyor" cümlesinin Opus'ta karşılığı yok, Sonnet'te ise tekrarlanmış bir kanıtı. Maliyet tarafı ise büyük ölçüde iki modelde de aynı yönde — araçlı işte
+      neredeyse her config bare'e zarar, prose'da <span class="mono">modes</span> net kazanç.
+      45 araçlı hücrede iki istisna var, ikisi de Opus'ta <span class="mono">modes</span>:
+      web turu (84) ve ikinci ince tur (92). İkisinde de sebep aynı — kısalık metni değil
+      <strong>tur sayısını</strong> kesiyor: ince #2'de modes 4 turda bitiriyor, bare 9 turda.
+    </p>
+    <p>
+      Turlar, modeller ve grafikler tek sayfada:
+      <a href="rapor-model-karsilastirma.html">rapor-model-karsilastirma.html</a> (220 koşu).
+    </p>
+  </div>
+
+  <div class="verdict">
+    <b>Öneri</b>
+    <p>Kodlama oturumlarında <strong>superpowers + iki hook açık, caveman + ponytail kapalı</strong>;
+    prose ağırlıklı oturumlarda tersi. Kaldıraç <code>enabledPlugins</code> artı restart — oturum
+    ortasında “stop caveman” demek maliyeti geri getirmiyor, ruleset zaten context'e girmiş
+    durumda; <code>skillOverrides</code> de eklenti kaynaklı skill'leri gizleyemiyor.</p>
+    <p>Önerinin kalite yarısı <strong>Sonnet'e dayanıyor</strong>: Opus'ta hiçbir tur configleri
+    kaliteye göre ayırmadı. Opus'ta kalan tek gerekçe maliyet, o da aynı yönde — araçlı işte
+    en ucuzu yine <span class="mono">bare</span>.</p>
+  </div>
+
+  <h3>Neye güvenilmemeli</h3>
+  <ul class="tight">
+    <li>Her tur tek görev. Sonnet'te dört turun hepsi n=5; Opus'ta prose/kolay/web n=3, ince n=5.</li>
+    <li>Kalite bulgusu <strong>tek görev + tek model</strong>: sadece ince turda, sadece Sonnet'te
+      ayrışma var. Opus'ta aynı görev beş config'i de 5/5 geçiriyor.</li>
+    <li>İkinci bir tuzak görev (<span class="mono">hard2</span>, Paginator) bu caveat'i kapatmak
+      için yazıldı ve <strong>kapatamadı</strong>: laboratuvarda ayırt edici olduğu kanıtlanmış
+      olmasına rağmen Sonnet'te beş config de 5/5 geçti. Yani ince turun ayrımı o tek göreve ait,
+      genel bir "zor görev" özelliği değil.</li>
+    <li>Web turunda görünüm, erişilebilirlik ve mobil uyum ölçülmedi — sadece davranış.</li>
+    <li><strong>Kalite rakamları güne ait.</strong> Bu turdaki 3/5, 2/5, 0/5 değerlerinin hepsi
+      17 Ağustos'ta, tek bir günde ölçüldü. Sonradan görüldü ki byte'ı byte'ına aynı bir config
+      aynı görevde 25 Ağustos'ta 4/5, 26 Ağustos'ta 1/5, 29 Ağustos'ta 2/14 alabiliyor — maliyet
+      neredeyse hiç oynamadan. Yani buradaki kalite sıralaması <em>o günün</em> fotoğrafı;
+      tekrarlanmış bir sonuç değil. Sonraki her kalite karşılaştırması bu yüzden iki kolu da aynı
+      gün koşturarak yapıldı.</li>
+    <li><strong>Bir satır kendi oturumunun yalnız bir bacağını raporlayabilir.</strong> 286
+      satırın ikisinde ödenen maliyet, satırın kendi token sayılarının satın alabileceğinden
+      fazlaydı: ajan döngüsü hücre ortasında yeniden başlamış ve özet JSON yalnız son bacağı
+      anlatmış. Biri 1 tur / 29 output token yazıp gizli suite'i 8/8 geçmişti — sayılsaydı
+      “ucuz ve doğru” diye okunacaktı. Satırın maliyeti ile token'larının tutarlılığı artık
+      otomatik denetleniyor; ikisi de ayıklandı.</li>
+    <li>Yön dört turda tutarlı; sayıları kesin değil, gösterge olarak kullan.</li>
+  </ul>
+</section>
+
+<!-- TIMELINE:START -->
+<section id="zaman">
+  <div class="sec-head"><span class="marker">D</span><h2>Nasıl ilerledi — on beş gün</h2></div>
+  <p class="col">Proje bir benchmark olarak başlamadı; iki bozuk hook olarak başladı. Sonraki her tur da, bir önceki cevabın güvenilmez çıkması yüzünden var.</p>
+
+  <ol class="tl">
+    <li class="tl-key">
+      <time>2026-08-16 · kaza</time>
+      <h4>İki arıza ve kimsenin cevaplayamadığı bir soru</h4>
+      <p>Skill'ler kendiliğinden yüklenmez oldu. İki ayrı sebep: bütün <span class="mono">SessionStart</span> hook'ları tek bir zaman aşımı penceresini paylaşıyor, yani yavaş bir hook bütün grubu iptal ediyor — ve <span class="mono">enabledPlugins</span> ile <span class="mono">installed_plugins.json</span> birbirinden kaymış. İkisi de bir öğleden sonrada düzeldi.</p>
+      <p>Rahatsız edici kısım ardından gelen soruydu: on bir plugin açıktı ve hiçbirinin ne kadara mal olduğunu ya da işe yarayıp yaramadığını kimse söyleyemiyordu. Bütün proje o soru.</p>
+    </li>
+    <li>
+      <time>2026-08-17 · denetim</time>
+      <h4>On bir plugin üçe indi, sonra bu kesintiyi sınayacak harness</h4>
+      <p>Önce token denetimi geldi — sen bir şey yazmadan her plugin'in ne yüklediğini ölç — ve on birin sekizini eledi. Ama denetim yalnızca maliyeti ölçer, faydayı asla; o yüzden harness onu izledi: beş yapılandırma, aynı görevler, aynı prompt'lar, aynı repo kopyaları ve ajanın erişemeyeceği bir notlama — o çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i.</p>
+    </li>
+    <li>
+      <time>2026-08-18 · ilk cevap</time>
+      <h4>Gerçek bir proje, config başına tek koşu — ve yaşamayan bir başlık</h4>
+      <p>Oyuncak görevler oyuncak soruları cevaplar; o yüzden her config'e canlı, yedi dilli bir sitenin kopyası verilip "iyileştir" dendi. İlk sonuç şuydu: <strong>"full en ucuzu, $2.90, bare'in %60'ı"</strong>. Yanına bir n=1 uyarısı iliştirilmişti ve o uyarı, cümlenin kalıcı olan tek parçası çıktı.</p>
+    </li>
+    <li>
+      <time>2026-08-19 → 08-24 · kısıtlar geri saldırıyor</time>
+      <h4>İkinci bir tuzak görev, ikinci bir model ve n=3</h4>
+      <p>Kalite tam olarak bir turda ayrışmıştı; o ayrımı tekrarlamak için özel bir ikinci tuzak görev (Paginator) yazıldı. Tekrarlayamadı: bütün configler geçti. Ardından her tur Opus'ta yeniden koşturuldu — kalite farkı tamamen kayboldu, maliyet sıralaması iki hücrede tersine döndü.</p>
+      <p>Proje turu config başına üç örneğe çıktı ve $2.90 başlığı orada öldü: beş config'in dördü %16'lık bir bantta toplanırken tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyordu.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-25 · tasarım</time>
+      <h4>Config seçmek yerine, mekanizmalardan bir tane kurmak</h4>
+      <p>Matris üç mekanizma açığa çıkarmıştı: metin tasarrufu kısalan çıktıdan gelir, araçlı iş kaybı her turda yeniden okunan sabit kural setinden gelir, doğruluk ise sözleşme denetimi sırasındaki çıktı hacmini izler. Lea bu üçüne karşı yazıldı ve bir günde v1'den v7'ye getirildi; her değişiklikten sonra her tur yeniden ölçüldü. Bir cümlenin <em>nerede durduğunun</em> cümlenin kendisinden daha çok fark yarattığı da böyle görüldü — dört ayrı kez.</p>
+      <p>Aynı gün bugüne kadar her şeyi yöneten kural doğdu: <strong>yeni bir koşuyu asla kayıtlı bir dolar rakamıyla karşılaştırma.</strong> Değiştirilmemiş bir baseline yeniden koşturulunca ağustostakinden farklı bir örtük fiyat verdi — rejim, tablonun altından kaymıştı.</p>
+    </li>
+    <li>
+      <time>2026-08-26 · canlıya geçiş ve bir uyarı</time>
+      <h4>Lea canlıya alınıyor; başlık sonuç tekrarlanmıyor</h4>
+      <p>Opus mekanizmayı doğruladı (metinde −%42, zor fix'te aynı doğrulukla −%53), canlı yapılandırma Lea'ya geçirildi ve tek başarısız koşu <em>okunarak</em> — tahmin edilerek değil — bir v8 adayı yazıldı.</p>
+      <p>Sonra değiştirilmemiş aynı config zor turda yeniden ölçüldü ve <strong>bir gün önce 4/5 aldığı yerde 1/5</strong> aldı. Maliyet neredeyse hiç oynamadı; oynayan çıktı hacmiydi. Fiyatlar için öğrenilen ders, doğruluk için de geçerliymiş.</p>
+    </li>
+    <li>
+      <time>2026-08-27 → 08-29 · üç gün hiçbir şey</time>
+      <h4>Reset saati olmayan bir kullanım limiti ve kör beş saatlik uyku</h4>
+      <p>Runner, mesajında ayrıştırılabilir bir reset saati taşımayan bir 429'a çarptı ve beş saat uyumaya geçti — üstelik dört kez, bir saat içinde geri gelen bir kota karşısında. Ardından makine kapandı. Kuyruk üç gün kımıldamadı.</p>
+      <p>Düzeltme artık harness'in içinde: tahmin etmek yerine kısa bir merdivende yokla; başarısız bir yoklama on beş saniye ve sıfır token, bu da tek bir uzun tahminden kesinlikle ucuz.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-29 · belirleyici tur</time>
+      <h4>v7'ye karşı v8, kol başına yirmi örnek, aynı gün</h4>
+      <p>n=5'te iki sürüm berabere görünüyordu (1/5'e karşı 3/5, p=0,52). Kol başına n=20'de görünmediler: <strong>4/20'ye karşı 13/20</strong>, Fisher p=0,010; üstelik v8 %7 ucuz ve %36 hızlı. Tek bir paragraf, izinden yükümlülüğe yeniden yazıldı.</p>
+      <p>Aynı gün, bunu sessizce zehirleyecek bir satır da çıktı: 1 tur ve 29 output token yazan, ama gizli suite'i 8/8 geçen bir hücre. Transcript'inde on beş tur vardı — ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. Aritmetikle yakalandı: bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</p>
+    </li>
+    <li>
+      <time>2026-08-30 · kapanış</time>
+      <h4>Son bilinmeyen ve geçiş</h4>
+      <p>Gerçek proje turu nihayet aynı gün ölçülmüş bir rakip kazandı ve Lea hakkındaki son korkuyu çürüttü: medyanı <strong>$3.735</strong>, <span class="mono">full</span>'ünki <strong>$5.560</strong>. Aynı gün, o turun ne söyleyip ne söyleyemeyeceği de ölçüldü — %30'luk bir farkı çözmek için <strong>kol başına n=37</strong>; yani ürettiği hiçbir sıralama, hiçbir zaman gerçek değildi.</p>
+      <p>v8 önerilmeden önce metin vergisi ödeyip ödemediği sınandı (ödemiyor), bütün raporlar yeniden yazıldı ve canlı hook v8'e geçirildi. Ölçüm 232 hücre, 0 başarısız, 286 notlandırılmış koşuyla kapandı.</p>
+    </li>
+  </ol>
+
+  <div class="verdict">
+    <b>Bunun biçimi</b>
+    <p>Yukarıdaki dokuz maddenin beşi, önceki bir sonucun geri çekilmesi: $2.90 başlığı, kalite sıralaması, zor turdaki 4/5, meseleyi çözmesi beklenen tuzak görev ve proje turunun ürettiği her sıralama. Hayatta kalan şey sayılar değil, onları öldüren kurallar — baseline'ı aynı gün ölç, tek güne dayanan kalite rakamına güvenme, ve bir satıra kendi maliyetini kanıtlat.</p>
+  </div>
+</section>
+<!-- TIMELINE:END -->
+
+<section id="tuzaklar">
+  <div class="sec-head"><span class="marker">E</span><h2>Yol boyunca çıkan tuzaklar</h2></div>
+  <p class="col">Bunların her biri en az bir ölçümü geçersiz kıldı ya da kılacaktı. Tekrarlanmasın diye yazılı.</p>
+
+  <details class="trap">
+    <summary>PATH'teki <span class="mono">claude</span> bir .cmd shim — çok satırlı prompt tüm flag'leri düşürüyor</summary>
+    <div>
+      <p><code>C:\WINDOWS\system32\claude.cmd</code> isteği <code>%*</code> ile iletiyor, cmd.exe ise
+      komut satırını argümanın ilk satırında kesiyor. Çok satırlı bir <code>-p</code> prompt'tan
+      sonraki her flag sessizce kayboluyor: <code>--output-format json</code> ve
+      <code>--permission-mode bypassPermissions</code> gitti, koşular prose döndü ve her araç
+      çağrısı reddedildi. Belirti izin hatası gibi görünüyor, değil.</p>
+      <p>Çözüm: CLI'ın <code>.exe</code>'si doğrudan çağrılıyor (kurulum yolu makineye göre değişir,
+<code>~/.local/bin/claude.exe</code> altında). Prose turu
+      etkilenmemişti çünkü onun promptları tek satırdı.</p>
+    </div>
+  </details>
+
+  <details class="trap">
+    <summary>“Tek <span class="mono">if</span> ile prune” aslında bug değil</summary>
+    <div>
+      <p>İnce turun ilk tasarımı <code>_prune</code>'da <code>while</code> yerine <code>if</code>
+      kullanıyordu, “expired kayıtları geride bırakır” varsayımıyla. Monoton saatte her
+      <code>allow</code> en fazla bir boş slot ister ve en yaşlı expired kaydı düşürmek her zaman
+      onu sağlar — davranış <code>while</code> versiyonuyla birebir aynı. Gizli suite'i 7/7 geçti.</p>
+      <p>Sliding window'da “turda tek kayıt düşürme” hatası public API'den görünmez. Görev bu
+      yüzden iki gerçek sözleşme ihlaliyle yeniden yazıldı.</p>
+    </div>
+  </details>
+
+  <details class="trap">
+    <summary>tr-TR locale CSV'yi ikiye bölüyor</summary>
+    <div>
+      <p>Maliyet alanı <code>0,052892</code> diye yazılıp kolonu ikiye ayırdı, dosya 14 yerine 15
+      kolonlu oldu. Scriptler artık CSV yazmadan önce <code>InvariantCulture</code> zorluyor.
+      Tur 1'in ham dosyası düzeltmeden önce yazıldığı için hâlâ bölünmüş — okunurken kolonlar
+      yeniden birleştiriliyor.</p>
+    </div>
+  </details>
+
+  <details class="trap">
+    <summary><span class="mono">skillOverrides</span> eklenti skill'lerini gizleyemez</summary>
+    <div>
+      <p>Resolver <code>if (e.type !== "prompt" || e.source === "plugin") return "on"</code> diyor:
+      eklenti kaynaklı skill, <code>skillOverrides</code> hiç okunmadan “on”a kısa devre yapıyor.
+      13 girdinin 12'si bu yüzden ölüydü, ölçülen tasarruf sıfır. Tek kaldıraç eklentinin tamamını
+      <code>enabledPlugins</code> ile kapatmak.</p>
+    </div>
+  </details>
+
+  <details class="trap">
+    <summary>Uzun turlar harness'ın arka plan görevi olarak koşturulamıyor</summary>
+    <div>
+      <p>İnce turun ilk denemesi 25 koşunun 16'sında öldürüldü. Uzun turlar artık detached
+      başlatılıyor (<code>Start-Process pwsh -WindowStyle Hidden -RedirectStandardOutput …</code>)
+      ve <code>run.log</code> ayrı izleniyor.</p>
+      <p>Ayrıca <code>-ArgumentList '-File', script, '-Configs', 'modes,full'</code> config listesini
+      tek string olarak geçiriyor ve her koşu <code>cfg\modes,full.json</code> bulunamadı diye
+      ölüyor. <code>-Command "&amp; 'script' -Configs modes,full"</code> formu doğru parse ediyor.</p>
+    </div>
+  </details>
+
+  <details class="trap">
+    <summary>İlk gerçek görev benchmark'ı tamamen geçersizdi</summary>
+    <div>
+      <p>Üç config üç farklı iş yaptı: superpowers görev yerine soru sordu, modes dosya yazmayı
+      denedi ve <code>-p</code> modunda izin reddi alıp tekrar denedi. Input patlaması verimliliği
+      değil, izin reddi ve davranış sapmasını ölçüyordu. Doğru kurulum: dosya yazımı gerektirmeyen
+      ya da izin verilmiş bir görev, <code>--permission-mode</code>, ve çıktıları okumadan sayıya
+      bakmamak.</p>
+    </div>
+  </details>
+</section>
+
+<section id="dosyalar">
+  <div class="sec-head"><span class="marker">F</span><h2>Bu klasördeki dosyalar</h2></div>
+  <pre>Optimizing CLI/
+├── rapor.html                     bu belge
+├── data/
+│   ├── round1-prose.csv           45 çağrı  (maliyet kolonu tr-TR yüzünden bölünmüş)
+│   ├── round2-easy-tools.csv      15 koşu
+│   ├── round3-hard-part-a.csv     bare / hooks / superpowers + 1 artık modes örneği
+│   ├── round3-hard-part-b.csv     modes / full
+│   └── round4-web.csv             15 koşu
+└── harness/
+    ├── run-prose.ps1  run-tools.ps1  run-hard.ps1  run-web.ps1
+    ├── cfg/                       beş config dosyası
+    ├── template-easy/             kolay bug görevi
+    ├── template-hard/             iki ihlalli limiter + görünen suite
+    ├── hidden-hard/               gizli notlama suite'i
+    └── web/                       CDP grader + üç referans site</pre>
+  <p class="note">
+    Tur 3'ün verisi iki dosyada: ilk koşu 16 koşuda öldürüldüğü için modes ve full ayrıca
+    koşturuldu. Birleştirirken <span class="mono">part-a</span> içindeki tek <span class="mono">modes</span>
+    satırı atılıyor, çünkü o turun kalan dördü yok.
+  </p>
+  <p class="note">
+    Kaynak kurulum ve canlı harness: <span class="mono">~/.claude/bench/</span>.
+    Ham koşu dizinleri (üretilen her site, her <span class="mono">limiter.py</span>, her cevap metni)
+    orada <span class="mono">runs/</span> altında duruyor.
+  </p>
+  <p class="note">
+    Yukarıdaki <span class="mono">data/</span> dosyaları ilk turların anlık görüntüsü. Bu belgedeki
+    güncel sayıların kaynağı, iki modelin 220 koşusunu tek tabloda toplayan
+    <span class="mono">runs/_matrix/merged.csv</span> — <span class="mono">merge_matrix.py</span>
+    üretiyor, <span class="mono">build_report.py</span> da grafikli karşılaştırmayı ondan çiziyor.
+  </p>
+</section>
+
+<footer>
+  17 Ağustos 2026 · Claude Code · Sonnet · dört tur, 100 çağrı, ~$13 · medyanlar raporlanmıştır
+</footer>
+
+</div>
+

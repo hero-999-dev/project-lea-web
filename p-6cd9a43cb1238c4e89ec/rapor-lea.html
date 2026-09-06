@@ -1,0 +1,689 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lea — ölçümden çıkarılmış config</title>
+<style>
+  :root {
+    --paper:   #e9ecef;
+    --card:    #f7f8f9;
+    --sunk:    #dfe4e8;
+    --ink:     #131a20;
+    --ink-2:   #5c6873;
+    --ink-3:   #7d8892;
+    --rule:    #cdd4da;
+    --accent:  #0a6e8c;
+    --accent-soft: #0a6e8c22;
+    --good:    #2c6e49;
+    --bad:     #9b2c2c;
+    --warn:    #8a5a00;
+    --good-bg: #2c6e4919;
+    --bad-bg:  #9b2c2c19;
+    --warn-bg: #8a5a0019;
+
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --data: "Cascadia Mono", ui-monospace, Consolas, "SF Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #101519;
+      --card:    #171e24;
+      --sunk:    #0b1014;
+      --ink:     #e4eaef;
+      --ink-2:   #93a1ac;
+      --ink-3:   #74828d;
+      --rule:    #26313a;
+      --accent:  #4fb3d1;
+      --accent-soft: #4fb3d128;
+      --good:    #63b37e;
+      --bad:     #e0716b;
+      --warn:    #d9a340;
+      --good-bg: #63b37e1f;
+      --bad-bg:  #e0716b1f;
+      --warn-bg: #d9a3401f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #101519;
+    --card:    #171e24;
+    --sunk:    #0b1014;
+    --ink:     #e4eaef;
+    --ink-2:   #93a1ac;
+    --ink-3:   #74828d;
+    --rule:    #26313a;
+    --accent:  #4fb3d1;
+    --accent-soft: #4fb3d128;
+    --good:    #63b37e;
+    --bad:     #e0716b;
+    --warn:    #d9a340;
+    --good-bg: #63b37e1f;
+    --bad-bg:  #e0716b1f;
+    --warn-bg: #d9a3401f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem) 6rem; }
+  .col { max-width: 74ch; }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.1rem); line-height: 1.1; margin: 0; }
+  h2 { font-size: clamp(1.5rem, 3vw, 1.95rem); line-height: 1.2; margin: 0; }
+  h3 { font-size: 1.12rem; margin: 2.4rem 0 0.6rem; }
+  p { margin: 0 0 1rem; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  code, .mono { font-family: var(--data); font-size: 0.88em; }
+  code { background: var(--sunk); padding: 0.1em 0.36em; border-radius: 3px; }
+
+  header.masthead {
+    border-bottom: 1px solid var(--rule);
+    padding: clamp(3rem, 8vw, 5.5rem) 0 2.2rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .eyebrow {
+    font-family: var(--data); font-size: 0.72rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 68ch; margin: 0; }
+
+  .kpis {
+    display: grid; gap: 1px; background: var(--rule);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    border: 1px solid var(--rule); margin: 2.5rem 0 0;
+  }
+  .kpi { background: var(--card); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.15rem; }
+  .kpi b { font-family: var(--data); font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .kpi span { font-size: 0.82rem; color: var(--ink-2); }
+
+  nav.toc { margin: 2.5rem 0 0; font-size: 0.92rem; }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+  nav.toc a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  nav.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  section { padding-top: 3.6rem; }
+  .sec-head { display: flex; align-items: baseline; gap: 0.9rem; margin-bottom: 1.4rem; }
+  .marker {
+    font-family: var(--data); font-size: 0.78rem; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 2px; padding: 0.1rem 0.42rem;
+    letter-spacing: 0.05em; flex: none;
+  }
+
+  .scroller { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--rule); background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { padding: 0.58rem 0.85rem; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  thead th {
+    font-family: var(--data); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--ink-3); font-weight: 500; background: var(--sunk);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
+  td.cfg { font-family: var(--data); font-weight: 600; }
+  tr.hl td { background: var(--accent-soft); }
+
+  .meter { display: grid; grid-template-columns: 1fr 3.6rem; align-items: center; gap: 0.6rem; min-width: 9rem; }
+  .meter .track { height: 7px; background: var(--sunk); border-radius: 2px; overflow: hidden; }
+  .meter .fill { display: block; height: 100%; background: var(--accent); border-radius: 0 2px 2px 0; }
+  .meter .val { font-family: var(--data); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.86rem; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.32rem; font-family: var(--data);
+    font-size: 0.76rem; padding: 0.08rem 0.42rem; border-radius: 2px; border: 1px solid;
+  }
+  .tag.ok   { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+  .tag.no   { color: var(--bad);  border-color: var(--bad);  background: var(--bad-bg); }
+  .tag.mid  { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+
+  .verdict {
+    border-left: 3px solid var(--accent); background: var(--card);
+    padding: 0.9rem 1.2rem; margin: 1.6rem 0; max-width: 74ch;
+  }
+  .verdict b { font-family: var(--data); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.25rem; }
+  .verdict p { margin: 0; }
+
+  .note { color: var(--ink-2); font-size: 0.92rem; max-width: 74ch; }
+  ul.tight { max-width: 74ch; padding-left: 1.1rem; margin: 0 0 1rem; }
+  ul.tight li { margin-bottom: 0.5rem; }
+
+  details.trap { border-top: 1px solid var(--rule); padding: 0.9rem 0; max-width: 78ch; }
+  details.trap summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; gap: 0.7rem; align-items: baseline; }
+  details.trap summary::-webkit-details-marker { display: none; }
+  details.trap summary::before { content: "+"; font-family: var(--data); color: var(--accent); }
+  details.trap[open] summary::before { content: "\2212"; }
+  details.trap > div { padding: 0.7rem 0 0 1.4rem; color: var(--ink-2); }
+  details.trap p { margin: 0 0 0.7rem; }
+
+  pre {
+    font-family: var(--data); font-size: 0.82rem; line-height: 1.55; background: var(--card);
+    border: 1px solid var(--rule); padding: 0.9rem 1rem; overflow-x: auto; margin: 0 0 1rem;
+  }
+  footer { border-top: 1px solid var(--rule); margin-top: 4rem; padding-top: 1.4rem; color: var(--ink-3); font-size: 0.86rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* TIMELINE:CSS:START */
+.tl { list-style: none; margin: 1.4rem 0 0; padding-inline-start: 1.5rem; border-inline-start: 2px solid var(--rule); }
+.tl > li { position: relative; padding-bottom: 1.5rem; }
+.tl > li:last-child { padding-bottom: 0; }
+.tl > li::before {
+  content: ""; position: absolute; inset-inline-start: calc(-1.5rem - 6px); top: 0.4rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--rule);
+}
+.tl > li.tl-key::before  /* namespaced: one report styles a chart legend .key */ { background: var(--accent); border-color: var(--accent); }
+.tl time { display: block; font-family: var(--data); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+.tl h4 { margin: 0.15rem 0 0.35rem; font-size: 1rem; font-weight: 640; color: var(--ink); }
+.tl p { margin: 0 0 0.4rem; color: var(--ink-2); max-width: 68ch; }
+.tl p:last-child { margin-bottom: 0; }
+/* TIMELINE:CSS:END */
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Claude Code · 30 Ağustos 2026 · 286 notlandırılmış koşu · beş test turu + v7/v8 karşılaştırması</div>
+  <h1>Lea: ölçümden çıkarılmış bir config</h1>
+  <p class="lede">
+    Beş yapılandırma ölçüldü, hiçbiri her iş tipinde kazanmadı. Lea bunlardan biri değil:
+    ölçümlerin <em>gösterdiği mekanizmalardan</em> tasarlanmış altıncı bir aday. Tek bir
+    SessionStart kural seti, ~180 token, ve beş test turunun beşinde de o turun en iyi
+    rakibine karşı ölçüldü. 30 Ağustos'ta bir sürüm daha eklendi: <strong>v8</strong>, tek bir
+    paragrafı izinden yükümlülüğe çeviriyor ve zor turda v7'yi üçe katlıyor.
+  </p>
+  <div class="kpis">
+    <div class="kpi"><b>~180</b><span>token kural seti (caveman+ponytail ~6.000)</span></div>
+    <div class="kpi"><b>13/20</b><span>v8 zor bug fix doğruluğu — v7 aynı testte 4/20</span></div>
+    <div class="kpi"><b>−%42</b><span>Opus metin maliyeti, en yakın rakibe karşı</span></div>
+    <div class="kpi"><b>$3.74</b><span>gerçek proje turu medyanı (<span class="mono">full</span> $5.56)</span></div>
+  </div>
+  <nav class="toc">
+    <ol>
+      <li><a href="#neden">Neden yeni bir config</a></li>
+      <li><a href="#kural">Kural seti</a></li>
+      <li><a href="#sonuc">Sonuçlar</a></li>
+      <li><a href="#v8">v8: istisna maddesi</a></li>
+      <li><a href="#proje">Gerçek proje turu</a></li>
+      <li><a href="#surum">Sürüm günlüğü</a></li>
+      <li><a href="#zaman">Nasıl ilerledi</a></li>
+      <li><a href="#guven">Neye güvenilmemeli</a></li>
+      <li><a href="#kurulum">Kurulum</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="neden">
+  <div class="sec-head"><span class="marker">A</span><h2>Neden yeni bir config</h2></div>
+  <p class="col">
+    220 koşuluk matris beş yapılandırmayı sıraladı ama hiçbirini kazandırmadı: metin turunda
+    <span class="mono">modes</span> açık ara öndeydi, araçlı işte <span class="mono">bare</span>
+    her rakibi yeniyordu, kalitede ise <span class="mono">superpowers</span> tek başına ayrışıyordu.
+    Yani "hangisini kurayım" sorusunun cevabı yoktu — sadece "hangi iş için hangisi" vardı.
+  </p>
+  <p class="col">Lea, o sıralamayı değil, sıralamayı <strong>üreten üç mekanizmayı</strong> hedef aldı:</p>
+  <ul class="tight">
+    <li><strong>Metin turundaki tasarrufun tamamı kısalan çıktıdan geliyordu</strong> — 7.940'tan
+      3.074 output token'a. Prompt boyutuyla ilgisi yoktu.</li>
+    <li><strong>Araçlı işteki kayıp sabit kural setiydi:</strong> her turda yeniden okunan ~6.000
+      token, buna karşılık birkaç yüz output token üreten bir görev. +%45 ile +%97 buradan geliyordu.</li>
+    <li><strong>Kalite çıktı hacmine bağlıydı:</strong> zor turda yanlış düzeltmelerin hepsi 1.596
+      output token altında, doğruların hepsi 1.924 üstünde kaldı. Kısalık orada sözleşme denetimini
+      bastırıyordu — <span class="mono">modes</span>'un 0/5'i böyle geldi.</li>
+  </ul>
+  <div class="verdict">
+    <b>Tasarım hedefi</b>
+    <p>Çıktı kesme kalsın (metin kazancı oradan), sabit yük neredeyse sıfır olsun (araçlı iş kaybı
+    oradan), ve kesme <strong>analize dokunmasın</strong> (kalite kaybı oradan). Üç mekanizma, üç
+    kural, tek hook.</p>
+  </div>
+</section>
+
+<section id="kural">
+  <div class="sec-head"><span class="marker">B</span><h2>Kural seti</h2></div>
+  <p class="col">
+    Tek bir <span class="mono">SessionStart</span> hook'u, gövdesi tamamen aşağıdaki metin.
+    Plugin yok, marketplace yok, bağımlılık yok.
+  </p>
+  <pre>LEA ACTIVE - always on. Terse prose, unlimited analysis.
+
+Prose budget: at most 120 words of explanation per reply, plus whatever code or data the answer
+needs. No preamble, no restating the question, no closing summary, no "note that", no hedging, no
+offer of further help. Lead with the answer. Fragments are fine. Bullets beat paragraphs.
+
+Code: each implementation once, complete. Never re-paste unchanged code - name it, state the delta.
+When you build a file or an artifact, none of this budget applies to the artifact itself: validation,
+error handling and platform basics (a web page keeps its viewport meta, title, labelled controls)
+survive every cut. Shorten the prose about the work, never the work.
+
+Tool loop: read what the task needs, change it, check once, report. No re-running a passed check,
+no re-reading a file already read, no narrating the call you are about to make. Turns are the bill.
+
+One exception, and it overrides the budget: when the code you are fixing states a contract - a
+docstring, a spec, a type - checking every clause of it against the implementation is required, not
+optional, and your analysis there is unlimited. A green test suite is not that check; it is someone
+else's sample of the contract. Say what you checked. Explaining a concept in chat is not this.
+
+Everything else: 120 words.</pre>
+  <p class="note">
+    Yukarıdaki metin <strong>v8</strong>: son paragraf 30 Ağustos'ta ölçülen sürüm. v7'nin aynı
+    paragrafı ve ikisinin karşılaştırması <a href="#v8">D bölümünde</a>. Diğer beş paragraf iki
+    sürümde de birebir aynı.
+    Beş kural, altı paragraf, ~180 token. Karşılaştırma için: <span class="mono">caveman</span> +
+    <span class="mono">ponytail</span> birlikte yaklaşık 6.000 token'lık kural seti yüklüyor ve bu
+    metin araçlı bir görevin 6–9 turunun her birinde yeniden okunuyor.
+  </p>
+</section>
+
+<section id="sonuc">
+  <div class="sec-head"><span class="marker">C</span><h2>Sonuçlar</h2></div>
+  <p class="col">
+    Hepsi 25 Ağustos 2026'da, Sonnet'te, aynı gün ölçülmüş rakiplere karşı. Rakip sütunu o turun
+    <em>bilinen en iyisi</em>: metinde <span class="mono">modes</span>, araçlı turlarda
+    <span class="mono">bare</span>, zor turda <span class="mono">superpowers</span>.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>test</th><th class="num">n</th><th>Lea</th><th>rakip</th><th>fark</th></tr></thead>
+      <tbody>
+        <tr><td>1 · metin, tool yok</td><td class="num">5</td><td class="num">0.0626 medyan<br>0.0613 ortalama</td><td>modes 0.0577 / 0.0730</td><td><span class="tag mid">berabere</span></td></tr>
+        <tr class="hl"><td>2 · kolay bug fix</td><td class="num">3</td><td class="num">0.0828 · 3/3 doğru</td><td>bare 0.0957</td><td><span class="tag ok">−%13</span></td></tr>
+        <tr class="hl"><td>3 · zor bug fix</td><td class="num">5</td><td class="num">0.0897 · <b>4/5 doğru</b></td><td>superpowers 0.1244 · 1/5</td><td><span class="tag ok">−%28, 4× doğru</span></td></tr>
+        <tr class="hl"><td>4 · sıfırdan web sitesi</td><td class="num">3</td><td class="num">0.0757 · 3 kez 7/7</td><td>bare 0.0911</td><td><span class="tag ok">−%17</span></td></tr>
+        <tr><td>5 · zor bug fix #2</td><td class="num">3</td><td class="num">0.0815 · 3/3 doğru</td><td>bare 0.0799</td><td><span class="tag mid">+%2, berabere</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict">
+    <b>En değerli satır üçüncüsü</b>
+    <p>Zor bug fix, gizli test suite ile notlanan tur — yani "yanlış fixi doğru diye teslim etme"
+    oranını ölçen tur. O gün <span class="mono">superpowers</span> 1/5, <span class="mono">modes</span>
+    1/5 alırken <strong>Lea 4/5 aldı ve bunu superpowers'tan %28 ucuza yaptı</strong> — ama o 4/5
+    tekrarlanmadı, hemen aşağıdaki uyarıya bakın. Sebep tek bir
+    cümle: analiz istisnası. Lea'nın doğru koşuları 1.500–2.500 output token üretiyor, yanlış olanı
+    ise 700 civarında kalıyor — ağustostaki hacim yasası birebir tekrarlanıyor.</p>
+  </div>
+  <div class="verdict" style="border-color: var(--warn); background: var(--warn-bg);">
+    <b style="color: var(--warn)">Bu satır tekrar etmedi</b>
+    <p>Yukarıdaki <strong>4/5</strong>, 25 Ağustos'ta bir kez ölçüldü. Byte'ı byte'ına aynı config
+    26 Ağustos'ta <strong>1/5</strong>, 29 Ağustos'ta <strong>2/14</strong> aldı. Maliyet neredeyse
+    hiç oynamadı (0.0897 → 0.0882 → 0.1004); oynayan çıktı hacmiydi. Yani 4/5 bu config'in
+    karakteri değil, <em>o günün</em> ölçümü — aynı ders fiyatlar için ağustosta öğrenilmişti,
+    kaliteye de aynen uyuyor. Bu raporda tek bir güne dayanan hiçbir kalite rakamını tekrarlanmış
+    saymayın; v8 karşılaştırması bu yüzden iki kolun da aynı gün koşturulduğu bir tasarımla yapıldı.</p>
+  </div>
+  <p class="col">
+    İkinci satırın anlamı da küçük değil: <strong>matriste hiçbir yapılandırma Sonnet'te araçlı
+    işte <span class="mono">bare</span>'i geçememişti.</strong> Lea geçiyor, çünkü kural seti maliyeti
+    token'da değil <em>tur sayısında</em> arıyor: 8 tur yerine 5–6.
+  </p>
+
+  <h3>Opus doğrulaması</h3>
+  <p class="col">
+    Yukarıdaki her şey Sonnet. Aynı sorunun Opus'ta da geçerli olup olmadığı 26 Ağustos'ta
+    22 hücreyle ölçüldü — rakipler yine <em>aynı gün</em> yeniden koşturuldu, saklı rakamla
+    kıyaslanmadı.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>tur</th><th class="num">n</th><th>Lea</th><th>rakip</th><th>fark</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>metin, tool yok</td><td class="num">3</td><td class="num">0.2032</td><td>modes 0.3488</td><td><span class="tag ok">−%42</span></td></tr>
+        <tr class="hl"><td>kolay bug fix</td><td class="num">3</td><td class="num">0.1842 · 3/3 · 6 tur</td><td>bare 0.2171 · 3/3 · 9 tur</td><td><span class="tag ok">−%15</span></td></tr>
+        <tr class="hl"><td>zor bug fix</td><td class="num">5</td><td class="num">0.2058 · 5/5 · 7 tur</td><td>superpowers 0.4366 · 5/5 · 10 tur</td><td><span class="tag ok">−%53</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict">
+    <b>Mekanizma modelden bağımsız, kalite üstünlüğü değil</b>
+    <p>Tur kesme Opus'ta da çalışıyor — araçlı turda 9 tur yerine 6, zor turda 10 yerine 7 — ve
+    metin turundaki kazanç Sonnet'tekinden <em>büyük</em>: Opus doğası gereği daha uzun yazıyor,
+    kelime bütçesi orada daha çok şey kesiyor. Kalite tarafında ise Opus hiçbir şeyi ayırmıyor:
+    zor turda Lea de superpowers de 5/5 alıyor. <strong>Bunu "kalite üstünlüğü Sonnet'e özgü" diye
+    okumayın</strong> — sonradan görüldü ki o 4/5 Sonnet'te de tekrarlanmadı (1/5, sonra 2/14), yani
+    v7 için elde <em>hiçbir modelde</em> tekrarlanmış bir kalite üstünlüğü yok. Tekrarlanan tek
+    kalite bulgusu <a href="#v8">v8'in aynı gün ölçülen n=20 kazancı</a>. Opus'ta Lea'nın gerekçesi
+    bu yüzden sade: <strong>aynı kaliteyi yarı fiyata almak</strong>.</p>
+  </div>
+  <p class="note">
+    Aralıklar: Lea metin 0.186–0.365, modes 0.239–0.356; Lea zor 0.189–0.218, superpowers
+    0.270–0.824. Metin turunda n=3 ve Lea'nın bir koşusu diğerlerinin iki katı — o satırı
+    "belirgin biçimde ucuz" diye okuyun, kesin bir yüzde olarak değil.
+  </p>
+</section>
+
+<section id="v8">
+  <div class="sec-head"><span class="marker">D</span><h2>v8: istisna maddesi izinden yükümlülüğe</h2></div>
+  <p class="col">
+    v7'nin zor turdaki başarısızlıkları tahmin edilmedi, okundu. Başarısız koşulardan biri —
+    <span class="mono">runs/hard-20260825-163700/lean_s1</span> — A hatasını düzeltti,
+    <span class="mono">_prune</span>'daki <span class="mono">&lt;</span> ile
+    <span class="mono">&lt;=</span> sınırına hiç dokunmadı, görünür test suite'ini koşturdu, yeşili
+    gördü ve işi dört kelimeyle kapattı: <em>"All tests pass."</em> 1.266 output token, gizli suite
+    5/8, üç başarısızlığın üçü de sona erme sınırında.
+  </p>
+  <p class="col">
+    Kusur kuralın kendisindeydi. v7 istisnayı bir <strong>izin</strong> olarak yazıyor —
+    "analizin sınırsızdır" — ve hiç tereddüt etmemiş bir koşu o izne hiç girmez. v8 aynı maddeyi
+    <strong>yükümlülüğe</strong> çeviriyor, tetiği somutlaştırıyor (kod bir sözleşme beyan ediyorsa)
+    ve başarısız koşunun kullandığı kısayolu kapatıyor:
+  </p>
+  <p class="note">v7 — izin:</p>
+  <pre>One exception, and it overrides the budget: while debugging, reading unfamiliar code, or checking
+an implementation against a stated contract, your analysis is unlimited - walk the contract clause
+by clause and say what you checked. That analysis is the work, not padding; shortening it is how a
+wrong fix ships as a right one. Explaining a concept in chat is not that exception.</pre>
+  <p class="note">v8 — yükümlülük:</p>
+  <pre>One exception, and it overrides the budget: when the code you are fixing states a contract - a
+docstring, a spec, a type - checking every clause of it against the implementation is required, not
+optional, and your analysis there is unlimited. A green test suite is not that check; it is someone
+else's sample of the contract. Say what you checked. Explaining a concept in chat is not this.</pre>
+  <p class="col">
+    Uzunluk bilerek korundu: matris dört kez gösterdi ki bu kural setine <em>eklenen</em> her satır
+    metin turunu bozuyor (v3 0.0563 → 0.0760, v5 → 0.0879) ve kelime bütçesini en sona almak
+    toparlıyor. Bu yüzden v8 bir ekleme değil, eş boyutlu bir <strong>değiştirme</strong>; bütçe
+    satırı yine en sonda duruyor. 220 kelime → 226.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>ölçüm</th><th>v7 <span class="mono">lea</span></th><th>v8 <span class="mono">lea-v8</span></th><th>fark</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>zor tur doğruluğu — <b>aynı gün</b>, 29 Ağu</td><td class="num">2/14</td><td class="num"><b>10/15</b></td><td><span class="tag ok">Fisher p=0.008</span></td></tr>
+        <tr class="hl"><td>zor tur doğruluğu — havuzlanmış, n=20</td><td class="num">4/20</td><td class="num"><b>13/20</b></td><td><span class="tag ok">p=0.010</span></td></tr>
+        <tr><td>medyan maliyet</td><td class="num">0.0954</td><td class="num">0.0888</td><td><span class="tag ok">−%7</span></td></tr>
+        <tr><td>medyan duvar saati</td><td class="num">211 s</td><td class="num">135 s</td><td><span class="tag ok">−%36</span></td></tr>
+        <tr><td>medyan input token</td><td class="num">165.608</td><td class="num">132.474</td><td><span class="tag ok">−%20</span></td></tr>
+        <tr><td>medyan output token</td><td class="num">1.188</td><td class="num">1.524</td><td><span class="tag mid">+%28</span></td></tr>
+        <tr class="hl"><td><b>metin turu</b> medyan — aynı gün, n=5</td><td class="num">0.0624</td><td class="num"><b>0.0563</b></td><td><span class="tag ok">−%10, p=0.22</span></td></tr>
+        <tr><td>metin turu output medyan</td><td class="num">3.322</td><td class="num">2.466</td><td><span class="tag ok">−%26</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict">
+    <b>Daha az okuyor, daha çok söylüyor</b>
+    <p>v8 pahalıya değil <em>ucuza</em> geliyor: %28 daha fazla çıktı üretmesine rağmen medyan
+    maliyeti düşük, çünkü input'u %20 daha az. Doğru koşuların çıktı hacmi iki kolda da yüksek
+    (1.8–2.0k), yanlışlarınki düşük (0.8–1.2k) — hacim yasası yine tuttu. Ama hacim
+    <em>dağılımları</em> istatistiksel olarak ayrışmıyor (Mann-Whitney p=0.25): hareket eden şey
+    doğruluk. n=5'te bu fark görünmüyordu (1/5 vs 3/5, p=0.52); planın öngördüğü n=20'de
+    görünür oldu.</p>
+  </div>
+  <p class="col">
+    Bir sürüm önerilmeden önce kapatılması gereken bir boşluk vardı: v8 yalnız zor turda
+    ölçülmüştü, oysa <em>tam da bu paragraf bölgesi</em> metin turunu dört kez bozmuştu. 30
+    Ağustos'ta iki kol da aynı gün, n=5 metin turuna sokuldu. Sonuç: v8 metni pahalılaştırmıyor,
+    aksine ucuzlatıyor — medyan 0.0563'e karşı 0.0624, ortalama 0.0577'ye karşı 0.0783 ve
+    <strong>v8'in beş koşusunun beşi de v7'nin ortalamasının altında</strong>. Tam test p=0.22,
+    yani bunu "v8 metinde de kazanıyor" diye değil, <strong>"kazandığı yeri metinden ödemiyor"</strong>
+    diye okuyun. Araçlı tur, web turu ve Opus tarafı v8 için hâlâ ölçülmedi.
+  </p>
+</section>
+
+<section id="proje">
+  <div class="sec-head"><span class="marker">E</span><h2>Gerçek proje turu: Lea pahalı değil, tur da ayırt edemiyor</h2></div>
+  <p class="col">
+    Yapay turların hepsi tek dosyalık görevler. Gerçek iş için ayrı bir tur var: yedi dilli, canlı
+    bir statik sitenin kopyası veriliyor, "sistemi kodu okuyarak çöz, tek bir iyileştirme seç,
+    uygula, kararını <span class="mono">ANALYSIS.md</span>'de yaz" deniyor. Opus, hücre başına
+    $10 tavan.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>config</th><th class="num">n</th><th class="num">medyan</th><th class="num">ortalama</th><th class="num">aralık</th><th>ölçüm günü</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="cfg">lea</td><td class="num">3</td><td class="num"><b>$3.735</b></td><td class="num">$4.920</td><td class="num">2.93 – 8.10</td><td>26 Ağu</td></tr>
+        <tr><td class="cfg">full</td><td class="num">3</td><td class="num">$5.560</td><td class="num">$6.029</td><td class="num">5.49 – 7.04</td><td>30 Ağu</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">
+    Bu karşılaştırma <strong>saklı dolar rakamıyla</strong> yapılmadı: <span class="mono">full</span>
+    hücreleri bugün yeniden koşturuldu ve fiyat rejiminin 19 Ağustos'tan beri değişmediği ayrıca
+    ölçüldü. Lea hem medyanda hem ortalamada düşük, ve $5'in altına inen tek kol o —
+    ama <strong>tam test p=0.70</strong>. n=3'e karşı n=3'te ulaşılabilecek en küçük p zaten 0.10;
+    yani bu tur hiçbir farkı anlamlı kılamazdı. Buradan çıkan tek sağlam cümle şu:
+    <strong>Lea'nın 71 dakikalık $8.095'lik ilk hücresi kolun karakteri değil, aykırı değeriydi.</strong>
+  </p>
+  <div class="verdict">
+    <b>Turun çözünürlüğü ölçüldü</b>
+    <p>19 koşu üzerinden config-içi <span class="mono">log(maliyet)</span> havuzlanmış standart
+    sapması <strong>0.397</strong>: tek bir koşu kendi config'inin ortalamasından ×1.49 sapıyor.
+    %30'luk bir maliyet farkını %80 güçle görmek için <strong>kol başına n=37</strong> gerekir
+    (~$192 ve ~24 saat); %20 için n=75; n=3 ancak <strong>2 kat</strong> farkı görebilir. Bu
+    turdaki her sıralama — ilk raporun "full en ucuz, $2.90" başlığı dahil — örnekleme
+    gürültüsünü tarif ediyordu.</p>
+  </div>
+  <p class="note">
+    Kalite tarafında ayrım yok: altı koşunun altısında da build geçiyor; Markdown ihlali, JS sözdizim
+    hatası, kırık referans, konsol hatası ve bayat build çıktısı sıfır. <span class="mono">broken_imgs</span>
+    ekseni koşular arası 1 ile 18 arasında zıplıyor ve <span class="mono">_pristine</span> temelinin
+    kendisi 1 — o eksen gürültü, bulgu değil.
+  </p>
+</section>
+
+<section id="surum">
+  <div class="sec-head"><span class="marker">F</span><h2>Sürüm günlüğü</h2></div>
+  <p class="col">
+    Yedi sürüm sürdü ve ilginç kısmı şu: kuralların <em>içeriği</em> v2'den sonra neredeyse hiç
+    değişmedi. Değişen, cümlelerin nerede durduğu ve neyi kapsadığıydı.
+  </p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>sürüm</th><th>değişiklik</th><th class="num">metin</th><th class="num">araçlı</th><th>sonuç</th></tr></thead>
+      <tbody>
+        <tr><td class="cfg">v1</td><td>"dolgu yok, preamble yok"</td><td class="num">0.1058</td><td class="num">—</td><td>çıktı 7.574 token — kural ısırmadı</td></tr>
+        <tr class="hl"><td class="cfg">v2</td><td>+ 120 kelimelik sert bütçe</td><td class="num">0.0563</td><td class="num">0.0987</td><td>metin çözüldü, araçlı bare'in üstünde</td></tr>
+        <tr><td class="cfg">v3</td><td>+ tool döngüsü paragrafı</td><td class="num">0.0760</td><td class="num">0.0836</td><td>araçlı düzeldi, <b>metin bozuldu</b></td></tr>
+        <tr class="hl"><td class="cfg">v4</td><td>tool kuralı tek satır, bütçe en sona</td><td class="num">0.0547</td><td class="num">0.0740</td><td>ikisi birden — ama viewport eksik</td></tr>
+        <tr><td class="cfg">v5</td><td>+ 4 satırlık "temelleri koru" bloğu</td><td class="num">0.0879</td><td class="num">—</td><td>viewport geldi, <b>metin çöktü</b></td></tr>
+        <tr><td class="cfg">v6</td><td>aynı koruma, tek cümle</td><td class="num">0.0700</td><td class="num">0.0827</td><td>toparlandı</td></tr>
+        <tr class="hl"><td class="cfg">v7</td><td>koruma kapsamı "ürün üretirken" ile sınırlandı</td><td class="num">0.0626</td><td class="num">0.0828</td><td>final — zor turda 3/5 → 4/5</td></tr>
+        <tr class="hl"><td class="cfg">v8</td><td>istisna maddesi izinden yükümlülüğe, eş boyutta</td><td class="num">0.0563</td><td class="num">—</td><td><b>zor turda 4/20 → 13/20</b> (p=0.010)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="verdict">
+    <b>Konum, içerikten çok şey değiştirdi</b>
+    <p>Dört kez aynı şey oldu: metnin ortasına eklenen bir kural, 120 kelimelik bütçeyi seyreltti
+    ve metin turu bozuldu. Aynı kural tek cümleye indirilip bütçe en sona alındığında geri geldi.
+    v5 → v6 → v7 zincirinde tek bir cümlenin uzunluğu ve kapsamı, metin maliyetini %0.0879'dan
+    %0.0626'ya taşıdı — <em>tek kelime kural eklemeden</em>. v8 aynı dersin sınavı oldu: aynı
+    paragraf, aynı uzunluk, sadece kipi değişti — ve ölçülen tek fark doğrulukta çıktı.</p>
+  </div>
+</section>
+
+<!-- TIMELINE:START -->
+<section id="zaman">
+  <div class="sec-head"><span class="marker">G</span><h2>Nasıl ilerledi — on beş gün</h2></div>
+  <p class="col">Proje bir benchmark olarak başlamadı; iki bozuk hook olarak başladı. Sonraki her tur da, bir önceki cevabın güvenilmez çıkması yüzünden var.</p>
+
+  <ol class="tl">
+    <li class="tl-key">
+      <time>2026-08-16 · kaza</time>
+      <h4>İki arıza ve kimsenin cevaplayamadığı bir soru</h4>
+      <p>Skill'ler kendiliğinden yüklenmez oldu. İki ayrı sebep: bütün <span class="mono">SessionStart</span> hook'ları tek bir zaman aşımı penceresini paylaşıyor, yani yavaş bir hook bütün grubu iptal ediyor — ve <span class="mono">enabledPlugins</span> ile <span class="mono">installed_plugins.json</span> birbirinden kaymış. İkisi de bir öğleden sonrada düzeldi.</p>
+      <p>Rahatsız edici kısım ardından gelen soruydu: on bir plugin açıktı ve hiçbirinin ne kadara mal olduğunu ya da işe yarayıp yaramadığını kimse söyleyemiyordu. Bütün proje o soru.</p>
+    </li>
+    <li>
+      <time>2026-08-17 · denetim</time>
+      <h4>On bir plugin üçe indi, sonra bu kesintiyi sınayacak harness</h4>
+      <p>Önce token denetimi geldi — sen bir şey yazmadan her plugin'in ne yüklediğini ölç — ve on birin sekizini eledi. Ama denetim yalnızca maliyeti ölçer, faydayı asla; o yüzden harness onu izledi: beş yapılandırma, aynı görevler, aynı prompt'lar, aynı repo kopyaları ve ajanın erişemeyeceği bir notlama — o çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i.</p>
+    </li>
+    <li>
+      <time>2026-08-18 · ilk cevap</time>
+      <h4>Gerçek bir proje, config başına tek koşu — ve yaşamayan bir başlık</h4>
+      <p>Oyuncak görevler oyuncak soruları cevaplar; o yüzden her config'e canlı, yedi dilli bir sitenin kopyası verilip "iyileştir" dendi. İlk sonuç şuydu: <strong>"full en ucuzu, $2.90, bare'in %60'ı"</strong>. Yanına bir n=1 uyarısı iliştirilmişti ve o uyarı, cümlenin kalıcı olan tek parçası çıktı.</p>
+    </li>
+    <li>
+      <time>2026-08-19 → 08-24 · kısıtlar geri saldırıyor</time>
+      <h4>İkinci bir tuzak görev, ikinci bir model ve n=3</h4>
+      <p>Kalite tam olarak bir turda ayrışmıştı; o ayrımı tekrarlamak için özel bir ikinci tuzak görev (Paginator) yazıldı. Tekrarlayamadı: bütün configler geçti. Ardından her tur Opus'ta yeniden koşturuldu — kalite farkı tamamen kayboldu, maliyet sıralaması iki hücrede tersine döndü.</p>
+      <p>Proje turu config başına üç örneğe çıktı ve $2.90 başlığı orada öldü: beş config'in dördü %16'lık bir bantta toplanırken tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyordu.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-25 · tasarım</time>
+      <h4>Config seçmek yerine, mekanizmalardan bir tane kurmak</h4>
+      <p>Matris üç mekanizma açığa çıkarmıştı: metin tasarrufu kısalan çıktıdan gelir, araçlı iş kaybı her turda yeniden okunan sabit kural setinden gelir, doğruluk ise sözleşme denetimi sırasındaki çıktı hacmini izler. Lea bu üçüne karşı yazıldı ve bir günde v1'den v7'ye getirildi; her değişiklikten sonra her tur yeniden ölçüldü. Bir cümlenin <em>nerede durduğunun</em> cümlenin kendisinden daha çok fark yarattığı da böyle görüldü — dört ayrı kez.</p>
+      <p>Aynı gün bugüne kadar her şeyi yöneten kural doğdu: <strong>yeni bir koşuyu asla kayıtlı bir dolar rakamıyla karşılaştırma.</strong> Değiştirilmemiş bir baseline yeniden koşturulunca ağustostakinden farklı bir örtük fiyat verdi — rejim, tablonun altından kaymıştı.</p>
+    </li>
+    <li>
+      <time>2026-08-26 · canlıya geçiş ve bir uyarı</time>
+      <h4>Lea canlıya alınıyor; başlık sonuç tekrarlanmıyor</h4>
+      <p>Opus mekanizmayı doğruladı (metinde −%42, zor fix'te aynı doğrulukla −%53), canlı yapılandırma Lea'ya geçirildi ve tek başarısız koşu <em>okunarak</em> — tahmin edilerek değil — bir v8 adayı yazıldı.</p>
+      <p>Sonra değiştirilmemiş aynı config zor turda yeniden ölçüldü ve <strong>bir gün önce 4/5 aldığı yerde 1/5</strong> aldı. Maliyet neredeyse hiç oynamadı; oynayan çıktı hacmiydi. Fiyatlar için öğrenilen ders, doğruluk için de geçerliymiş.</p>
+    </li>
+    <li>
+      <time>2026-08-27 → 08-29 · üç gün hiçbir şey</time>
+      <h4>Reset saati olmayan bir kullanım limiti ve kör beş saatlik uyku</h4>
+      <p>Runner, mesajında ayrıştırılabilir bir reset saati taşımayan bir 429'a çarptı ve beş saat uyumaya geçti — üstelik dört kez, bir saat içinde geri gelen bir kota karşısında. Ardından makine kapandı. Kuyruk üç gün kımıldamadı.</p>
+      <p>Düzeltme artık harness'in içinde: tahmin etmek yerine kısa bir merdivende yokla; başarısız bir yoklama on beş saniye ve sıfır token, bu da tek bir uzun tahminden kesinlikle ucuz.</p>
+    </li>
+    <li class="tl-key">
+      <time>2026-08-29 · belirleyici tur</time>
+      <h4>v7'ye karşı v8, kol başına yirmi örnek, aynı gün</h4>
+      <p>n=5'te iki sürüm berabere görünüyordu (1/5'e karşı 3/5, p=0,52). Kol başına n=20'de görünmediler: <strong>4/20'ye karşı 13/20</strong>, Fisher p=0,010; üstelik v8 %7 ucuz ve %36 hızlı. Tek bir paragraf, izinden yükümlülüğe yeniden yazıldı.</p>
+      <p>Aynı gün, bunu sessizce zehirleyecek bir satır da çıktı: 1 tur ve 29 output token yazan, ama gizli suite'i 8/8 geçen bir hücre. Transcript'inde on beş tur vardı — ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. Aritmetikle yakalandı: bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</p>
+    </li>
+    <li>
+      <time>2026-08-30 · kapanış</time>
+      <h4>Son bilinmeyen ve geçiş</h4>
+      <p>Gerçek proje turu nihayet aynı gün ölçülmüş bir rakip kazandı ve Lea hakkındaki son korkuyu çürüttü: medyanı <strong>$3.735</strong>, <span class="mono">full</span>'ünki <strong>$5.560</strong>. Aynı gün, o turun ne söyleyip ne söyleyemeyeceği de ölçüldü — %30'luk bir farkı çözmek için <strong>kol başına n=37</strong>; yani ürettiği hiçbir sıralama, hiçbir zaman gerçek değildi.</p>
+      <p>v8 önerilmeden önce metin vergisi ödeyip ödemediği sınandı (ödemiyor), bütün raporlar yeniden yazıldı ve canlı hook v8'e geçirildi. Ölçüm 232 hücre, 0 başarısız, 286 notlandırılmış koşuyla kapandı.</p>
+    </li>
+  </ol>
+
+  <div class="verdict">
+    <b>Bunun biçimi</b>
+    <p>Yukarıdaki dokuz maddenin beşi, önceki bir sonucun geri çekilmesi: $2.90 başlığı, kalite sıralaması, zor turdaki 4/5, meseleyi çözmesi beklenen tuzak görev ve proje turunun ürettiği her sıralama. Hayatta kalan şey sayılar değil, onları öldüren kurallar — baseline'ı aynı gün ölç, tek güne dayanan kalite rakamına güvenme, ve bir satıra kendi maliyetini kanıtlat.</p>
+  </div>
+</section>
+<!-- TIMELINE:END -->
+
+<section id="guven">
+  <div class="sec-head"><span class="marker">H</span><h2>Neye güvenilmemeli</h2></div>
+  <ul class="tight">
+    <li><strong>İki model, farklı derinlik.</strong> Beş turun beşi Sonnet'te, üçü Opus'ta
+      ölçüldü. Opus'ta web ve zor#2 turları koşturulmadı: ikisi de doygun turlar, Lea hakkında
+      yeni bilgi vermezlerdi.</li>
+    <li><strong>Örneklem küçük.</strong> Metin ve zor tur n=5, diğerleri n=3. Bir ara sürümde
+      "modes'u %22 geçtik" dedim; n=5'te fark yok oldu, çünkü modes'un metin maliyeti çift tepeli
+      (üç koşu ~0.056, iki koşu ~0.10) ve üç örneklik medyan yanlış tepeye oturmuştu.</li>
+    <li><strong>Fiyat rejimi kaydı — ve sebebi sonradan bulundu.</strong> Ağustos matrisindeki
+      dolarlar $3.02/M input fiyatına, 25 Ağustos sonrası her rakam $2.02/M'ye ait görünüyordu. Aynı
+      script, aynı bayrak, farklı rejim. 30 Ağustos'ta token fiyatları dönem dönem çıkarılınca
+      bunun bir <em>fiyat</em> değişikliği olmadığı anlaşıldı: 17–19 Ağustos satırları taban
+      $3.00/$15.03 per M veriyor (Sonnet 4.6 liste fiyatı), 30 Ağustos satırları
+      <strong>$2.00/$10.00 — %0.00 hatayla</strong> (Sonnet 5 liste fiyatı). Yani
+      <span class="mono">--model sonnet</span> takma adı Sonnet 4.6'dan Sonnet 5'e geçmiş. Opus
+      tarafı üç dönemde de $5.00/$25.00, yani Opus 5. Kural değişmiyor — rakipler yine aynı gün
+      ölçüldü — ama artık kaymanın adı var.</li>
+    <li><strong>5. tur doygun.</strong> Paginator görevinde herkes 5/5 alıyor ve
+      <span class="mono">bare</span> 0.0781–0.0805 aralığına kilitlenmiş durumda. Lea'nın oradaki
+      +%2'si tam olarak kural setinin sabit yüküdür; sıfırlamanın tek yolu kuralı silmek.</li>
+    <li><strong>Skor gerçek kusuru gizleyebilir.</strong> v4'e kadar web turunda üç koşuda da 7/7
+      alındı ve üç sitede de <span class="mono">&lt;meta name="viewport"&gt;</span> yoktu. Grader
+      davranışı ölçüyor, yerleşimi değil. Üretilen dosya elle açılmasaydı bu kusur "mükemmel skor"
+      diye raporlanacaktı.</li>
+    <li><strong>Kalite rakamı güne aittir, config'e değil.</strong> Aynı byte'lardan oluşan v7
+      zor turda 25 Ağustos'ta 4/5, 26 Ağustos'ta 1/5, 29 Ağustos'ta 2/14 aldı. Bu yüzden buradaki
+      hiçbir kalite karşılaştırması saklı rakamla yapılmadı: v8 karşılaştırmasında iki kol da aynı
+      gün, karışık sırayla koşturuldu ve iki günün örneklem sayısı iki kolda da eşit tutuldu.</li>
+    <li><strong>Bir satır kendi oturumunun yalnız bir bacağını raporlayabilir.</strong>
+      <span class="mono">hard|sonnet|lea|10</span> hücresi 1 tur, 29 output token, 2.2 saniye ve
+      $0.13 yazdı — üstelik gizli suite'i 8/8 geçti, çünkü iş gerçekten yapılmıştı. Transcript'inde
+      tek bir oturum kimliği altında 15 tur ve 6.049 output token var: ajan döngüsü hücre ortasında
+      yeniden başlamış, <span class="mono">--output-format json</span> özeti yalnız son bacağı
+      anlatmış. Böyle bir satır sayılırsa "ucuz, doğru, tek turluk kazanç" gibi okunur ve hem
+      doğruluk oranını hem hacim yasasını bozar. Yakalama yöntemi satırın kendi içinde:
+      <strong>maliyet ile token'lar birbirini tutmalı.</strong> Temiz bir günün fiyat vektörü
+      satırları %0.12–0.17 hatayla yeniden üretiyor, dolayısıyla %3'ü aşan fazlalık gürültü değil.
+      286 satırlık korpusta böyle iki satır var; ikisi de ayıklandı, biri yeniden ölçüldü.</li>
+    <li><strong>v8 her turda ölçülmedi.</strong> Zor tur n=20 ve metin turu n=5 aynı gün ölçüldü;
+      araçlı tur, web turu ve Opus tarafı hâlâ v7 rakamlarıdır. v8 yalnız istisna paragrafını
+      değiştirdiği için o turlarda farkın küçük olması beklenir — ama beklenti ölçüm değildir.</li>
+    <li><strong>Fiyat rejimi artık tahminle sınanıyor.</strong> "Aynı gün yeniden ölç" kuralı
+      pahalıydı: bir baseline kolunu yeniden koşmak gerekiyordu. Yerine dört token fiyatı (input,
+      cache-write, cache-read, output) bir günün satırlarından en küçük karelerle çıkarılıyor ve
+      yeni koşu <em>eski</em> vektörle fiyatlanıyor. Uyum varsa rejim değişmemiştir. 30 Ağustos'ta
+      üç Opus canary satırı 19/24/25 Ağustos vektörlerinin üçüyle de <strong>%0.2</strong> hatayla
+      eşleşti — $0.54 ve dört dakika, bir kol yeniden koşmak yerine.</li>
+  </ul>
+  <p class="note">
+    Geliştirmenin toplam token maliyeti <strong>$10.4776</strong>, 216 API çağrısı. Bunun $7.17'si
+    Lea'nın kendi koşuları, $3.30'u aynı gün rakip baseline'larını yeniden ölçmek için harcandı.
+    Pro planında bu rakam faturaya değil, nosyonel token maliyetine karşılık gelir.
+  </p>
+</section>
+
+<section id="kurulum">
+  <div class="sec-head"><span class="marker">I</span><h2>Kurulum</h2></div>
+  <p class="col">
+    Lea tek dosya artı tek ayar. Plugin kurmuyor, marketplace eklemiyor, hiçbir şeyi indirmiyor.
+  </p>
+  <p class="col"><strong>1.</strong> Hook dosyasını yaz — <span class="mono">~/.claude/hooks/lea.js</span>:</p>
+  <pre>process.stdout.write(`LEA ACTIVE - always on. Terse prose, unlimited analysis.
+
+... (kural setinin tamamı, B bölümündeki metin) ...
+
+Everything else: 120 words.
+`);</pre>
+  <p class="col"><strong>2.</strong> <span class="mono">~/.claude/settings.json</span> içine hook'u ekle:</p>
+  <pre>{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          { "type": "command",
+            "command": "node \"C:\\Users\\&lt;kullanıcı&gt;\\.claude\\hooks\\lea.js\"",
+            "timeout": 20 }
+        ]
+      }
+    ]
+  }
+}</pre>
+  <p class="col"><strong>3.</strong> Claude Code'u yeniden başlat. Oturum açılışında ilk satır
+  <span class="mono">LEA ACTIVE</span> yazıyorsa yüklenmiştir.</p>
+  <div class="verdict">
+    <b>Neyi kurmuyorsun</b>
+    <p>Bu rehber <span class="mono">full</span> kurulumunun yerine geçiyor. <span class="mono">caveman</span>,
+    <span class="mono">ponytail</span> ve <span class="mono">superpowers</span> plugin'lerini kurman
+    gerekmiyor — ölçüm, üçünün birlikte yaptığı işi bu ~180 token'ın çoğu turda daha ucuza yaptığını
+    söylüyor. Zaten kuruluysalar Lea'yı onlarla birlikte çalıştırma: kural setleri üst üste biner ve
+    ölçülen kazanç kaybolur.</p>
+  </div>
+  <div class="verdict" style="border-color: var(--warn); background: var(--warn-bg);">
+    <b style="color: var(--warn)">Bu makinede şu an hangisi çalışıyor</b>
+    <p>Canlı <span class="mono">~/.claude/settings.json</span> 26 Ağustos'ta Lea'ya geçirildi ve
+    <strong>v7</strong> çalıştırıyor: <span class="mono">~/.claude/hooks/lea.js</span>, izin kipli
+    istisna paragrafı. v8'e geçmek tek bir paragrafı değiştirmek demek — dosyanın son istisna
+    bloğunu <a href="#v8">D bölümündeki</a> v8 metniyle değiştirip Claude Code'u yeniden başlatmak
+    yeterli, başka hiçbir satır değişmiyor. Ölçüm v8'i öneriyor; geçiş yapılmadı, çünkü canlı
+    yapılandırmayı değiştirmek ölçümün değil kullanıcının kararı.</p>
+  </div>
+  <p class="note">
+    Harness dosyaları: <span class="mono">~/.claude/bench/cfg/lea.json</span> ve
+    <span class="mono">~/.claude/bench/hooks/lea.js</span> (v7),
+    <span class="mono">cfg/lea-v8.json</span> ve <span class="mono">hooks/lea-v8.js</span> (v8).
+    Canlı hook bilerek bench ağacına <em>işaret etmiyor</em>, bir kopya: bench'teki bir deney
+    canlı davranışı sessizce değiştiremesin diye. Geçiş öncesi yedek:
+    <span class="mono">~/.claude/backups/config-audit-2026-08-17/settings.pre-lea-20260826.json</span>.
+  </p>
+</section>
+
+<footer>
+  Ölçümler 25–30 Ağustos 2026, Sonnet ve Opus, <span class="mono">~/.claude/bench</span> harness'i;
+  toplam 286 notlandırılmış koşu, 232 matris hücresi, 0 başarısız hücre.
+  Lea 25 Ağustos'ta <span class="mono">lean</span> adıyla ölçüldü; o günün CSV dosyalarında
+  config adı hâlâ <span class="mono">lean</span> olarak geçiyor — aynı dosya, eski isim.
+  Ad, bu makinedeki <span class="mono">lean-context</span> hook'uyla karışmasın diye değiştirildi.
+  Yeniden adlandırmadan sonra metin turu 26 Ağustos'ta üç örnekle tekrar ölçüldü — medyan
+  <strong>0.0523</strong> (0.0520 · 0.0523 · 0.0631), yani v7'nin 0.0626'sıyla aynı bantta:
+  banner metnindeki değişiklik ölçülebilir bir fark yaratmadı.
+</footer>
+
+</div>
+

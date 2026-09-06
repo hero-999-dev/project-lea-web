@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Config karşılaştırması — Sonnet vs Opus</title>
+<style>
+:root {
+  --bg: #fbfbfa; --raised: #ffffff; --sunken: #f2f2ef;
+  --text: #1f1f1d; --dim: #5f5f58; --faint: #8a8a80;
+  --border: #e2e2dc; --strong: #cfcfc6; --accent: #b4531f;
+  --good: #2f6f43; --bad: #a8341f;
+  --s-sonnet: #2a78d6; --s-opus: #eb6834;
+  --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+    --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+    --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+    --good: #6cc08a; --bad: #e2705b;
+    --s-sonnet: #3987e5; --s-opus: #d95926;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16161a; --raised: #1d1d22; --sunken: #111114;
+  --text: #e8e8e3; --dim: #a5a59d; --faint: #77776f;
+  --border: #2c2c33; --strong: #3d3d45; --accent: #e08b56;
+  --good: #6cc08a; --bad: #e2705b;
+  --s-sonnet: #3987e5; --s-opus: #d95926;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.2rem 5rem; }
+h1 { font-size: 1.6rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; margin: 3rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+h3 { font-size: 0.95rem; margin: 1.6rem 0 0.4rem; color: var(--dim); }
+p { margin: 0.7rem 0; }
+.sub { color: var(--dim); margin: 0 0 2rem; }
+.lead { font-size: 1.02rem; }
+strong { font-weight: 650; }
+code { font-family: var(--mono); font-size: 0.87em; background: var(--sunken);
+  padding: 0.1em 0.35em; border-radius: 4px; }
+figure { margin: 1.4rem 0 0.6rem; padding: 1rem 0.8rem 0.6rem; background: var(--raised);
+  border: 1px solid var(--border); border-radius: 10px; }
+figcaption { color: var(--dim); font-size: 0.82rem; margin-top: 0.5rem; padding: 0 0.4rem; }
+.chart { display: block; width: 100%; height: auto; }
+.grid { stroke: var(--border); stroke-width: 1; }
+.tick, .cat, .val, .axis, .missing, .ser { font-family: var(--sans); fill: var(--dim); }
+.tick { font-size: 11px; }
+.cat { font-size: 12px; fill: var(--text); font-weight: 600; }
+/* Which bar is which model, written under the bar itself. A legend two hues wide is one glance
+   too many, and it fails outright for a reader who cannot tell the hues apart. */
+.ser { font-size: 9.5px; letter-spacing: 0.02em; }
+.ser-sonnet { fill: var(--s-sonnet); }
+.ser-opus { fill: var(--s-opus); }
+.val { font-size: 11px; fill: var(--dim); }
+.axis { font-size: 11px; fill: var(--faint); }
+.missing { font-size: 13px; fill: var(--faint); }
+.dot-ok { fill: var(--good); stroke: var(--raised); stroke-width: 2; }
+.dot-bad { fill: var(--bad); stroke: var(--raised); stroke-width: 2; }
+.legend { display: flex; gap: 1rem; padding: 0.2rem 0.4rem 0; font-size: 0.82rem; color: var(--dim); }
+.key { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.scroll { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+.note { background: var(--sunken); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 0.9rem 1rem; margin: 1.2rem 0; font-size: 0.92rem; }
+.pending { color: var(--faint); font-style: italic; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  color: var(--faint); font-size: 0.85rem; }
+
+.tl { list-style: none; margin: 1.4rem 0 0; padding-inline-start: 1.5rem; border-inline-start: 2px solid var(--border); }
+.tl > li { position: relative; padding-bottom: 1.5rem; }
+.tl > li:last-child { padding-bottom: 0; }
+.tl > li::before {
+  content: ""; position: absolute; inset-inline-start: calc(-1.5rem - 6px); top: 0.4rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--border);
+}
+.tl > li.tl-key::before  /* namespaced: one report styles a chart legend .key */ { background: var(--accent); border-color: var(--accent); }
+.tl time { display: block; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--faint); }
+.tl h4 { margin: 0.15rem 0 0.35rem; font-size: 1rem; font-weight: 640; color: var(--text); }
+.tl p { margin: 0 0 0.4rem; color: var(--dim); max-width: 68ch; }
+.tl p:last-child { margin-bottom: 0; }</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Config karşılaştırması: Sonnet ve Opus yan yana</h1>
+<p class="sub">Beş config, beş görev tipi, iki model — 286 ölçülmüş koşu. Her rakam birleştirilmiş ölçüm tablosundan üretildi.</p>
+<h2 id="hard">Zor bug turu: Opus ayırmıyor, Sonnet de tekrarlamıyor</h2>
+<p class="lead">Aynı görev, aynı beş config, aynı gizli test suite. Tek fark model.</p>
+<figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>doğru düzeltme (5 koşudan)</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0</text>
+<line class="grid" x1="46" y1="210.0" x2="708" y2="210.0"/>
+<text class="tick" x="38" y="214.0" text-anchor="end">1</text>
+<line class="grid" x1="46" y1="166.0" x2="708" y2="166.0"/>
+<text class="tick" x="38" y="170.0" text-anchor="end">2</text>
+<line class="grid" x1="46" y1="122.0" x2="708" y2="122.0"/>
+<text class="tick" x="38" y="126.0" text-anchor="end">3</text>
+<line class="grid" x1="46" y1="78.0" x2="708" y2="78.0"/>
+<text class="tick" x="38" y="82.0" text-anchor="end">4</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">5</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="210.0" width="38.0" height="44.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 1</title></rect>
+<text class="val" x="92.2" y="205.0" text-anchor="middle">1</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="34.0" width="38.0" height="220.0" rx="4" fill="var(--s-opus)"><title>Opus · bare: 5</title></rect>
+<text class="val" x="132.2" y="29.0" text-anchor="middle">5</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="166.0" width="38.0" height="88.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 2</title></rect>
+<text class="val" x="224.6" y="161.0" text-anchor="middle">2</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="34.0" width="38.0" height="220.0" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 5</title></rect>
+<text class="val" x="264.6" y="29.0" text-anchor="middle">5</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="122.0" width="38.0" height="132.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 3</title></rect>
+<text class="val" x="357.0" y="117.0" text-anchor="middle">3</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="-186.0" width="38.0" height="440.0" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 10</title></rect>
+<text class="val" x="397.0" y="-191.0" text-anchor="middle">10</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="254.0" width="38.0" height="0.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0</title></rect>
+<text class="val" x="489.4" y="249.0" text-anchor="middle">0</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="34.0" width="38.0" height="220.0" rx="4" fill="var(--s-opus)"><title>Opus · modes: 5</title></rect>
+<text class="val" x="529.4" y="29.0" text-anchor="middle">5</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="166.0" width="38.0" height="88.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 2</title></rect>
+<text class="val" x="621.8" y="161.0" text-anchor="middle">2</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="34.0" width="38.0" height="220.0" rx="4" fill="var(--s-opus)"><title>Opus · full: 5</title></rect>
+<text class="val" x="661.8" y="29.0" text-anchor="middle">5</text>
+<text class="axis" x="46" y="14" text-anchor="start">doğru düzeltme (5 koşudan)</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div>
+<figcaption>Gizli suite'in kabul ettiği düzeltme sayısı, config başına 5 koşu. Sonnet'te 0 ile 3 arasında dağılan sonuç, Opus'ta beş config için de 5.</figcaption></figure>
+<div class="scroll"><table><thead><tr><th>config</th><th>model</th><th>n</th><th>doğru</th><th>USD medyan</th><th>output medyan</th></tr></thead><tbody><tr><td>bare</td><td>sonnet</td><td>5</td><td>1/5</td><td>0.134</td><td>803</td></tr><tr><td>bare</td><td>opus</td><td>5</td><td>5/5</td><td>0.192</td><td>1,889</td></tr><tr><td>hooks</td><td>sonnet</td><td>5</td><td>2/5</td><td>0.143</td><td>1,004</td></tr><tr><td>hooks</td><td>opus</td><td>5</td><td>5/5</td><td>0.206</td><td>1,932</td></tr><tr><td>superpowers</td><td>sonnet</td><td>5</td><td>3/5</td><td>0.209</td><td>2,408</td></tr><tr><td>superpowers</td><td>opus</td><td>10</td><td>10/10</td><td>0.342</td><td>3,142</td></tr><tr><td>modes</td><td>sonnet</td><td>5</td><td>0/5</td><td>0.173</td><td>748</td></tr><tr><td>modes</td><td>opus</td><td>5</td><td>5/5</td><td>0.227</td><td>1,005</td></tr><tr><td>full</td><td>sonnet</td><td>5</td><td>2/5</td><td>0.244</td><td>1,164</td></tr><tr><td>full</td><td>opus</td><td>5</td><td>5/5</td><td>0.292</td><td>1,551</td></tr></tbody></table></div>
+<div class="note"><strong>Bu tablodaki kalite sütunu tek bir günün fotoğrafı.</strong> Sonnet'te caveman+ponytail (<code>modes</code>) 5 koşunun 5'inde de yanlış düzeltmeyi "bitti" diye raporladı; superpowers 5'te 3 doğru yaptı. Opus'ta bu fark tamamen kayboldu — görev o modele göre yeterince zor değil. Uzun süre bundan "kalite farkı modele bağlı" sonucu çıkarıldı — ama sonradan aynı görev Sonnet'te tekrar ölçüldü ve <strong>değiştirilmemiş bir config üç ayrı günde 4/5, 1/5 ve 2/14 aldı</strong>. Yani Sonnet sütunu da tekrarlanmış bir sonuç değil: tek güne dayanan bir kalite rakamı bir özellik değil, bir fotoğraf. İki kolu da aynı gün ölçülmüş tek kalite karşılaştırması Lea v7-v8 turudur.</div>
+<h2 id="split">Ayıran şey config değil, yazılan miktar</h2>
+<figure><svg viewBox="0 0 720 190" role="img" class="chart">
+<title>output token (Sonnet, zor bug turu, 25 koşu)</title>
+<line class="grid" x1="46.0" y1="30" x2="46.0" y2="144"/>
+<text class="tick" x="46.0" y="162" text-anchor="middle">0</text>
+<line class="grid" x1="178.0" y1="30" x2="178.0" y2="144"/>
+<text class="tick" x="178.0" y="162" text-anchor="middle">737</text>
+<line class="grid" x1="310.0" y1="30" x2="310.0" y2="144"/>
+<text class="tick" x="310.0" y="162" text-anchor="middle">1,474</text>
+<line class="grid" x1="442.0" y1="30" x2="442.0" y2="144"/>
+<text class="tick" x="442.0" y="162" text-anchor="middle">2,211</text>
+<line class="grid" x1="574.0" y1="30" x2="574.0" y2="144"/>
+<text class="tick" x="574.0" y="162" text-anchor="middle">2,948</text>
+<line class="grid" x1="706.0" y1="30" x2="706.0" y2="144"/>
+<text class="tick" x="706.0" y="162" text-anchor="middle">3,686</text>
+<text class="cat" x="38" y="62.5" text-anchor="end">doğru</text>
+<text class="cat" x="38" y="119.5" text-anchor="end">yanlış</text>
+<circle class="dot-bad" cx="158.8" cy="115.5" r="5"><title>bare s1: 630 output token</title></circle>
+<circle class="dot-bad" cx="189.8" cy="115.5" r="5"><title>bare s2: 803 output token</title></circle>
+<circle class="dot-ok" cx="426.5" cy="58.5" r="5"><title>bare s3: 2,125 output token</title></circle>
+<circle class="dot-bad" cx="200.0" cy="115.5" r="5"><title>bare s4: 860 output token</title></circle>
+<circle class="dot-bad" cx="177.3" cy="115.5" r="5"><title>bare s5: 733 output token</title></circle>
+<circle class="dot-bad" cx="194.6" cy="115.5" r="5"><title>hooks s1: 830 output token</title></circle>
+<circle class="dot-bad" cx="225.8" cy="115.5" r="5"><title>hooks s2: 1,004 output token</title></circle>
+<circle class="dot-ok" cx="606.5" cy="58.5" r="5"><title>hooks s3: 3,130 output token</title></circle>
+<circle class="dot-ok" cx="390.6" cy="58.5" r="5"><title>hooks s4: 1,924 output token</title></circle>
+<circle class="dot-bad" cx="222.0" cy="115.5" r="5"><title>hooks s5: 983 output token</title></circle>
+<circle class="dot-bad" cx="257.9" cy="115.5" r="5"><title>superpowers s1: 1,183 output token</title></circle>
+<circle class="dot-ok" cx="596.5" cy="58.5" r="5"><title>superpowers s2: 3,074 output token</title></circle>
+<circle class="dot-bad" cx="331.8" cy="115.5" r="5"><title>superpowers s3: 1,596 output token</title></circle>
+<circle class="dot-ok" cx="520.2" cy="58.5" r="5"><title>superpowers s4: 2,648 output token</title></circle>
+<circle class="dot-ok" cx="477.2" cy="58.5" r="5"><title>superpowers s5: 2,408 output token</title></circle>
+<circle class="dot-bad" cx="299.4" cy="115.5" r="5"><title>modes s1: 1,415 output token</title></circle>
+<circle class="dot-bad" cx="180.0" cy="115.5" r="5"><title>modes s2: 748 output token</title></circle>
+<circle class="dot-bad" cx="178.5" cy="115.5" r="5"><title>modes s3: 740 output token</title></circle>
+<circle class="dot-bad" cx="178.9" cy="115.5" r="5"><title>modes s4: 742 output token</title></circle>
+<circle class="dot-bad" cx="193.6" cy="115.5" r="5"><title>modes s5: 824 output token</title></circle>
+<circle class="dot-bad" cx="254.4" cy="115.5" r="5"><title>full s1: 1,164 output token</title></circle>
+<circle class="dot-ok" cx="648.4" cy="58.5" r="5"><title>full s2: 3,364 output token</title></circle>
+<circle class="dot-ok" cx="535.2" cy="58.5" r="5"><title>full s3: 2,732 output token</title></circle>
+<circle class="dot-bad" cx="216.3" cy="115.5" r="5"><title>full s4: 951 output token</title></circle>
+<circle class="dot-bad" cx="222.4" cy="115.5" r="5"><title>full s5: 985 output token</title></circle>
+<circle class="dot-bad" cx="176.9" cy="115.5" r="5"><title>lea-v8 s4: 731 output token</title></circle>
+<circle class="dot-bad" cx="175.1" cy="115.5" r="5"><title>lea-v8 s11: 721 output token</title></circle>
+<circle class="dot-bad" cx="221.3" cy="115.5" r="5"><title>lea s1: 979 output token</title></circle>
+<circle class="dot-bad" cx="214.9" cy="115.5" r="5"><title>lea s5: 943 output token</title></circle>
+<circle class="dot-ok" cx="579.8" cy="58.5" r="5"><title>lea-v8 s16: 2,981 output token</title></circle>
+<circle class="dot-ok" cx="317.5" cy="58.5" r="5"><title>lea s20: 1,516 output token</title></circle>
+<circle class="dot-ok" cx="311.8" cy="58.5" r="5"><title>lea-v8 s14: 1,484 output token</title></circle>
+<circle class="dot-ok" cx="408.8" cy="58.5" r="5"><title>lea s7: 2,026 output token</title></circle>
+<circle class="dot-ok" cx="306.2" cy="58.5" r="5"><title>lea-v8 s13: 1,453 output token</title></circle>
+<circle class="dot-ok" cx="439.6" cy="58.5" r="5"><title>lea-v8 s8: 2,198 output token</title></circle>
+<circle class="dot-bad" cx="193.6" cy="115.5" r="5"><title>lea-v8 s19: 824 output token</title></circle>
+<circle class="dot-bad" cx="228.7" cy="115.5" r="5"><title>lea s12: 1,020 output token</title></circle>
+<circle class="dot-bad" cx="226.7" cy="115.5" r="5"><title>lea s8: 1,009 output token</title></circle>
+<circle class="dot-bad" cx="233.1" cy="115.5" r="5"><title>lea s6: 1,045 output token</title></circle>
+<circle class="dot-bad" cx="257.7" cy="115.5" r="5"><title>lea s19: 1,182 output token</title></circle>
+<circle class="dot-bad" cx="198.8" cy="115.5" r="5"><title>lea-v8 s6: 853 output token</title></circle>
+<circle class="dot-bad" cx="259.8" cy="115.5" r="5"><title>lea s9: 1,194 output token</title></circle>
+<circle class="dot-bad" cx="323.2" cy="115.5" r="5"><title>lea s3: 1,548 output token</title></circle>
+<circle class="dot-bad" cx="257.3" cy="115.5" r="5"><title>lea s17: 1,180 output token</title></circle>
+<circle class="dot-bad" cx="296.2" cy="115.5" r="5"><title>lea s11: 1,397 output token</title></circle>
+<circle class="dot-ok" cx="296.5" cy="58.5" r="5"><title>lea-v8 s5: 1,399 output token</title></circle>
+<circle class="dot-bad" cx="250.5" cy="115.5" r="5"><title>lea s14: 1,142 output token</title></circle>
+<circle class="dot-ok" cx="458.1" cy="58.5" r="5"><title>lea-v8 s7: 2,301 output token</title></circle>
+<circle class="dot-ok" cx="412.9" cy="58.5" r="5"><title>lea s10: 2,049 output token</title></circle>
+<circle class="dot-ok" cx="360.3" cy="58.5" r="5"><title>lea-v8 s15: 1,755 output token</title></circle>
+<circle class="dot-bad" cx="229.7" cy="115.5" r="5"><title>lea s16: 1,026 output token</title></circle>
+<circle class="dot-ok" cx="325.9" cy="58.5" r="5"><title>lea-v8 s2: 1,563 output token</title></circle>
+<circle class="dot-bad" cx="183.4" cy="115.5" r="5"><title>lea-v8 s10: 767 output token</title></circle>
+<circle class="dot-bad" cx="265.4" cy="115.5" r="5"><title>lea s15: 1,225 output token</title></circle>
+<circle class="dot-bad" cx="298.9" cy="115.5" r="5"><title>lea s13: 1,412 output token</title></circle>
+<circle class="dot-bad" cx="207.4" cy="115.5" r="5"><title>lea-v8 s1: 901 output token</title></circle>
+<circle class="dot-ok" cx="674.6" cy="58.5" r="5"><title>lea-v8 s9: 3,510 output token</title></circle>
+<circle class="dot-bad" cx="374.3" cy="115.5" r="5"><title>lea s18: 1,833 output token</title></circle>
+<circle class="dot-ok" cx="404.0" cy="58.5" r="5"><title>lea s4: 1,999 output token</title></circle>
+<circle class="dot-ok" cx="363.3" cy="58.5" r="5"><title>lea-v8 s17: 1,772 output token</title></circle>
+<circle class="dot-bad" cx="244.8" cy="115.5" r="5"><title>lea-v8 s18: 1,110 output token</title></circle>
+<circle class="dot-ok" cx="548.3" cy="58.5" r="5"><title>lea-v8 s12: 2,805 output token</title></circle>
+<circle class="dot-ok" cx="340.9" cy="58.5" r="5"><title>lea-v8 s20: 1,647 output token</title></circle>
+<circle class="dot-bad" cx="203.1" cy="115.5" r="5"><title>lea s2: 877 output token</title></circle>
+<circle class="dot-ok" cx="483.1" cy="58.5" r="5"><title>lea-v8 s3: 2,441 output token</title></circle>
+<text class="axis" x="46" y="16" text-anchor="start">output token (Sonnet, zor bug turu, 25 koşu)</text>
+</svg>
+<figcaption>Sonnet'in zor bug turundaki 25 koşusu. Üst şerit gizli suite'i geçenler, alt şerit geçmeyenler. Renk durum bildiriyor, seri değil.</figcaption></figure>
+<p>Doğru koşuların en düşüğü 1,399, yanlışların en yükseği 1,833. İki bulut çakışmıyor. Kodu docstring'deki sözleşmeyle karşılaştırıp ikinci ihlali yakalayan koşular, tam olarak daha çok yazan koşular. caveman+ponytail'in bütün tasarrufu çıktıyı kısmaktan geldiği için, o turda kestiği şey muhakemenin kendisiydi.</p>
+<p>Opus'ta aynı ayrım yok: beş config de doğru çözdüğü için ayıracak bir şey kalmıyor.</p>
+<h2 id="hard2">İkinci tuzak görevi: kimse düşmedi</h2>
+<p>İlk turun tek bir gizli kusura dayanması açık bir zayıflıktı. İkinci görev aynı mimariyle, farklı alanda yazıldı: bir <code>Paginator</code>, görünür testin yakaladığı bir indeksleme hatası ve docstring'de yazılı ama görünür testlerin bilerek uğramadığı bir <code>page_count</code> formülü.</p>
+<p>Görev laboratuvarda ayırt edici olduğu kanıtlandı — yalnızca ilk hatayı düzelten varyant görünür testleri geçiyor, gizli suite'te düşüyor. Gerçek koşularda ise:</p>
+<div class="scroll"><table><thead><tr><th>config</th><th>model</th><th>n</th><th>doğru</th><th>USD medyan</th><th>endeks</th><th>tur medyan</th></tr></thead><tbody><tr><td>bare</td><td>sonnet</td><td>5</td><td>5/5</td><td>0.130</td><td>100</td><td>6</td></tr><tr><td>hooks</td><td>sonnet</td><td>5</td><td>5/5</td><td>0.154</td><td>118</td><td>7</td></tr><tr><td>superpowers</td><td>sonnet</td><td>5</td><td>5/5</td><td>0.193</td><td>148</td><td>8</td></tr><tr><td>modes</td><td>sonnet</td><td>5</td><td>5/5</td><td>0.163</td><td>125</td><td>5</td></tr><tr><td>full</td><td>sonnet</td><td>5</td><td>5/5</td><td>0.251</td><td>192</td><td>8</td></tr><tr><td>bare</td><td>opus</td><td>5</td><td>5/5</td><td>0.252</td><td>100</td><td>9</td></tr><tr><td>hooks</td><td>opus</td><td>5</td><td>5/5</td><td>0.272</td><td>108</td><td>9</td></tr><tr><td>superpowers</td><td>opus</td><td>5</td><td>5/5</td><td>0.355</td><td>141</td><td>8</td></tr><tr><td>modes</td><td>opus</td><td>5</td><td>5/5</td><td>0.233</td><td>92</td><td>4</td></tr><tr><td>full</td><td>opus</td><td>5</td><td>5/5</td><td>0.287</td><td>114</td><td>5</td></tr></tbody></table></div>
+<div class="note"><strong>Elli koşunun ellisi de doğru.</strong> Kapatmaya çalıştığımız caveat kapanmadı; ölçüm onu doğruladı, üstelik iki modelde birden. Kalite farkı <em>tek göreve</em> bağlı çıktı — ikinci görevde hiçbir config yanılmadı. Dürüst okuma şu: bir config'in kaliteyi bozduğunu gösteren elimizde tek bir görev var, o da yalnız Sonnet'te.</div>
+<div class="note"><strong>Maliyet tarafında sürpriz:</strong> Opus'ta <code>modes</code> bu turu <em>bare'den ucuza</em> bitiriyor (endeks 92) — tüm matriste bunun görüldüğü iki hücreden biri. Sebep tur sayısı: modes 4 turda kapatıyor, bare 9 turda. Sonnet'te aynı config 125'te, yani kısalığın kazandırıp kazandırmaması göreve olduğu kadar modele de bağlı.</div>
+<h2 id="cost">Maliyet: tur tur, model model</h2>
+<p>Her turun kendi grafiği var; iki modelin ölçeği farklı olduğu için tek eksende birleştirmek karşılaştırmayı bozardı.</p>
+<h3>Metin (tool yok)</h3><figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>USD medyan</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0.00</text>
+<line class="grid" x1="46" y1="199.0" x2="708" y2="199.0"/>
+<text class="tick" x="38" y="203.0" text-anchor="end">0.19</text>
+<line class="grid" x1="46" y1="144.0" x2="708" y2="144.0"/>
+<text class="tick" x="38" y="148.0" text-anchor="end">0.38</text>
+<line class="grid" x1="46" y1="89.0" x2="708" y2="89.0"/>
+<text class="tick" x="38" y="93.0" text-anchor="end">0.57</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">0.76</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="203.4" width="38.0" height="50.6" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 0.17</title></rect>
+<text class="val" x="92.2" y="198.4" text-anchor="middle">0.17</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="94.7" width="38.0" height="159.3" rx="4" fill="var(--s-opus)"><title>Opus · bare: 0.55</title></rect>
+<text class="val" x="132.2" y="89.7" text-anchor="middle">0.55</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="200.5" width="38.0" height="53.5" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 0.18</title></rect>
+<text class="val" x="224.6" y="195.5" text-anchor="middle">0.18</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="91.7" width="38.0" height="162.3" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 0.56</title></rect>
+<text class="val" x="264.6" y="86.7" text-anchor="middle">0.56</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="193.0" width="38.0" height="61.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 0.21</title></rect>
+<text class="val" x="357.0" y="188.0" text-anchor="middle">0.21</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="62.7" width="38.0" height="191.3" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 0.66</title></rect>
+<text class="val" x="397.0" y="57.7" text-anchor="middle">0.66</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="226.0" width="38.0" height="28.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0.10</title></rect>
+<text class="val" x="489.4" y="221.0" text-anchor="middle">0.10</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="151.8" width="38.0" height="102.2" rx="4" fill="var(--s-opus)"><title>Opus · modes: 0.35</title></rect>
+<text class="val" x="529.4" y="146.8" text-anchor="middle">0.35</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="221.6" width="38.0" height="32.4" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 0.11</title></rect>
+<text class="val" x="621.8" y="216.6" text-anchor="middle">0.11</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="132.7" width="38.0" height="121.3" rx="4" fill="var(--s-opus)"><title>Opus · full: 0.42</title></rect>
+<text class="val" x="661.8" y="127.7" text-anchor="middle">0.42</text>
+<text class="axis" x="46" y="14" text-anchor="start">USD medyan</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div></figure>
+<h3>Kolay bug fix</h3><figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>USD medyan</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0.00</text>
+<line class="grid" x1="46" y1="199.0" x2="708" y2="199.0"/>
+<text class="tick" x="38" y="203.0" text-anchor="end">0.07</text>
+<line class="grid" x1="46" y1="144.0" x2="708" y2="144.0"/>
+<text class="tick" x="38" y="148.0" text-anchor="end">0.14</text>
+<line class="grid" x1="46" y1="89.0" x2="708" y2="89.0"/>
+<text class="tick" x="38" y="93.0" text-anchor="end">0.22</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">0.29</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="163.0" width="38.0" height="91.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 0.12</title></rect>
+<text class="val" x="92.2" y="158.0" text-anchor="middle">0.12</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="111.0" width="38.0" height="143.0" rx="4" fill="var(--s-opus)"><title>Opus · bare: 0.19</title></rect>
+<text class="val" x="132.2" y="106.0" text-anchor="middle">0.19</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="154.2" width="38.0" height="99.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 0.13</title></rect>
+<text class="val" x="224.6" y="149.2" text-anchor="middle">0.13</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="115.6" width="38.0" height="138.4" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 0.18</title></rect>
+<text class="val" x="264.6" y="110.6" text-anchor="middle">0.18</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="114.5" width="38.0" height="139.5" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 0.18</title></rect>
+<text class="val" x="357.0" y="109.5" text-anchor="middle">0.18</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="75.8" width="38.0" height="178.2" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 0.23</title></rect>
+<text class="val" x="397.0" y="70.8" text-anchor="middle">0.23</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="121.9" width="38.0" height="132.1" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0.17</title></rect>
+<text class="val" x="489.4" y="116.9" text-anchor="middle">0.17</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="91.2" width="38.0" height="162.8" rx="4" fill="var(--s-opus)"><title>Opus · modes: 0.21</title></rect>
+<text class="val" x="529.4" y="86.2" text-anchor="middle">0.21</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="75.2" width="38.0" height="178.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 0.23</title></rect>
+<text class="val" x="621.8" y="70.2" text-anchor="middle">0.23</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="62.7" width="38.0" height="191.3" rx="4" fill="var(--s-opus)"><title>Opus · full: 0.25</title></rect>
+<text class="val" x="661.8" y="57.7" text-anchor="middle">0.25</text>
+<text class="axis" x="46" y="14" text-anchor="start">USD medyan</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div></figure>
+<h3>Zor bug fix</h3><figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>USD medyan</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0.00</text>
+<line class="grid" x1="46" y1="199.0" x2="708" y2="199.0"/>
+<text class="tick" x="38" y="203.0" text-anchor="end">0.10</text>
+<line class="grid" x1="46" y1="144.0" x2="708" y2="144.0"/>
+<text class="tick" x="38" y="148.0" text-anchor="end">0.20</text>
+<line class="grid" x1="46" y1="89.0" x2="708" y2="89.0"/>
+<text class="tick" x="38" y="93.0" text-anchor="end">0.29</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">0.39</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="179.2" width="38.0" height="74.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 0.13</title></rect>
+<text class="val" x="92.2" y="174.2" text-anchor="middle">0.13</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="146.5" width="38.0" height="107.5" rx="4" fill="var(--s-opus)"><title>Opus · bare: 0.19</title></rect>
+<text class="val" x="132.2" y="141.5" text-anchor="middle">0.19</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="173.7" width="38.0" height="80.3" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 0.14</title></rect>
+<text class="val" x="224.6" y="168.7" text-anchor="middle">0.14</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="138.7" width="38.0" height="115.3" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 0.21</title></rect>
+<text class="val" x="264.6" y="133.7" text-anchor="middle">0.21</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="137.0" width="38.0" height="117.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 0.21</title></rect>
+<text class="val" x="357.0" y="132.0" text-anchor="middle">0.21</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="62.7" width="38.0" height="191.3" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 0.34</title></rect>
+<text class="val" x="397.0" y="57.7" text-anchor="middle">0.34</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="157.1" width="38.0" height="96.9" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0.17</title></rect>
+<text class="val" x="489.4" y="152.1" text-anchor="middle">0.17</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="127.0" width="38.0" height="127.0" rx="4" fill="var(--s-opus)"><title>Opus · modes: 0.23</title></rect>
+<text class="val" x="529.4" y="122.0" text-anchor="middle">0.23</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="117.5" width="38.0" height="136.5" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 0.24</title></rect>
+<text class="val" x="621.8" y="112.5" text-anchor="middle">0.24</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="90.3" width="38.0" height="163.7" rx="4" fill="var(--s-opus)"><title>Opus · full: 0.29</title></rect>
+<text class="val" x="661.8" y="85.3" text-anchor="middle">0.29</text>
+<text class="axis" x="46" y="14" text-anchor="start">USD medyan</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div></figure>
+<h3>Zor bug fix #2 (Paginator)</h3><figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>USD medyan</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0.00</text>
+<line class="grid" x1="46" y1="199.0" x2="708" y2="199.0"/>
+<text class="tick" x="38" y="203.0" text-anchor="end">0.10</text>
+<line class="grid" x1="46" y1="144.0" x2="708" y2="144.0"/>
+<text class="tick" x="38" y="148.0" text-anchor="end">0.20</text>
+<line class="grid" x1="46" y1="89.0" x2="708" y2="89.0"/>
+<text class="tick" x="38" y="93.0" text-anchor="end">0.31</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">0.41</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="183.7" width="38.0" height="70.3" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 0.13</title></rect>
+<text class="val" x="92.2" y="178.7" text-anchor="middle">0.13</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="118.0" width="38.0" height="136.0" rx="4" fill="var(--s-opus)"><title>Opus · bare: 0.25</title></rect>
+<text class="val" x="132.2" y="113.0" text-anchor="middle">0.25</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="171.2" width="38.0" height="82.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 0.15</title></rect>
+<text class="val" x="224.6" y="166.2" text-anchor="middle">0.15</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="107.2" width="38.0" height="146.8" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 0.27</title></rect>
+<text class="val" x="264.6" y="102.2" text-anchor="middle">0.27</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="150.0" width="38.0" height="104.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 0.19</title></rect>
+<text class="val" x="357.0" y="145.0" text-anchor="middle">0.19</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="62.7" width="38.0" height="191.3" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 0.36</title></rect>
+<text class="val" x="397.0" y="57.7" text-anchor="middle">0.36</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="166.0" width="38.0" height="88.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0.16</title></rect>
+<text class="val" x="489.4" y="161.0" text-anchor="middle">0.16</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="128.6" width="38.0" height="125.4" rx="4" fill="var(--s-opus)"><title>Opus · modes: 0.23</title></rect>
+<text class="val" x="529.4" y="123.6" text-anchor="middle">0.23</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="119.0" width="38.0" height="135.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 0.25</title></rect>
+<text class="val" x="621.8" y="114.0" text-anchor="middle">0.25</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="99.3" width="38.0" height="154.7" rx="4" fill="var(--s-opus)"><title>Opus · full: 0.29</title></rect>
+<text class="val" x="661.8" y="94.3" text-anchor="middle">0.29</text>
+<text class="axis" x="46" y="14" text-anchor="start">USD medyan</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div></figure>
+<h3>Sıfırdan web sitesi</h3><figure><svg viewBox="0 0 720 316" role="img" class="chart">
+<title>USD medyan</title>
+<line class="grid" x1="46" y1="254.0" x2="708" y2="254.0"/>
+<text class="tick" x="38" y="258.0" text-anchor="end">0.00</text>
+<line class="grid" x1="46" y1="199.0" x2="708" y2="199.0"/>
+<text class="tick" x="38" y="203.0" text-anchor="end">0.17</text>
+<line class="grid" x1="46" y1="144.0" x2="708" y2="144.0"/>
+<text class="tick" x="38" y="148.0" text-anchor="end">0.34</text>
+<line class="grid" x1="46" y1="89.0" x2="708" y2="89.0"/>
+<text class="tick" x="38" y="93.0" text-anchor="end">0.52</text>
+<line class="grid" x1="46" y1="34.0" x2="708" y2="34.0"/>
+<text class="tick" x="38" y="38.0" text-anchor="end">0.69</text>
+<text class="cat" x="112.2" y="290" text-anchor="middle">bare</text>
+<text class="ser ser-sonnet" x="92.2" y="270" text-anchor="middle">Sonnet</text>
+<rect x="73.2" y="213.2" width="38.0" height="40.8" rx="4" fill="var(--s-sonnet)"><title>Sonnet · bare: 0.13</title></rect>
+<text class="val" x="92.2" y="208.2" text-anchor="middle">0.13</text>
+<text class="ser ser-opus" x="132.2" y="270" text-anchor="middle">Opus</text>
+<rect x="113.2" y="162.3" width="38.0" height="91.7" rx="4" fill="var(--s-opus)"><title>Opus · bare: 0.29</title></rect>
+<text class="val" x="132.2" y="157.3" text-anchor="middle">0.29</text>
+<text class="cat" x="244.6" y="290" text-anchor="middle">hooks</text>
+<text class="ser ser-sonnet" x="224.6" y="270" text-anchor="middle">Sonnet</text>
+<rect x="205.6" y="190.9" width="38.0" height="63.1" rx="4" fill="var(--s-sonnet)"><title>Sonnet · hooks: 0.20</title></rect>
+<text class="val" x="224.6" y="185.9" text-anchor="middle">0.20</text>
+<text class="ser ser-opus" x="264.6" y="270" text-anchor="middle">Opus</text>
+<rect x="245.6" y="62.7" width="38.0" height="191.3" rx="4" fill="var(--s-opus)"><title>Opus · hooks: 0.60</title></rect>
+<text class="val" x="264.6" y="57.7" text-anchor="middle">0.60</text>
+<text class="cat" x="377.0" y="290" text-anchor="middle">superpowers</text>
+<text class="ser ser-sonnet" x="357.0" y="270" text-anchor="middle">Sonnet</text>
+<rect x="338.0" y="207.0" width="38.0" height="47.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · superpowers: 0.15</title></rect>
+<text class="val" x="357.0" y="202.0" text-anchor="middle">0.15</text>
+<text class="ser ser-opus" x="397.0" y="270" text-anchor="middle">Opus</text>
+<rect x="378.0" y="106.1" width="38.0" height="147.9" rx="4" fill="var(--s-opus)"><title>Opus · superpowers: 0.46</title></rect>
+<text class="val" x="397.0" y="101.1" text-anchor="middle">0.46</text>
+<text class="cat" x="509.4" y="290" text-anchor="middle">modes</text>
+<text class="ser ser-sonnet" x="489.4" y="270" text-anchor="middle">Sonnet</text>
+<rect x="470.4" y="211.0" width="38.0" height="43.0" rx="4" fill="var(--s-sonnet)"><title>Sonnet · modes: 0.13</title></rect>
+<text class="val" x="489.4" y="206.0" text-anchor="middle">0.13</text>
+<text class="ser ser-opus" x="529.4" y="270" text-anchor="middle">Opus</text>
+<rect x="510.4" y="177.1" width="38.0" height="76.9" rx="4" fill="var(--s-opus)"><title>Opus · modes: 0.24</title></rect>
+<text class="val" x="529.4" y="172.1" text-anchor="middle">0.24</text>
+<text class="cat" x="641.8" y="290" text-anchor="middle">full</text>
+<text class="ser ser-sonnet" x="621.8" y="270" text-anchor="middle">Sonnet</text>
+<rect x="602.8" y="192.9" width="38.0" height="61.1" rx="4" fill="var(--s-sonnet)"><title>Sonnet · full: 0.19</title></rect>
+<text class="val" x="621.8" y="187.9" text-anchor="middle">0.19</text>
+<text class="ser ser-opus" x="661.8" y="270" text-anchor="middle">Opus</text>
+<rect x="642.8" y="123.5" width="38.0" height="130.5" rx="4" fill="var(--s-opus)"><title>Opus · full: 0.41</title></rect>
+<text class="val" x="661.8" y="118.5" text-anchor="middle">0.41</text>
+<text class="axis" x="46" y="14" text-anchor="start">USD medyan</text>
+</svg><div class="legend"><span class="key"><i style="background:var(--s-sonnet)"></i>Sonnet</span><span class="key"><i style="background:var(--s-opus)"></i>Opus</span></div></figure>
+<h2 id="zaman">Nasıl ilerledi — on beş gün</h2>
+<p>Proje bir benchmark olarak başlamadı; iki bozuk hook olarak başladı. Sonraki her tur da, bir önceki cevabın güvenilmez çıkması yüzünden var.</p>
+
+<ol class="tl">
+  <li class="tl-key">
+    <time>2026-08-16 · kaza</time>
+    <h4>İki arıza ve kimsenin cevaplayamadığı bir soru</h4>
+    <p>Skill'ler kendiliğinden yüklenmez oldu. İki ayrı sebep: bütün <code>SessionStart</code> hook'ları tek bir zaman aşımı penceresini paylaşıyor, yani yavaş bir hook bütün grubu iptal ediyor — ve <code>enabledPlugins</code> ile <code>installed_plugins.json</code> birbirinden kaymış. İkisi de bir öğleden sonrada düzeldi.</p>
+    <p>Rahatsız edici kısım ardından gelen soruydu: on bir plugin açıktı ve hiçbirinin ne kadara mal olduğunu ya da işe yarayıp yaramadığını kimse söyleyemiyordu. Bütün proje o soru.</p>
+  </li>
+  <li>
+    <time>2026-08-17 · denetim</time>
+    <h4>On bir plugin üçe indi, sonra bu kesintiyi sınayacak harness</h4>
+    <p>Önce token denetimi geldi — sen bir şey yazmadan her plugin'in ne yüklediğini ölç — ve on birin sekizini eledi. Ama denetim yalnızca maliyeti ölçer, faydayı asla; o yüzden harness onu izledi: beş yapılandırma, aynı görevler, aynı prompt'lar, aynı repo kopyaları ve ajanın erişemeyeceği bir notlama — o çıktıktan <em>sonra</em> kopyalanan gizli bir test suite'i.</p>
+  </li>
+  <li>
+    <time>2026-08-18 · ilk cevap</time>
+    <h4>Gerçek bir proje, config başına tek koşu — ve yaşamayan bir başlık</h4>
+    <p>Oyuncak görevler oyuncak soruları cevaplar; o yüzden her config'e canlı, yedi dilli bir sitenin kopyası verilip "iyileştir" dendi. İlk sonuç şuydu: <strong>"full en ucuzu, $2.90, bare'in %60'ı"</strong>. Yanına bir n=1 uyarısı iliştirilmişti ve o uyarı, cümlenin kalıcı olan tek parçası çıktı.</p>
+  </li>
+  <li>
+    <time>2026-08-19 → 08-24 · kısıtlar geri saldırıyor</time>
+    <h4>İkinci bir tuzak görev, ikinci bir model ve n=3</h4>
+    <p>Kalite tam olarak bir turda ayrışmıştı; o ayrımı tekrarlamak için özel bir ikinci tuzak görev (Paginator) yazıldı. Tekrarlayamadı: bütün configler geçti. Ardından her tur Opus'ta yeniden koşturuldu — kalite farkı tamamen kayboldu, maliyet sıralaması iki hücrede tersine döndü.</p>
+    <p>Proje turu config başına üç örneğe çıktı ve $2.90 başlığı orada öldü: beş config'in dördü %16'lık bir bantta toplanırken tek bir config'in kendi koşuları $2.78 ile $9.39 arasında geziniyordu.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-25 · tasarım</time>
+    <h4>Config seçmek yerine, mekanizmalardan bir tane kurmak</h4>
+    <p>Matris üç mekanizma açığa çıkarmıştı: metin tasarrufu kısalan çıktıdan gelir, araçlı iş kaybı her turda yeniden okunan sabit kural setinden gelir, doğruluk ise sözleşme denetimi sırasındaki çıktı hacmini izler. Lea bu üçüne karşı yazıldı ve bir günde v1'den v7'ye getirildi; her değişiklikten sonra her tur yeniden ölçüldü. Bir cümlenin <em>nerede durduğunun</em> cümlenin kendisinden daha çok fark yarattığı da böyle görüldü — dört ayrı kez.</p>
+    <p>Aynı gün bugüne kadar her şeyi yöneten kural doğdu: <strong>yeni bir koşuyu asla kayıtlı bir dolar rakamıyla karşılaştırma.</strong> Değiştirilmemiş bir baseline yeniden koşturulunca ağustostakinden farklı bir örtük fiyat verdi — rejim, tablonun altından kaymıştı.</p>
+  </li>
+  <li>
+    <time>2026-08-26 · canlıya geçiş ve bir uyarı</time>
+    <h4>Lea canlıya alınıyor; başlık sonuç tekrarlanmıyor</h4>
+    <p>Opus mekanizmayı doğruladı (metinde −%42, zor fix'te aynı doğrulukla −%53), canlı yapılandırma Lea'ya geçirildi ve tek başarısız koşu <em>okunarak</em> — tahmin edilerek değil — bir v8 adayı yazıldı.</p>
+    <p>Sonra değiştirilmemiş aynı config zor turda yeniden ölçüldü ve <strong>bir gün önce 4/5 aldığı yerde 1/5</strong> aldı. Maliyet neredeyse hiç oynamadı; oynayan çıktı hacmiydi. Fiyatlar için öğrenilen ders, doğruluk için de geçerliymiş.</p>
+  </li>
+  <li>
+    <time>2026-08-27 → 08-29 · üç gün hiçbir şey</time>
+    <h4>Reset saati olmayan bir kullanım limiti ve kör beş saatlik uyku</h4>
+    <p>Runner, mesajında ayrıştırılabilir bir reset saati taşımayan bir 429'a çarptı ve beş saat uyumaya geçti — üstelik dört kez, bir saat içinde geri gelen bir kota karşısında. Ardından makine kapandı. Kuyruk üç gün kımıldamadı.</p>
+    <p>Düzeltme artık harness'in içinde: tahmin etmek yerine kısa bir merdivende yokla; başarısız bir yoklama on beş saniye ve sıfır token, bu da tek bir uzun tahminden kesinlikle ucuz.</p>
+  </li>
+  <li class="tl-key">
+    <time>2026-08-29 · belirleyici tur</time>
+    <h4>v7'ye karşı v8, kol başına yirmi örnek, aynı gün</h4>
+    <p>n=5'te iki sürüm berabere görünüyordu (1/5'e karşı 3/5, p=0,52). Kol başına n=20'de görünmediler: <strong>4/20'ye karşı 13/20</strong>, Fisher p=0,010; üstelik v8 %7 ucuz ve %36 hızlı. Tek bir paragraf, izinden yükümlülüğe yeniden yazıldı.</p>
+    <p>Aynı gün, bunu sessizce zehirleyecek bir satır da çıktı: 1 tur ve 29 output token yazan, ama gizli suite'i 8/8 geçen bir hücre. Transcript'inde on beş tur vardı — ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. Aritmetikle yakalandı: bir satırın maliyeti ile kendi token sayıları birbirini tutmalı.</p>
+  </li>
+  <li>
+    <time>2026-08-30 · kapanış</time>
+    <h4>Son bilinmeyen ve geçiş</h4>
+    <p>Gerçek proje turu nihayet aynı gün ölçülmüş bir rakip kazandı ve Lea hakkındaki son korkuyu çürüttü: medyanı <strong>$3.735</strong>, <code>full</code>'ünki <strong>$5.560</strong>. Aynı gün, o turun ne söyleyip ne söyleyemeyeceği de ölçüldü — %30'luk bir farkı çözmek için <strong>kol başına n=37</strong>; yani ürettiği hiçbir sıralama, hiçbir zaman gerçek değildi.</p>
+    <p>v8 önerilmeden önce metin vergisi ödeyip ödemediği sınandı (ödemiyor), bütün raporlar yeniden yazıldı ve canlı hook v8'e geçirildi. Ölçüm 232 hücre, 0 başarısız, 286 notlandırılmış koşuyla kapandı.</p>
+  </li>
+</ol>
+
+<div class="note"><p><strong>Bunun biçimi.</strong> Yukarıdaki dokuz maddenin beşi, önceki bir sonucun geri çekilmesi: $2.90 başlığı, kalite sıralaması, zor turdaki 4/5, meseleyi çözmesi beklenen tuzak görev ve proje turunun ürettiği her sıralama. Hayatta kalan şey sayılar değil, onları öldüren kurallar — baseline'ı aynı gün ölç, tek güne dayanan kalite rakamına güvenme, ve bir satıra kendi maliyetini kanıtlat.</p></div>
+<h2 id="caveats">Neye güvenilmemeli</h2>
+<p>Ölçülen hücre sayısı, olduğu gibi:</p>
+<div class="scroll"><table><thead><tr><th>tur</th><th>model</th><th>koşu</th><th>durum</th></tr></thead><tbody><tr><td>Metin (tool yok)</td><td>sonnet</td><td>25</td><td>tamam</td></tr><tr><td>Metin (tool yok)</td><td>opus</td><td>25</td><td>tamam</td></tr><tr><td>Kolay bug fix</td><td>sonnet</td><td>25</td><td>tamam</td></tr><tr><td>Kolay bug fix</td><td>opus</td><td>21</td><td>tamam</td></tr><tr><td>Zor bug fix</td><td>sonnet</td><td>65</td><td>tamam</td></tr><tr><td>Zor bug fix</td><td>opus</td><td>35</td><td>tamam</td></tr><tr><td>Zor bug fix #2 (Paginator)</td><td>sonnet</td><td>25</td><td>tamam</td></tr><tr><td>Zor bug fix #2 (Paginator)</td><td>opus</td><td>25</td><td>tamam</td></tr><tr><td>Sıfırdan web sitesi</td><td>sonnet</td><td>25</td><td>tamam</td></tr><tr><td>Sıfırdan web sitesi</td><td>opus</td><td>15</td><td>tamam</td></tr></tbody></table></div>
+<ul>
+<li><strong>Kalite bulgusu tek göreve dayanıyor.</strong> İkinci tuzak görevinde hiçbir config yanılmadı, yani "modes doğruluğu bozuyor" sonucu genellenemiyor.</li>
+<li><strong>Ve tek modele.</strong> Opus'ta o görevde de fark yok.</li>
+<li><strong>Ve tek güne.</strong> Değiştirilmemiş bir config aynı görevde 25 Ağustos'ta 4/5, 26 Ağustos'ta 1/5, 29 Ağustos'ta 2/14 aldı — maliyet neredeyse hiç oynamadan. Bir kalite rakamını alındığı güne ait oku, başka günün rakamıyla kıyaslama.</li>
+<li><strong>Bir satırın maliyeti kendi token sayılarını tutmalı.</strong> 286 satırın ikisi, token'larının satın alabileceğinden fazlasını faturaladı: ajan döngüsü hücre ortasında yeniden başlamış, özet JSON yalnız son bacağı anlatmıştı. İkisi de ayıklandı.</li>
+<li><strong>Maliyet sıralaması göreve göre ters dönüyor.</strong> Metin işinde caveman+ponytail kazandırıyor, çok turlu araçlı işte kaybettiriyor. Tek bir "en iyi config" yok.</li>
+<li><strong>Dolar rakamları token maliyeti,</strong> fatura değil; abonelikte gerçek kısıt oturum limiti.</li>
+</ul>
+<footer>Bu sayfa <code>build_report.py</code> tarafından <code>merged.csv</code>'den üretildi. Yeni hücreler bitince komutu tekrar çalıştırmak sayfayı günceller.</footer>
+</div>
+</body>
+</html>

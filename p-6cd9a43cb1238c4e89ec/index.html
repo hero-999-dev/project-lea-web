@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code config benchmark — raporlar</title>
+<style>
+  /* The three reports each bring their own full stylesheet, so they are shown in an iframe:
+     no class collisions, and build_report.py can keep regenerating its own file untouched. */
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1b1b1f; --dim: #5d5d68;
+    --rule: #e2e2dd; --accent: #b1541f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16161a; --panel: #1d1d22; --ink: #ececf0; --dim: #a0a0ac;
+            --rule: #303038; --accent: #e08a4f; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; flex-direction: column; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  header {
+    background: var(--panel); border-bottom: 1px solid var(--rule);
+    padding: 0.7rem 1.1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; align-items: baseline;
+  }
+  h1 { font-size: 0.95rem; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  h1 small { display: block; font-weight: 400; font-size: 0.78rem; color: var(--dim); letter-spacing: 0; }
+  nav { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-left: auto; }
+  nav a {
+    padding: 0.34rem 0.7rem; border: 1px solid var(--rule); border-radius: 7px;
+    color: var(--ink); text-decoration: none; font-size: 0.86rem; white-space: nowrap;
+  }
+  nav a:hover { border-color: var(--accent); color: var(--accent); }
+  nav a.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  nav a.ext::after { content: " ↗"; color: var(--dim); }
+  nav a.on.ext::after { color: #fff; }
+  iframe { flex: 1; width: 100%; border: 0; background: var(--panel); }
+  footer { padding: 0.45rem 1.1rem; border-top: 1px solid var(--rule); color: var(--dim); font-size: 0.76rem; background: var(--panel); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.92em; }
+
+  /* Savings banner. Written by savings.py; the markers in the body are what it rewrites. */
+  /* flex:none because the page is a full-height flex column whose iframe takes the slack -
+     without it a short viewport shrinks the banner instead of the report. */
+  .savings {
+    flex: none; background: var(--panel); border-bottom: 1px solid var(--rule);
+    padding: 0.75rem 1.1rem 0.7rem; box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .savings-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.55rem; }
+  .savings-eyebrow { color: var(--dim); font-size: 0.82rem; }
+  .savings-usd { font-size: 1.5rem; font-weight: 680; letter-spacing: -0.02em;
+    color: var(--accent); font-variant-numeric: tabular-nums; }
+  .savings-pct {
+    font-size: 0.8rem; font-weight: 650; color: #fff; background: var(--accent);
+    border-radius: 999px; padding: 0.1rem 0.5rem; font-variant-numeric: tabular-nums;
+  }
+  .savings-unit { color: var(--dim); font-size: 0.82rem; }
+  .savings-basis { margin: 0.3rem 0 0; font-size: 0.82rem; color: var(--dim); max-width: 78ch; }
+  .savings-basis b { color: var(--ink); font-weight: 620; font-variant-numeric: tabular-nums; }
+  .savings-basis a { color: var(--accent); }
+  .savings-fine { margin: 0.25rem 0 0; font-size: 0.74rem; color: var(--dim); opacity: 0.85;
+    max-width: 88ch; }
+</style>
+</head>
+<body>
+
+<!-- SAVINGS:BEGIN -->
+<section class="savings" aria-label="Lea tasarrufu">
+  <div class="savings-main">
+    <span class="savings-eyebrow">Lea sayesinde bugüne kadar</span>
+    <strong class="savings-usd">$362</strong>
+    <span class="savings-pct">&minus;26%</span>
+    <span class="savings-unit">token tasarrufu</span>
+    <img class="savings-badge" src="rozet.svg" alt="usable pairs"
+         title="Gölge kolunun oran taşıyabilen çift sayısı. Bu sayı hedefe ulaşınca manşet
+izdüşüm olmaktan çıkıp doğrudan ölçüme dayanabilir.">
+  </div>
+  <p class="savings-basis">
+    Ölçülen kullanım, API fiyatlarıyla değerlenmiş <b>$1,007.74</b>
+    (148 istem, 3,705 tur, 2026-08-30 &rarr; 2026-09-04).
+    Aynı iş Lea&rsquo;dan önce çalışan <code>full</code> config&rsquo;iyle
+    <b>$1,370</b> tutardı.
+    Üst sınır <b>$1,065</b> (&minus;51%).
+    <a href="rapor-tasarruf.html" target="viewer">hesabın tamamı &rarr;</a>
+  </p>
+  <p class="savings-fine">
+    Alt sınır: dört ölçülmüş turun Lea&rsquo;ya en az kazandıranı (Kolay bug fix, n=3/3).
+    Ölçülmüş oran &times; ölçülmüş kullanım &mdash; doğrudan ölçülmüş tasarruf değil.
+    <b>Bu rakamlar fatura değil:</b> CLI bir Claude Pro aboneliğiyle koşuyor, hiçbir API anahtarı yok,
+    dolayısıyla hiçbir hesaptan para çıkmıyor. Tükenen şey kota. Dolar, iki config&rsquo;i
+    karşılaştırmanın ortak birimi olarak duruyor: token sayıları, 205 ölçüm satırından
+    türetilmiş API fiyat vektörleriyle değerlendi.
+    Güncelleme 2026-09-05 20:08 &middot; <code>python savings.py</code>
+  </p>
+</section>
+<!-- SAVINGS:END -->
+
+<header>
+  <h1>Lea · Claude Code config benchmark
+    <small>286 notlandırılmış koşu · Sonnet + Opus · 5 config + Lea v7/v8 · artı 21 koşuluk gerçek proje turu</small>
+  </h1>
+  <nav>
+    <a href="rapor-lea.html" target="viewer" class="on">Lea: sonuç config</a>
+    <a href="rapor.html" target="viewer">Dört tur (Sonnet + Opus)</a>
+    <a href="rapor-model-karsilastirma.html" target="viewer">Model karşılaştırması</a>
+    <a href="rapor-opus-proje-turu.html" target="viewer">Gerçek proje turu</a>
+    <a href="rapor-tasarruf.html" target="viewer">Tasarruf hesabı</a>
+    <a href="rapor-golge.html" target="viewer">Gölge kolu durumu</a>
+    <a href="rapor-v9.html" target="viewer">v9: denendi, geçemedi</a>
+    <a href="RAPOR.md" target="_blank" rel="noopener" class="ext">Tek sayfa (Markdown)</a>
+    <a href="kurulum.html" target="viewer">Kurulum</a>
+    <a href="install.html" target="viewer">Install (EN)</a>
+    <a href="hakkinda.html" target="viewer">README</a>
+    <a href="Project-Lea.zip" class="ext">Her şeyi indir (.zip)</a>
+  </nav>
+</header>
+
+<iframe name="viewer" src="rapor-lea.html" title="Rapor"></iframe>
+
+<footer>
+  Kaynak tablo: <code>~/.claude/bench/runs/_matrix/merged.csv</code> · Depo özel; kurulum ve kaynak buradan iniyor ·
+  Bu sayfa <code>file://</code> ile açılır, sunucu gerekmez.
+</footer>
+
+<script>
+  document.querySelector('nav').addEventListener('click', function (event) {
+    var link = event.target.closest('a');
+    if (!link || link.classList.contains('ext')) return;
+    this.querySelectorAll('a').forEach(function (a) { a.classList.remove('on'); });
+    link.classList.add('on');
+  });
+</script>
+
+</body>
+</html>
