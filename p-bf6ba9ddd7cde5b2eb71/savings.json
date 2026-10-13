@@ -1,32 +1,36 @@
 {
-  "generated": "2026-09-05 20:08",
+  "generated": "2026-10-13 22:43",
   "baseline": "full",
   "model": "opus",
   "lea": {
-    "prompts": 148,
-    "total_usd": 1007.7419639999999,
-    "median_usd": 2.628375,
-    "turns": 3705,
-    "output_tokens": 4760804,
-    "input_tokens": 18816228,
-    "cache_read_tokens": 1407083698,
+    "prompts": 364,
+    "total_usd": 3101.975711,
+    "median_usd": 2.427655,
+    "turns": 11374,
+    "output_tokens": 17013896,
+    "input_tokens": 56439384,
+    "cache_read_tokens": 4232058479,
     "first": "2026-08-30 18:02:51",
-    "last": "2026-09-04 10:14:05",
+    "last": "2026-10-13 20:40:58",
     "models": [
-      "claude-opus-5"
+      "claude-opus-5",
+      "claude-opus-5-5",
+      "claude-sonnet-5",
+      "claude-sonnet-5-5"
     ],
     "by_user": {
       "A": {
-        "prompts": 146,
-        "usd": 1001.8068629999996
+        "prompts": 313,
+        "usd": 2768.9416909999986
       },
       "B": {
-        "prompts": 2,
-        "usd": 5.935101
+        "prompts": 52,
+        "usd": 333.03401999999994
       }
     },
-    "excluded_rows": 46,
+    "excluded_rows": 462,
     "excluded_configs": [
+      "lea-no-banner",
       "other",
       "other-carried-lea"
     ],
@@ -78,37 +82,37 @@
   ],
   "headline": {
     "ratio": 0.7358257617529307,
-    "would_be_usd": 1369.5388451734732,
-    "saved_usd": 361.79688117347325,
+    "would_be_usd": 4215.6389083337845,
+    "saved_usd": 1113.6631973337844,
     "saved_pct": 26.41742382470693,
     "source": "Kolay bug fix",
     "n": "3/3"
   },
   "ceiling": {
     "ratio": 0.4861662631926437,
-    "would_be_usd": 2072.834008230393,
-    "saved_usd": 1065.0920442303932,
+    "would_be_usd": 6380.483274650508,
+    "saved_usd": 3278.507563650508,
     "saved_pct": 51.38337368073562,
     "source": "Metin (araç yok)",
     "n": "5/3"
   },
   "shadow": {
-    "rows": 234,
-    "ok": 12,
+    "rows": 1159,
+    "ok": 44,
     "truncated": 0,
     "deferred": 1,
-    "spent_usd": 11.290763499999999,
+    "spent_usd": 35.65403580000001,
     "buckets": {
-      "home directory": 10,
-      "shorter than min_prompt_chars": 23,
-      "in flight": 1,
-      "mid-conversation": 183,
+      "home directory": 13,
+      "shorter than min_prompt_chars": 25,
+      "in flight": 2,
+      "mid-conversation": 1067,
       "skip pattern": 3,
-      "other": 1
+      "other": 4
     },
-    "comparable": 4,
-    "usable": 0,
-    "lea_rows": 194,
-    "home_cwd": 121
+    "comparable": 5,
+    "usable": 1,
+    "lea_rows": 827,
+    "home_cwd": 496
   }
 }

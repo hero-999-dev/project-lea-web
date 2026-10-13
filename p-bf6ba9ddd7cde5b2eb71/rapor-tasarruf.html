@@ -80,19 +80,19 @@ footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--bord
 <div class="wrap">
 
 <h1>Lea ne kazandırdı</h1>
-<p class="sub">Ölçülmüş harcama &times; ölçülmüş oran. 2026-09-05 20:08 tarihinde
+<p class="sub">Ölçülmüş harcama &times; ölçülmüş oran. 2026-10-13 22:43 tarihinde
 <code>savings.py</code> tarafından üretildi.</p>
 
 <div class="note">
-<strong>$362 &mdash; yani &minus;26%.</strong>
-Lea 148 gerçek istemde $1,007.74 harcadı
-(2026-08-30 &rarr; 2026-09-04, 3,705 tur, hepsi Opus).
-Aynı iş <code>full</code> ile <strong>$1,370</strong> tutardı.
-Bu <em>alt</em> sınır; ölçülen en iyi tur aynı hesapta $1,065
+<strong>$1,114 &mdash; yani &minus;26%.</strong>
+Lea 364 gerçek istemde $3,101.98 harcadı
+(2026-08-30 &rarr; 2026-10-13, 11,374 tur, hepsi Opus).
+Aynı iş <code>full</code> ile <strong>$4,216</strong> tutardı.
+Bu <em>alt</em> sınır; ölçülen en iyi tur aynı hesapta $3,279
 (&minus;51%) veriyor.
 </div>
 
-<p><strong>Bunu kanıtlamanın maliyeti:</strong> gölge kolu bugüne kadar <b>$11.29</b> harcadı &mdash; 12 koşu, 234 istem kaydedildi. Manşetten düşülmedi ve düşülmemeli: manşet kural setinin gerçek işte kazandırdığı, bu ise onu ölçen deneyin bedeli. Aynı cüzdandan çıkıyor olmaları onları aynı şey yapmıyor &mdash; ama rakamı yanına yazmadan tasarruf rakamı yarım kalır.</p>
+<p><strong>Bunu kanıtlamanın maliyeti:</strong> gölge kolu bugüne kadar <b>$35.65</b> harcadı &mdash; 44 koşu, 1159 istem kaydedildi. Manşetten düşülmedi ve düşülmemeli: manşet kural setinin gerçek işte kazandırdığı, bu ise onu ölçen deneyin bedeli. Aynı cüzdandan çıkıyor olmaları onları aynı şey yapmıyor &mdash; ama rakamı yanına yazmadan tasarruf rakamı yarım kalır.</p>
 
 <h2>Karşılaştırma neye karşı</h2>
 <p><code>full</code> = superpowers + ponytail + caveman, artı iki SessionStart hook&rsquo;u. Bu
@@ -116,24 +116,24 @@ korpüsteki hiçbir ölçüm altına çekmiyor; bant yukarı doğru açık.</p>
 taşımasaydı iki kurulum arasındaki fark bir config farkı gibi okunurdu.</p>
 <div class="scroll"><table>
 <thead><tr><th>kullanıcı</th><th>istem</th><th>USD</th><th>pay</th></tr></thead>
-<tbody><tr><td><code>A</code></td><td>146</td><td>$1,001.81</td><td>99%</td></tr><tr><td><code>B</code></td><td>2</td><td>$5.94</td><td>1%</td></tr></tbody></table></div>
-<div class="note"><strong>46 satır hesabın dışında bırakıldı</strong> &mdash; o kurulum Lea çalıştırmıyordu (other, other-carried-lea). Eklentileri açık bir oturum Lea değildir; satırı Lea&rsquo;nın adı altına yazmak, bir benchmark&rsquo;ın kaldıramayacağı tek hatadır &mdash; çünkü satır hâlâ kanıt gibi görünür.</div>
+<tbody><tr><td><code>A</code></td><td>313</td><td>$2,768.94</td><td>89%</td></tr><tr><td><code>B</code></td><td>52</td><td>$333.03</td><td>11%</td></tr></tbody></table></div>
+<div class="note"><strong>462 satır hesabın dışında bırakıldı</strong> &mdash; o kurulum Lea çalıştırmıyordu (lea-no-banner, other, other-carried-lea). Eklentileri açık bir oturum Lea değildir; satırı Lea&rsquo;nın adı altına yazmak, bir benchmark&rsquo;ın kaldıramayacağı tek hatadır &mdash; çünkü satır hâlâ kanıt gibi görünür.</div>
 
 <h2>Gerçek işin maliyeti nereye gidiyor</h2>
-<p>148 istemin token dökümü, aynı fiyat vektörleriyle:</p>
+<p>364 istemin token dökümü, aynı fiyat vektörleriyle:</p>
 <div class="scroll"><table>
 <thead><tr><th>kalem</th><th>token</th><th>USD</th><th>pay</th></tr></thead>
 <tbody>
-<tr><td>cache okuma (konuşmayı yeniden okumak)</td><td>1,407,083,698</td>
-    <td>$704.95</td><td>70%</td></tr>
-<tr><td>girdi + cache yazma</td><td>18,816,228</td>
-    <td>$187.97</td><td>19%</td></tr>
-<tr><td>çıktı</td><td>4,760,804</td>
-    <td>$119.12</td><td>12%</td></tr>
+<tr><td>cache okuma (konuşmayı yeniden okumak)</td><td>4,232,058,479</td>
+    <td>$2,120.26</td><td>68%</td></tr>
+<tr><td>girdi + cache yazma</td><td>56,439,384</td>
+    <td>$563.83</td><td>18%</td></tr>
+<tr><td>çıktı</td><td>17,013,896</td>
+    <td>$425.69</td><td>14%</td></tr>
 </tbody></table></div>
 <div class="note"><strong>Gerçek oturumlarda paranın üçte ikisi konuşmayı yeniden okumaya
 gidiyor, çıktıya değil.</strong> Lea&rsquo;nın 120 kelimelik bütçesinin doğrudan kestiği kalem
-maliyetin yalnızca %12&rsquo;i. Asıl kaldıraç <em>tur sayısı</em>: her tur bütün
+maliyetin yalnızca %14&rsquo;i. Asıl kaldıraç <em>tur sayısı</em>: her tur bütün
 konuşmayı yeniden okur, ve benchmark&rsquo;ta Lea turu kısaltıyor (zor bug turunda Opus&rsquo;ta 7
 tur, superpowers 9,5). Bu, buradaki manşetin neden muhafazakâr olduğunun da cevabı: oranlar tek
 görevlik başsız koşulardan geliyor, gerçek oturum ise 20&ndash;46 turluk.</div>
@@ -153,7 +153,7 @@ aboneliğinde bağlayıcı kısıt oturum limiti; bu sayfa o limitin ne kadarın
 gösteriyor, ne kadar ödendiğini değil.</li>
 </ul>
 
-<footer>Kaynaklar: <code>shadow/lea.csv</code> (148 satır) &middot;
+<footer>Kaynaklar: <code>shadow/lea.csv</code> (364 satır) &middot;
 <code>merged.csv</code> (386 koşu) &middot;
 <code>project-round/results.csv</code>. Her rakam <code>savings.json</code>&rsquo;da açık.
 Sayfayı tazelemek için <code>python savings.py</code>.</footer>

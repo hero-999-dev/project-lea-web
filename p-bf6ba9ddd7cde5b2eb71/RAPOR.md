@@ -4,7 +4,7 @@
 
 Gölge kolunun **oran taşıyabilen** çift sayısı, hedef 20. Bu sayı hedefe ulaşınca manşet izdüşüm olmaktan çıkıp doğrudan ölçüme dayanabilir — dolana kadar `lea.js` değişmiyor.
 
-Bütün ölçümler tek sayfada. **2026-09-05 20:08** tarihinde `savings.py` tarafından üretildi —
+Bütün ölçümler tek sayfada. **2026-10-13 22:43** tarihinde `savings.py` tarafından üretildi —
 elle düzenlenmiyor.
 
 > Bu sayfa GitHub'da açılır çünkü Markdown. Yanındaki `.html` raporlar açılmaz: GitHub HTML'i
@@ -15,11 +15,11 @@ elle düzenlenmiyor.
 
 | | |
 |---|---|
-| **Tasarruf** | **$362 · −26%** |
-| Ölçülen kullanım (API fiyatıyla değerlenmiş) | $1,007.74 · 148 istem · 3,705 tur |
-| Aynı iş `full` config'iyle | $1,370 |
-| Üst sınır (en iyi ölçülen tur) | $1,065 · −51% |
-| Bunu kanıtlamanın maliyeti | $11.29 · 12 gölge koşusu |
+| **Tasarruf** | **$1,114 · −26%** |
+| Ölçülen kullanım (API fiyatıyla değerlenmiş) | $3,101.98 · 364 istem · 11,374 tur |
+| Aynı iş `full` config'iyle | $4,216 |
+| Üst sınır (en iyi ölçülen tur) | $3,279 · −51% |
+| Bunu kanıtlamanın maliyeti | $35.65 · 44 gölge koşusu |
 
 Manşet **alt sınır**: dört ölçülmüş turun Lea'ya en az kazandıranını kullanıyor
 (Kolay bug fix, n=3/3). Ölçülmüş oran × ölçülmüş harcama — doğrudan ölçülmüş tasarruf
@@ -38,9 +38,9 @@ değil. Onu ölçecek olan gölge kolu.
 
 | kalem | token | pay |
 |---|---|---|
-| cache okuma (konuşmayı yeniden okumak) | 1,407,083,698 | %70 |
-| girdi + cache yazma | 18,816,228 | %19 |
-| çıktı | 4,760,804 | %12 |
+| cache okuma (konuşmayı yeniden okumak) | 4,232,058,479 | %68 |
+| girdi + cache yazma | 56,439,384 | %18 |
+| çıktı | 17,013,896 | %14 |
 
 Paranın üçte ikisi konuşmayı yeniden okumaya gidiyor, çıktıya değil. Lea'nın 120 kelimelik
 bütçesinin doğrudan kestiği kalem en küçüğü — asıl kaldıraç **tur sayısı**.
@@ -49,18 +49,18 @@ bütçesinin doğrudan kestiği kalem en küçüğü — asıl kaldıraç **tur 
 
 | kurulum | istem | USD |
 |---|---|---|
-| `A` | 146 | $1,001.81 |
-| `B` | 2 | $5.94 |
+| `A` | 313 | $2,768.94 |
+| `B` | 52 | $333.03 |
 
 ## Gölge kolu
 
 | | |
 |---|---|
-| kayıtlı istem | 234 |
-| koşan | 12 |
-| kullanılan kota (API fiyatıyla) | $11.29 |
-| karşılaştırılabilir çift | 4 |
-| **oran taşıyabilen çift** | **0 / 20** |
+| kayıtlı istem | 1159 |
+| koşan | 44 |
+| kullanılan kota (API fiyatıyla) | $35.65 |
+| karşılaştırılabilir çift | 5 |
+| **oran taşıyabilen çift** | **1 / 20** |
 
 Alttaki satır ilerlemeyi gösteren tek sayı. Üstteki "aynı istem iki kola soruldu" demek;
 alttaki "ve iki kol karşılaştırılabilir miktarda iş yaptı" demek. Manşetin izdüşümden ölçüme
@@ -76,6 +76,7 @@ Aynı istem, iki kol, aynı ağaçtan.
 | 2026-09-03 06:52 | local | bare | 4 / 4 | 527 / 1k | 161k / 90k | ? / 0 |
 | 2026-09-03 08:05 | local | bare | 57 / 25 | 81k / 25k | 5.0M / 1.0M | ? / 1 |
 | 2026-09-04 10:58 | local | bare | 28 / 9 | 32k / 5k | 1.3M / 159k | 1942 / 0 |
+| 2026-10-07 16:14 | local | modes | 1 / 1 | 134 / 163 | 62k / 24k | 0 / 0 |
 
 **Bu çiftlerden 4 tanesi oran taşıyamaz.** Son sütun sebebi: bir kol iş yaptı, diğeri yapmadı — ya da sayı hiç kaydedilmedi. Az iş yapmak her zaman ucuzdur, o yüzden bu satırlar gösteriliyor ama ortalamaya girmiyor. Gölge kolunun 2026-09-03'e kadarki bütün çiftlerinde Lea tarafının diff'i kayıp: `git diff` proje kökünü tararken `shadow/runs/` içindeki eski kopyalara giriyor, bir yol Windows sınırını geçiyor ve komut hiçbir şey yazmadan çıkıyordu. Düzeltildi; bundan sonraki çiftlerde bu sütun dolu gelecek.
 
