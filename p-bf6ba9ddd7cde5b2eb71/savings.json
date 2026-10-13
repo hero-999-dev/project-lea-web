@@ -1,17 +1,17 @@
 {
-  "generated": "2026-10-13 22:43",
+  "generated": "2026-10-14 01:38",
   "baseline": "full",
   "model": "opus",
   "lea": {
-    "prompts": 364,
-    "total_usd": 3101.975711,
-    "median_usd": 2.427655,
-    "turns": 11374,
-    "output_tokens": 17013896,
-    "input_tokens": 56439384,
-    "cache_read_tokens": 4232058479,
+    "prompts": 370,
+    "total_usd": 3127.044041,
+    "median_usd": 2.425811,
+    "turns": 11497,
+    "output_tokens": 17227396,
+    "input_tokens": 56934498,
+    "cache_read_tokens": 4261561279,
     "first": "2026-08-30 18:02:51",
-    "last": "2026-10-13 20:40:58",
+    "last": "2026-10-13 21:45:51",
     "models": [
       "claude-opus-5",
       "claude-opus-5-5",
@@ -20,12 +20,12 @@
     ],
     "by_user": {
       "A": {
-        "prompts": 313,
-        "usd": 2768.9416909999986
+        "prompts": 314,
+        "usd": 2782.1974089999985
       },
       "B": {
-        "prompts": 52,
-        "usd": 333.03401999999994
+        "prompts": 57,
+        "usd": 344.84663199999994
       }
     },
     "excluded_rows": 462,
@@ -82,22 +82,22 @@
   ],
   "headline": {
     "ratio": 0.7358257617529307,
-    "would_be_usd": 4215.6389083337845,
-    "saved_usd": 1113.6631973337844,
+    "would_be_usd": 4249.707204529722,
+    "saved_usd": 1122.6631635297217,
     "saved_pct": 26.41742382470693,
     "source": "Kolay bug fix",
     "n": "3/3"
   },
   "ceiling": {
     "ratio": 0.4861662631926437,
-    "would_be_usd": 6380.483274650508,
-    "saved_usd": 3278.507563650508,
+    "would_be_usd": 6432.046560501271,
+    "saved_usd": 3305.0025195012713,
     "saved_pct": 51.38337368073562,
     "source": "Metin (araç yok)",
     "n": "5/3"
   },
   "shadow": {
-    "rows": 1159,
+    "rows": 1165,
     "ok": 44,
     "truncated": 0,
     "deferred": 1,
@@ -106,13 +106,13 @@
       "home directory": 13,
       "shorter than min_prompt_chars": 25,
       "in flight": 2,
-      "mid-conversation": 1067,
+      "mid-conversation": 1073,
       "skip pattern": 3,
       "other": 4
     },
     "comparable": 5,
     "usable": 1,
-    "lea_rows": 827,
-    "home_cwd": 496
+    "lea_rows": 833,
+    "home_cwd": 497
   }
 }

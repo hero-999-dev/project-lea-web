@@ -4,7 +4,7 @@
 
 Gölge kolunun **oran taşıyabilen** çift sayısı, hedef 20. Bu sayı hedefe ulaşınca manşet izdüşüm olmaktan çıkıp doğrudan ölçüme dayanabilir — dolana kadar `lea.js` değişmiyor.
 
-Bütün ölçümler tek sayfada. **2026-10-13 22:43** tarihinde `savings.py` tarafından üretildi —
+Bütün ölçümler tek sayfada. **2026-10-14 01:38** tarihinde `savings.py` tarafından üretildi —
 elle düzenlenmiyor.
 
 > Bu sayfa GitHub'da açılır çünkü Markdown. Yanındaki `.html` raporlar açılmaz: GitHub HTML'i
@@ -15,10 +15,10 @@ elle düzenlenmiyor.
 
 | | |
 |---|---|
-| **Tasarruf** | **$1,114 · −26%** |
-| Ölçülen kullanım (API fiyatıyla değerlenmiş) | $3,101.98 · 364 istem · 11,374 tur |
-| Aynı iş `full` config'iyle | $4,216 |
-| Üst sınır (en iyi ölçülen tur) | $3,279 · −51% |
+| **Tasarruf** | **$1,123 · −26%** |
+| Ölçülen kullanım (API fiyatıyla değerlenmiş) | $3,127.04 · 370 istem · 11,497 tur |
+| Aynı iş `full` config'iyle | $4,250 |
+| Üst sınır (en iyi ölçülen tur) | $3,305 · −51% |
 | Bunu kanıtlamanın maliyeti | $35.65 · 44 gölge koşusu |
 
 Manşet **alt sınır**: dört ölçülmüş turun Lea'ya en az kazandıranını kullanıyor
@@ -38,9 +38,9 @@ değil. Onu ölçecek olan gölge kolu.
 
 | kalem | token | pay |
 |---|---|---|
-| cache okuma (konuşmayı yeniden okumak) | 4,232,058,479 | %68 |
-| girdi + cache yazma | 56,439,384 | %18 |
-| çıktı | 17,013,896 | %14 |
+| cache okuma (konuşmayı yeniden okumak) | 4,261,561,279 | %68 |
+| girdi + cache yazma | 56,934,498 | %18 |
+| çıktı | 17,227,396 | %14 |
 
 Paranın üçte ikisi konuşmayı yeniden okumaya gidiyor, çıktıya değil. Lea'nın 120 kelimelik
 bütçesinin doğrudan kestiği kalem en küçüğü — asıl kaldıraç **tur sayısı**.
@@ -49,14 +49,14 @@ bütçesinin doğrudan kestiği kalem en küçüğü — asıl kaldıraç **tur 
 
 | kurulum | istem | USD |
 |---|---|---|
-| `A` | 313 | $2,768.94 |
-| `B` | 52 | $333.03 |
+| `A` | 314 | $2,782.20 |
+| `B` | 57 | $344.85 |
 
 ## Gölge kolu
 
 | | |
 |---|---|
-| kayıtlı istem | 1159 |
+| kayıtlı istem | 1165 |
 | koşan | 44 |
 | kullanılan kota (API fiyatıyla) | $35.65 |
 | karşılaştırılabilir çift | 5 |
