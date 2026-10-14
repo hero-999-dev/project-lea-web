@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-14 01:38",
+  "generated": "2026-10-14 03:36",
   "baseline": "full",
   "model": "opus",
   "lea": {
@@ -97,7 +97,7 @@
     "n": "5/3"
   },
   "shadow": {
-    "rows": 1165,
+    "rows": 1166,
     "ok": 44,
     "truncated": 0,
     "deferred": 1,
@@ -106,7 +106,7 @@
       "home directory": 13,
       "shorter than min_prompt_chars": 25,
       "in flight": 2,
-      "mid-conversation": 1073,
+      "mid-conversation": 1074,
       "skip pattern": 3,
       "other": 4
     },
