@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lea — start to finish: what was done, what was approved, what was dropped</title>
+<style>
+  /* One page, read top to bottom: what Lea is, what stands today, then the dated record.
+     The detailed reports are linked at the bottom as evidence; nothing is framed in. */
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1b1b1f; --dim: #5d5d68;
+    --rule: #e2e2dd; --accent: #b1541f; --sunk: #efefeb;
+    --ok: #1d6b3a; --ok-bg: #e3f1e7; --no: #a12a2a; --no-bg: #f7e4e2;
+    --back: #8a5a00; --back-bg: #f8ecd0; --open: #1f5a94; --open-bg: #e1ecf7;
+    --info: #5d5d68; --info-bg: #ebebe7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16161a; --panel: #1d1d22; --ink: #ececf0; --dim: #a0a0ac;
+            --rule: #303038; --accent: #e08a4f; --sunk: #25252b;
+            --ok: #7fd09a; --ok-bg: #1c3325; --no: #f09a94; --no-bg: #3a2020;
+            --back: #e6bb62; --back-bg: #3a2f17; --open: #8dbcee; --open-bg: #1b2c40;
+            --info: #a0a0ac; --info-bg: #2a2a31; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  a { color: var(--accent); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.9em;
+    background: var(--sunk); padding: 0.08em 0.35em; border-radius: 4px; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 16px 80px; }
+
+  /* Sticky table of contents: the only navigation the page has. */
+  .toc {
+    position: sticky; top: 0; z-index: 5; background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+  }
+  .toc div { max-width: 920px; margin: 0 auto; padding: 0.5rem 16px; display: flex; gap: 0.3rem 1rem;
+    overflow-x: auto; white-space: nowrap; font-size: 0.88rem; }
+  .toc a { color: var(--dim); text-decoration: none; }
+  .toc a:hover, .toc a:focus { color: var(--accent); }
+  .toc b { color: var(--ink); margin-right: 0.4rem; }
+
+  .hero { padding: 2.6rem 0 0.6rem; }
+  .hero h1 { font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.12; margin: 0 0 0.7rem;
+    letter-spacing: -0.02em; }
+  .hero p { font-size: 1.08rem; max-width: 68ch; margin: 0 0 0.6rem; }
+  .hero .sub { color: var(--dim); font-size: 0.95rem; }
+
+  h2 { font-size: 1.45rem; letter-spacing: -0.01em; margin: 3.2rem 0 0.3rem; padding-top: 1rem;
+    border-top: 1px solid var(--rule); scroll-margin-top: 3.2rem; }
+  h2 small { display: block; font-size: 0.92rem; font-weight: 400; color: var(--dim);
+    letter-spacing: 0; margin-top: 0.15rem; }
+  h3 { font-size: 1.05rem; margin: 1.8rem 0 0.4rem; }
+  p { margin: 0.5rem 0; max-width: 72ch; }
+  .dim { color: var(--dim); }
+
+  .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    margin: 1.2rem 0; }
+  .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 1rem 1.1rem; min-width: 0; }
+  .card h3 { margin: 0 0 0.4rem; font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--dim); font-weight: 600; }
+  .card p { margin: 0.3rem 0; font-size: 0.95rem; }
+  .card ul { margin: 0.3rem 0 0; padding-left: 1.1rem; font-size: 0.93rem; }
+  .card li { margin: 0.28rem 0; }
+  .card.ok { border-top: 3px solid var(--ok); }
+  .card.no { border-top: 3px solid var(--no); }
+  .card.open { border-top: 3px solid var(--open); }
+  pre { background: var(--sunk); border-radius: 8px; padding: 0.7rem 0.8rem; overflow-x: auto;
+    font: 0.82rem/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; margin: 0.5rem 0; }
+  /* "In short" reads left to right at every width: one row, and a narrow screen scrolls the
+     row sideways instead of stacking it. */
+  .cards.row { grid-template-columns: none; grid-auto-flow: column;
+    grid-auto-columns: minmax(260px, 1fr); overflow-x: auto; scroll-snap-type: x proximity;
+    padding-bottom: 4px; }
+  .cards.row .card { scroll-snap-align: start; }
+  /* The install command must be readable whole: wrap it, do not clip it. */
+  .card pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  details.rules summary { cursor: pointer; color: var(--accent); font-size: 0.95rem; }
+  details.rules pre { white-space: pre-wrap; }
+
+  /* Status labels. Every one carries its word, so colour is never the only signal. */
+  .tag { display: inline-block; font-size: 0.72rem; font-weight: 650; letter-spacing: 0.04em;
+    text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+  .tag.ok { color: var(--ok); background: var(--ok-bg); }
+  .tag.no { color: var(--no); background: var(--no-bg); }
+  .tag.back { color: var(--back); background: var(--back-bg); }
+  .tag.open { color: var(--open); background: var(--open-bg); }
+  .tag.info { color: var(--info); background: var(--info-bg); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: 0.86rem;
+    color: var(--dim); margin: 0.8rem 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0 0.4rem; }
+  .filters button { font: inherit; font-size: 0.86rem; padding: 0.3rem 0.75rem; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 999px; background: var(--panel); color: var(--ink); }
+  .filters button:hover { border-color: var(--accent); }
+  .filters button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent);
+    color: #fff; }
+
+  .phase { margin: 2.2rem 0 0.2rem; font-size: 0.82rem; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--accent); font-weight: 650; }
+  .phase span { color: var(--dim); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  ol.tl { list-style: none; margin: 0.6rem 0 0; padding: 0; border-left: 2px solid var(--rule); }
+  ol.tl > li { position: relative; padding: 0 0 1.5rem 1.3rem; }
+  ol.tl > li::before { content: ""; position: absolute; left: -7px; top: 0.45rem; width: 12px;
+    height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--dim); }
+  ol.tl > li.ok::before { border-color: var(--ok); background: var(--ok); }
+  ol.tl > li.no::before { border-color: var(--no); background: var(--no); }
+  ol.tl > li.back::before { border-color: var(--back); background: var(--back); }
+  ol.tl > li.open::before { border-color: var(--open); background: var(--open); }
+  ol.tl > li[hidden] { display: none; }
+  .when { font-size: 0.84rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .tl h4 { margin: 0.1rem 0 0.25rem; font-size: 1.05rem; line-height: 1.35; }
+  .tl p { margin: 0.3rem 0; font-size: 0.96rem; }
+  .tl .so { border-left: 3px solid var(--rule); padding-left: 0.7rem; color: var(--dim);
+    font-size: 0.92rem; }
+  .tl .so b { color: var(--ink); }
+
+  .scroll { overflow-x: auto; margin: 0.8rem 0; background: var(--panel);
+    border: 1px solid var(--rule); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  caption { text-align: left; padding: 0.7rem 0.9rem 0.3rem; font-weight: 650; }
+  th, td { text-align: left; vertical-align: top; padding: 0.5rem 0.9rem;
+    border-top: 1px solid var(--rule); }
+  th { color: var(--dim); font-weight: 600; font-size: 0.82rem; }
+  td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .read { font-size: 0.92rem; color: var(--dim); margin: 0.2rem 0 1.4rem; }
+  .read b { color: var(--ink); }
+
+  /* Savings banner. Written by savings.py; the markers in the body are what it rewrites. */
+  .savings {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 0.9rem 1.1rem; box-shadow: inset 3px 0 0 var(--accent); margin: 1rem 0;
+  }
+  .savings-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.55rem; }
+  .savings-eyebrow { color: var(--dim); font-size: 0.86rem; }
+  .savings-usd { font-size: 1.7rem; font-weight: 680; letter-spacing: -0.02em;
+    color: var(--accent); font-variant-numeric: tabular-nums; }
+  .savings-pct { font-size: 0.82rem; font-weight: 650; color: #fff; background: var(--accent);
+    border-radius: 999px; padding: 0.1rem 0.5rem; font-variant-numeric: tabular-nums; }
+  .savings-unit { color: var(--dim); font-size: 0.86rem; }
+  .savings-badge { display: none; }
+  .savings-basis { margin: 0.4rem 0 0; font-size: 0.9rem; color: var(--dim); max-width: 78ch; }
+  .savings-basis b { color: var(--ink); font-weight: 620; font-variant-numeric: tabular-nums; }
+  .savings-fine { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--dim); max-width: 88ch; }
+  /* The summary chart. Both colours were run through the palette validator per surface. */
+  .sv-chart { --sv-spent: #2f6fb0; --sv-saved: #b1541f; margin: 0.9rem 0 0.7rem; max-width: 46rem; }
+  @media (prefers-color-scheme: dark) { .sv-chart { --sv-spent: #4f8fd0; --sv-saved: #d07a3e; } }
+  .sv-chart figcaption { font-size: 0.86rem; color: var(--dim); }
+  .sv-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin: 0.35rem 0 0.6rem;
+    font-size: 0.8rem; color: var(--dim); }
+  .sv-sw { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 3px;
+    margin-right: 0.35rem; vertical-align: -0.05rem; }
+  .sv-row { margin: 0.55rem 0 0; }
+  .sv-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.8rem;
+    font-size: 0.86rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .sv-head b { color: var(--ink); font-weight: 650; }
+  .sv-track { display: flex; gap: 2px; height: 14px; margin-top: 0.25rem; }
+  .sv-seg { display: block; min-width: 2px; }
+  .sv-seg:last-child { border-radius: 0 4px 4px 0; }
+  .sv-seg:hover { filter: brightness(1.12); }
+  .sv-spent { background: var(--sv-spent); }
+  .sv-saved { background: var(--sv-saved); }
+
+  nav.docs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0; }
+  nav.docs a { padding: 0.45rem 0.8rem; border: 1px solid var(--rule); border-radius: 8px;
+    background: var(--panel); color: var(--ink); text-decoration: none; font-size: 0.9rem; }
+  nav.docs a:hover { border-color: var(--accent); color: var(--accent); }
+  nav.docs a.ext::after { content: " ↗"; color: var(--dim); }
+  dl.docs { margin: 0.6rem 0; font-size: 0.93rem; }
+  dl.docs dt { font-weight: 620; margin-top: 0.7rem; }
+  dl.docs dd { margin: 0.1rem 0 0; color: var(--dim); }
+
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+    color: var(--dim); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<div class="toc"><div>
+  <b>Lea</b>
+  <a href="#kisaca">In short</a>
+  <a href="#tasarruf">Savings</a>
+  <a href="#durum">Where it stands</a>
+  <a href="#zaman">Timeline</a>
+  <a href="#sonuclar">Test results</a>
+  <a href="#kurallar">Lessons</a>
+  <a href="index.html" lang="tr" hreflang="tr">Türkçe</a>
+</div></div>
+
+<div class="wrap">
+
+<header class="hero">
+  <h1>Lea: what happened, start to finish</h1>
+  <p>Lea is a small ruleset for Claude Code: 226 words (~180 tokens) read to the model when a
+    session opens. Its purpose is to get the same work done on less quota.</p>
+  <p class="sub">This page tells the whole project in date order: where it started, what was
+    measured, what was approved, what was dropped and what runs today. 16 August – 11 November 2026.</p>
+</header>
+
+<section id="kisaca">
+<h2>In short <small>Three questions, three answers</small></h2>
+<div class="cards row" tabindex="0" role="group" aria-label="In short: three cards">
+  <div class="card">
+    <h3>What is Lea?</h3>
+    <p>A single <code>SessionStart</code> hook. It tells the model: keep the explanation to 120
+      words, do not read the same file twice, do not repeat a check that passed; but if the code you
+      are fixing states a contract, check every clause of it.</p>
+    <p class="dim">Not a plugin bundle, no dependencies. The setup it replaced loaded ~6,000 tokens
+      of rules.</p>
+  </div>
+  <div class="card">
+    <h3>Does it work?</h3>
+    <p>In the benchmark, yes: on Opus <b>26% – 51% cheaper</b> than rivals measured the same day,
+      at the same correctness. On the hard bug-fix test, version v8 raised v7's correctness from
+      4/20 to 13/20.</p>
+    <p>Measured again on 11 November with today's models: v8 is still cheaper than
+      <code>superpowers</code>, but <b>4% – 10% dearer</b> than Claude Code with nothing installed
+      on short tool tasks.</p>
+    <p>The same day a pilot ran on real session openers: Lea is cheaper than <code>full</code>,
+      the install it replaced, in <b>18 of 18 pairs</b> (median ratio 0.44 – 0.48). Against a bare
+      install there is no decision. The limits are in <a href="#sonuclar">table 8</a>.</p>
+    <p class="dim">The saving in real daily use could not be measured directly; the published
+      figure is a projection. The chart is <a href="#tasarruf">just below</a>.</p>
+  </div>
+  <div class="card">
+    <h3>How do I install it?</h3>
+    <pre>claude plugin marketplace add hero-999-dev/project-lea-web
+claude plugin install lea@lea</pre>
+    <p class="dim">Restart Claude Code. If the first line of the session is <code>LEA ACTIVE</code>,
+      it is loaded. Nothing else is installed: no telemetry, nothing written to disk.</p>
+    <p class="dim">Needs <code>node</code>. To remove it:
+      <code>claude plugin uninstall lea@lea</code></p>
+  </div>
+</div>
+<details class="rules">
+  <summary>What exactly does Lea tell the model? (226 words)</summary>
+  <pre>LEA ACTIVE - always on. Terse prose, unlimited analysis.
+
+Prose budget: at most 120 words of explanation per reply, plus whatever code or data the answer
+needs. No preamble, no restating the question, no closing summary, no "note that", no hedging, no
+offer of further help. Lead with the answer. Fragments are fine. Bullets beat paragraphs.
+
+Code: each implementation once, complete. Never re-paste unchanged code - name it, state the delta.
+When you build a file or an artifact, none of this budget applies to the artifact itself: validation,
+error handling and platform basics (a web page keeps its viewport meta, title, labelled controls)
+survive every cut. Shorten the prose about the work, never the work.
+
+Tool loop: read what the task needs, change it, check once, report. No re-running a passed check,
+no re-reading a file already read, no narrating the call you are about to make. Turns are the bill.
+
+One exception, and it overrides the budget: when the code you are fixing states a contract - a
+docstring, a spec, a type - checking every clause of it against the implementation is required, not
+optional, and your analysis there is unlimited. A green test suite is not that check; it is someone
+else's sample of the contract. Say what you checked. Explaining a concept in chat is not this.
+
+Everything else: 120 words.</pre>
+</details>
+</section>
+
+<section id="tasarruf">
+<h2>What has it saved the developer? <small>So far; a projection, not a measured saving</small></h2>
+
+<section class="savings" aria-label="Lea savings">
+  <div class="savings-main">
+    <span class="savings-eyebrow">What Lea has saved the developer so far, at least</span>
+    <strong class="savings-usd">$2,196</strong>
+    <span class="savings-pct">&minus;26%</span>
+    <span class="savings-unit">in token value</span>
+  </div>
+<figure class="sv-chart">
+  <figcaption>What would the same work have cost? At API prices, three bars on one scale.</figcaption>
+  <div class="sv-legend">
+    <span><i class="sv-sw sv-spent"></i>Spent with Lea (measured)</span>
+    <span><i class="sv-sw sv-saved"></i>Saved by Lea (projection)</span>
+  </div>
+  <div class="sv-row">
+    <div class="sv-head"><span>With Lea, actually spent</span><span><b>$6,117</b></span></div>
+    <div class="sv-track"><i class="sv-seg sv-spent" style="width:48.6%"
+      title="Measured use with Lea: $6,116.50"></i></div>
+  </div>
+  <div class="sv-row">
+    <div class="sv-head"><span>Without Lea, at least</span><span><b>$8,312</b>
+      &middot; saved $2,196 (&minus;26%)</span></div>
+    <div class="sv-track"><i class="sv-seg sv-spent" style="width:48.6%"
+      title="Measured use with Lea: $6,116.50"></i><i class="sv-seg sv-saved"
+      style="width:17.5%"
+      title="Saved by Lea (projection): $2,196 &middot; easy bug fix, n=3/3"></i></div>
+  </div>
+  <div class="sv-row">
+    <div class="sv-head"><span>Without Lea, at most</span><span><b>$12,581</b>
+      &middot; saved $6,465 (&minus;51%)</span></div>
+    <div class="sv-track"><i class="sv-seg sv-spent" style="width:48.6%"
+      title="Measured use with Lea: $6,116.50"></i><i class="sv-seg sv-saved"
+      style="width:51.4%"
+      title="Saved by Lea (projection): $6,465 &middot; prose (no tools), n=5/3"></i></div>
+  </div>
+</figure>
+  <p class="savings-basis">
+    Measured use, valued at API prices: <b>$6,116.50</b>
+    (711 prompts, 25,713 turns, 2026-08-30 &rarr; 2026-11-10).
+    The same work under <code>full</code>, the setup that ran before Lea, would have come to
+    <b>$8,312</b>.
+    Upper bound <b>$6,465</b> (&minus;51%).
+  </p>
+  <p class="savings-fine">
+    Lower bound: the measured round that favours Lea least (easy bug fix, n=3/3).
+    A measured ratio &times; measured use &mdash; not a directly measured saving.
+    <b>These figures are not a bill:</b> the CLI runs on a Claude Pro subscription, there is no API
+    key, so no money leaves any account. What runs out is quota. The dollar is the common unit for
+    comparing two setups: token counts valued with API price vectors derived from 205 measurement
+    rows. Figures frozen on 11 November 2026.
+  </p>
+</section>
+
+<p><b>How to read this figure:</b></p>
+<ul>
+  <li>The sum is: the measured cost of real use × the ratio measured in the benchmark. The worst
+    ratio was used (26%); the best gives 51%.</li>
+  <li>What real use “would have cost without Lea” was never measured. Both rigs meant to measure it
+    were retired without producing a decision.</li>
+  <li>The records were frozen on 11 November; the figure no longer grows, this is its final state.</li>
+  <li>In real sessions about half the cost goes on re-reading the conversation and only a fifth on
+    output. The real lever is not a short reply but the number of turns and the length of the
+    conversation carried.</li>
+</ul>
+</section>
+
+<section id="durum">
+<h2>Where it stands <small>As of 11 November 2026: what is in force, what was dropped, what is pending</small></h2>
+<div class="cards">
+  <div class="card ok">
+    <h3><span class="tag ok">Approved</span> &nbsp;in force</h3>
+    <ul>
+      <li><b>The Lea v8 ruleset</b> — live since 30 August; not a word has changed since.</li>
+      <li><b>The 200k compaction window</b> (<code>autoCompactWindow</code>) — switched on 14 October;
+        it held the bar written beforehand.</li>
+      <li><b>Distribution as a plugin</b> — installed with two commands since 10 November.</li>
+      <li><b>The measurement rules</b> — the rival is measured the same day, the bar is written before
+        the round, a single measurement is not evidence.</li>
+    </ul>
+  </div>
+  <div class="card no">
+    <h3><span class="tag no">Dropped</span> &nbsp;and why</h3>
+    <ul>
+      <li><b>The old 11-plugin setup</b> — its cost was measured; it went down to 3, then Lea replaced it.</li>
+      <li><b>The v9 candidate</b> — did not beat its same-day control (p = 0.35).</li>
+      <li><b>A new rule paragraph (v10)</b> — the records held no measured waste for one to cut.</li>
+      <li><b>The shadow arm</b> — 10 usable pairs out of 2,430 prompts; it produced no decision.</li>
+      <li><b>The daily Lea/stock flip</b> — no visible difference, and no power to see one.</li>
+      <li><b>Early headlines</b> — “full is cheapest, $2.90”, the quality ranking, v7's 4/5: all
+        three fell when measured again.</li>
+    </ul>
+  </div>
+  <div class="card open">
+    <h3><span class="tag open">Open</span> &nbsp;answer pending</h3>
+    <ul>
+      <li><b>The v11 read</b> — synced plugins were switched off; the first check passed. The real
+        read comes after 2,000 turns: predicted $0.10 per turn; $0.13 or less holds, above $0.15
+        fails. The turns are counted on the development machine only (216 of 2,000 on 11 November);
+        plugin installs elsewhere report nothing.</li>
+      <li><b>The saving in real use</b> — still a projection. Both rigs meant to measure it were
+        retired.</li>
+      <li><b>v8 beside a bare install</b> — in the 11 November round the bar written beforehand held
+        on three of eight tests: v8 is 4% – 10% dearer than a bare install on short tool tasks. What
+        to do about it has not been decided.</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="zaman">
+<h2>Timeline <small>Twenty-three steps, four periods. Each step's label says how it ended.</small></h2>
+
+<div class="legend" aria-label="What the labels mean">
+  <span><span class="tag ok">Approved</span> accepted, in force</span>
+  <span><span class="tag no">Dropped</span> tried or built, then abandoned</span>
+  <span><span class="tag back">Withdrawn</span> a result was announced, then fell</span>
+  <span><span class="tag open">Open</span> result pending</span>
+  <span><span class="tag info">Event</span> a measurement, a failure or a fix</span>
+</div>
+<div class="filters" role="group" aria-label="Filter the timeline">
+  <button type="button" data-f="all" aria-pressed="true">All</button>
+  <button type="button" data-f="ok" aria-pressed="false">Approved</button>
+  <button type="button" data-f="no" aria-pressed="false">Dropped</button>
+  <button type="button" data-f="back" aria-pressed="false">Withdrawn</button>
+  <button type="button" data-f="open" aria-pressed="false">Open</button>
+</div>
+
+<p class="phase">Period 1 · The question and the benchmark <span>— 16–24 August</span></p>
+<ol class="tl">
+  <li class="info">
+    <div class="when">16 August 2026 · <span class="tag info">Event</span></div>
+    <h4>It all began with two faults</h4>
+    <p>Skills stopped loading on their own in Claude Code. The cause was two configuration errors,
+      fixed in an afternoon. One question was left over: eleven plugins were switched on, and nobody
+      could say what any of them cost or whether it helped.</p>
+    <p class="so"><b>Outcome:</b> the whole project is the answer to that question.</p>
+  </li>
+  <li class="ok">
+    <div class="when">17 August · <span class="tag ok">Approved</span></div>
+    <h4>Eleven plugins became three; the measurement rig was built</h4>
+    <p>First, what each plugin loads into a session was counted, and eight of the eleven went. Then
+      a rig was written to measure benefit: five setups, the same tasks, graded by hidden tests the
+      model cannot reach. The first four test rounds ran the same day.</p>
+    <p class="so"><b>Outcome:</b> no setup won everywhere. The short-output plugins were 45% cheaper
+      on prose and up to 45% dearer on tool work; the setup with everything on nearly doubled on
+      tool work.</p>
+  </li>
+  <li class="back">
+    <div class="when">18 August · <span class="tag back">Withdrawn</span></div>
+    <h4>The first headline: “the current setup is cheapest, $2.90”</h4>
+    <p>Each setup was given a copy of a real seven-language site and told to improve it. One run per
+      setup, and the current setup came out cheapest.</p>
+    <p class="so"><b>Outcome:</b> at three runs the headline died: one setup's own runs ranged from
+      $2.78 to $9.39.</p>
+  </li>
+  <li class="back">
+    <div class="when">19–24 August · <span class="tag back">Withdrawn</span></div>
+    <h4>The quality ranking could not be repeated</h4>
+    <p>The setups had differed in quality on one test only. A second trap task was written to repeat
+      it: every setup passed. All rounds were run again on Opus: the quality gap vanished entirely.</p>
+    <p class="so"><b>Outcome:</b> “this setup hurts correctness” belonged to one day and one task; it
+      was withdrawn. The direction of the cost differences held on both models.</p>
+  </li>
+</ol>
+
+<p class="phase">Period 2 · Designing Lea <span>— 25–30 August</span></p>
+<ol class="tl">
+  <li class="ok">
+    <div class="when">25 August · <span class="tag ok">Approved</span></div>
+    <h4>Instead of picking a setup, a new one was written: Lea v1 → v7</h4>
+    <p>The measurements had shown three mechanisms: on prose the saving comes from short output; on
+      tool work the loss comes from a long ruleset re-read every turn; and correctness depends on
+      output volume during the contract check. Lea was written to those three, and seven versions
+      were tried in a day.</p>
+    <p class="so"><b>Outcome:</b> v7 was cheaper than the test's best rival on three of five tests
+      and level on two. The founding rule was born the same day: a new run is never compared with a
+      stored old figure.</p>
+  </li>
+  <li class="ok">
+    <div class="when">26 August · <span class="tag ok">Approved</span></div>
+    <h4>Opus confirmed it; Lea went live</h4>
+    <p>The same tests were measured on Opus with the rivals re-run the same day: 42% cheaper on
+      prose, 53% cheaper on the hard bug fix at the same correctness. The daily setup was switched
+      to Lea v7.</p>
+  </li>
+  <li class="back">
+    <div class="when">26 August · <span class="tag back">Withdrawn</span></div>
+    <h4>v7's “4/5 correct” did not repeat</h4>
+    <p>An unchanged v7 had scored 4/5 on the hard test the day before; the next day it scored 1/5,
+      and three days later 2/14. Cost did not move; correctness did.</p>
+    <p class="so"><b>Outcome:</b> a quality figure resting on one day is not evidence. In every later
+      comparison both sides ran the same day.</p>
+  </li>
+  <li class="info">
+    <div class="when">27–29 August · <span class="tag info">Event</span></div>
+    <h4>Three days in which nothing could be measured</h4>
+    <p>The runner hit a usage limit, could not read when it would lift, and slept blind for five
+      hours; four times. Then the machine shut down.</p>
+    <p class="so"><b>Outcome:</b> the rig now probes at short intervals instead of guessing.</p>
+  </li>
+  <li class="ok">
+    <div class="when">29 August · <span class="tag ok">Approved</span></div>
+    <h4>The deciding round: v8 beat v7</h4>
+    <p>A failed v7 run was read: the model saw the visible tests green and closed the job with “all
+      tests pass”. v8 changed a single paragraph: the contract check is no longer a permission, it
+      is an obligation. Both versions ran twenty times each on the same day.</p>
+    <p class="so"><b>Outcome:</b> v7 4/20, v8 13/20 (p = 0.010); v8 was also 7% cheaper and 36%
+      faster.</p>
+  </li>
+  <li class="ok">
+    <div class="when">30 August · <span class="tag ok">Approved</span></div>
+    <h4>The benchmark closed; the live setup moved to v8</h4>
+    <p>The last worry was measured too: is Lea dearer on a real project? It is not (median $3.74,
+      the old setup $5.56). The power of that round was measured the same day: with so few runs it
+      cannot prove any ranking. That v8 does not make prose dearer was confirmed as well.</p>
+    <p class="so"><b>Outcome:</b> 286 graded agent runs, 0 failed cells. Lea v8 has not changed
+      since.</p>
+  </li>
+</ol>
+
+<p class="phase">Period 3 · Attempts to measure real use <span>— 30 August – 13 October</span></p>
+<ol class="tl">
+  <li class="no">
+    <div class="when">30 August – 2 September · <span class="tag no">Dropped</span> <span class="dim">(on 11 November)</span></div>
+    <h4>The shadow arm was built</h4>
+    <p>The idea: answer every real prompt a second time in the background with a setup without Lea,
+      and put the two costs side by side. On the first day all 5 pairs collected under a loose
+      criterion turned out not to be comparable; on 2 September the rig was found to miss exactly the
+      prompts that open a session, and was fixed.</p>
+    <p class="so"><b>Outcome:</b> it ran for ten weeks and produced no decision; see 11 November.</p>
+  </li>
+  <li class="no">
+    <div class="when">4 September · <span class="tag no">Dropped</span></div>
+    <h4>A third hard task and a screening round</h4>
+    <p>A new hard task was written to screen v9 candidates; calibration showed it did not tell the
+      versions apart. The planned screening round was calculated to lack the power to see the
+      difference.</p>
+    <p class="so"><b>Outcome:</b> the task was not used, the screening round was not run.</p>
+  </li>
+  <li class="no">
+    <div class="when">5 September · <span class="tag no">Dropped</span></div>
+    <h4>v9 was tried and did not pass</h4>
+    <p>A v9 candidate was measured against a v8 control run the same day: candidate 36/40, control
+      32/40, p = 0.35. The bar had been written before the round and was not cleared. The round's
+      real finding was something else: v8's “13/20” was not a rate. The same version scored 13, 15
+      and 17 in three blocks; the real rate is 45/60 = 75%.</p>
+    <p class="so"><b>Outcome:</b> there is no v9. Measured against the old 13/20 the candidate would
+      have read as a win; the difference came from the day, not the arm.</p>
+  </li>
+  <li class="no">
+    <div class="when">Night of 5 September · <span class="tag no">Dropped</span> <span class="dim">(on 11 November)</span></div>
+    <h4>The daily Lea / stock flip began</h4>
+    <p>The second route: work one day with Lea, one day without, and compare the days. It cost
+      nothing extra, but half the days ran without Lea, and seeing a 25% difference needed 518
+      records per arm.</p>
+  </li>
+  <li class="info">
+    <div class="when">6 September · <span class="tag info">Event</span></div>
+    <h4>The source repository went private; the site moved to a separate copy</h4>
+    <p>Since that day this site lives in a separate, public repository: the report pages, the
+      install guides and the source zip.</p>
+  </li>
+  <li class="info">
+    <div class="when">29 September · <span class="tag info">Event</span></div>
+    <h4>Shadow runs touched real files</h4>
+    <p>The background replays worked with real tools and raced a project's live files. The runs
+      were fenced into separate working copies.</p>
+  </li>
+  <li class="back">
+    <div class="when">13 October · <span class="tag back">Withdrawn</span></div>
+    <h4>The “Lea is 2.5× dearer” table was not a comparison</h4>
+    <p>The raw table of the daily flip showed Lea 2.5 times dearer per prompt. The two sides were
+      not the same population: Lea days had more Opus and far longer sessions. Looked at with the
+      same model and the same session depth, the ratio came out at 0.95.</p>
+    <p class="so"><b>Outcome:</b> no visible difference; this rig could not have seen any difference
+      under 2×.</p>
+  </li>
+</ol>
+
+<p class="phase">Period 4 · A setting, not a paragraph <span>— 14 October – 11 November</span></p>
+<ol class="tl">
+  <li class="no">
+    <div class="when">14 October · <span class="tag no">Dropped</span></div>
+    <h4>A new paragraph was looked for in v10, and not found</h4>
+    <p>The recorded sessions were read turn by turn. The waste a rule paragraph could cut was
+      already small: look-only turns that could have been batched 2.6%, repeated reads 4.2%, median
+      reply 122 words.</p>
+    <p class="so"><b>Outcome:</b> no v10 for the ruleset; the v8 text stayed as it was.</p>
+  </li>
+  <li class="ok">
+    <div class="when">14 October · <span class="tag ok">Approved</span></div>
+    <h4>The money was not in the rule but in the re-read conversation: the 200k window</h4>
+    <p>What a turn costs is set by the conversation it carries, and Claude Code let a conversation
+      grow to 1M tokens. One setting (<code>autoCompactWindow: 200000</code>) has the conversation
+      summarised at 200k. The prediction and the bar were written before it went on: from $0.256
+      per turn to $0.146; $0.19 or less holds.</p>
+    <p class="so"><b>Outcome (read on 10 November):</b> $0.170 over 9,021 turns. The bar held, the
+      prediction did not. The harm gauges stayed under their limits.</p>
+  </li>
+  <li class="ok">
+    <div class="when">10 November · <span class="tag ok">Approved</span></div>
+    <h4>Lea became a plugin</h4>
+    <p>Lea is now a Claude Code plugin installed with two commands: a single hook carrying the
+      ruleset and nothing else. The measurement rig is not handed to users; development happens in
+      one place.</p>
+  </li>
+  <li class="open">
+    <div class="when">10–11 November · <span class="tag open">Open</span></div>
+    <h4>v11: the same ruleset, a lighter session start</h4>
+    <p>Why the prediction missed was looked for: the session's starting load had grown (62k tokens
+      in October, 89k in November) and was eating the 200k window. One layer of that load was the
+      plugins and connectors synced from the account; the sync was switched off.</p>
+    <p class="so"><b>For now:</b> the first check passed (the first session carried 51k, the bar was
+      60k). The real read comes after 2,000 turns, counted on the development machine only: 216 on
+      11 November.</p>
+  </li>
+  <li class="no">
+    <div class="when">11 November · <span class="tag no">Dropped</span></div>
+    <h4>The shadow arm and the daily flip were retired</h4>
+    <p>The shadow arm: 2,430 prompts recorded, 78 ran, 10 usable pairs, $54 spent. Worse, the gap
+      between the pairs measured the two sides' different starting load, not Lea. The daily flip:
+      ratio 0.71, p = 0.42; no visible difference.</p>
+    <p class="so"><b>Outcome:</b> both were dismantled, their records frozen, and they will not be
+      rebuilt. The package handed to users contains no measurement rig.</p>
+  </li>
+  <li class="open">
+    <div class="when">11 November · <span class="tag open">Open</span></div>
+    <h4>v8 beside each test's best rival, the same night</h4>
+    <p>Until then v8 had been measured only on Sonnet, on the hard test and on plain text; the other
+      figures were v7's. On eight tests v8 and that test's best rival ran the same night, arms
+      alternating, five runs each: 80 runs, $7.65. The bar was written before the round: on no test
+      is v8 dearer or less correct than the rival.</p>
+    <p class="so"><b>Outcome:</b> the bar held on three of eight tests. v8 is cheaper than
+      <code>superpowers</code>; against a bare install it is 4% – 10% dearer on the four tool tests.
+      No difference in correctness: all 80 runs passed, so the tests no longer separate today's
+      models. What to do about it is open.</p>
+  </li>
+  <li class="open">
+    <div class="when">11 November · <span class="tag open">Open</span></div>
+    <h4>A pilot on real session openers</h4>
+    <p>The benchmark measures fixed tests; real work had not been measured. Nine questions that
+      opened the developer's own sessions ran headless the same morning, arms alternating: two
+      blocks, 45 runs, $8.31. The fence was built first: the session holds read-only tools, the
+      working folder is a copy, a read outside the copy is refused, no connector is loaded; nothing
+      was written and the copies were removed. The reading rule was written before the second
+      block.</p>
+    <p class="so"><b>Outcome:</b> Lea is cheaper than <code>full</code> in 18 of 18 pairs (median
+      ratio 0.44 and 0.48). Against a bare install it is cheaper in seven of nine pairs, median
+      0.87, but p = 0.105 and the dearest job went the other way: no decision. The answers were not
+      graded; the savings figure did not change.</p>
+  </li>
+</ol>
+</section>
+
+<section id="sonuclar">
+<h2>Test results <small>Under each table, one sentence on what it means</small></h2>
+
+<h3>1 · The five setups at the start (17–24 August)</h3>
+<p>Cost index, the plugin-free setup = 100. Sonnet, each cell the median of 5 runs.</p>
+<div class="scroll"><table>
+  <tr><th>setup</th><th>what it contains</th><th>prose</th><th>easy bug</th><th>hard bug</th><th>web site</th></tr>
+  <tr><td><code>bare</code></td><td>nothing</td><td class="n">100</td><td class="n">100</td><td class="n">100</td><td class="n">100</td></tr>
+  <tr><td><code>hooks</code></td><td>two hooks</td><td class="n">106</td><td class="n">110</td><td class="n">107</td><td class="n">155</td></tr>
+  <tr><td><code>superpowers</code></td><td>one plugin</td><td class="n">121</td><td class="n">153</td><td class="n">156</td><td class="n">115</td></tr>
+  <tr><td><code>modes</code></td><td>two short-output plugins</td><td class="n">55</td><td class="n">145</td><td class="n">130</td><td class="n">105</td></tr>
+  <tr><td><code>full</code></td><td>everything; the real setup of the day</td><td class="n">64</td><td class="n">197</td><td class="n">182</td><td class="n">150</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> “which one should I install” had no answer. Short output won on
+  prose, a long ruleset lost on tool work. Lea was written to combine the two.</p>
+
+<h3>2 · Lea v7 against each test's best rival (25–26 August)</h3>
+<div class="scroll"><table>
+  <tr><th>model</th><th>test</th><th>Lea</th><th>best rival</th><th>difference</th></tr>
+  <tr><td>Sonnet</td><td>prose</td><td class="n">$0.0626</td><td class="n">modes $0.0577</td><td>level</td></tr>
+  <tr><td>Sonnet</td><td>easy bug fix</td><td class="n">$0.0828 · 3/3</td><td class="n">bare $0.0957</td><td>13% cheaper</td></tr>
+  <tr><td>Sonnet</td><td>hard bug fix</td><td class="n">$0.0897</td><td class="n">superpowers $0.1244</td><td>28% cheaper</td></tr>
+  <tr><td>Sonnet</td><td>web site from scratch</td><td class="n">$0.0757 · 7/7</td><td class="n">bare $0.0911</td><td>17% cheaper</td></tr>
+  <tr><td>Sonnet</td><td>second hard bug</td><td class="n">$0.0815 · 3/3</td><td class="n">bare $0.0799</td><td>level</td></tr>
+  <tr><td>Opus</td><td>prose</td><td class="n">$0.2032</td><td class="n">modes $0.3488</td><td>42% cheaper</td></tr>
+  <tr><td>Opus</td><td>easy bug fix</td><td class="n">$0.1842 · 3/3</td><td class="n">bare $0.2171 · 3/3</td><td>15% cheaper</td></tr>
+  <tr><td>Opus</td><td>hard bug fix</td><td class="n">$0.2058 · 5/5</td><td class="n">superpowers $0.4366 · 5/5</td><td>53% cheaper</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> Lea is clearly dearer on no test and cheaper on most. On Opus there
+  is no quality gap; the case is plain: the same result on less quota. The sample is small (3–5
+  runs); read the percentages as a direction, not as exact.</p>
+
+<h3>3 · v7 against v8 (29–30 August)</h3>
+<div class="scroll"><table>
+  <tr><th>measure</th><th>v7</th><th>v8</th><th>difference</th></tr>
+  <tr><td>correct on the hard test (twenty runs each)</td><td class="n">4/20</td><td class="n">13/20</td><td>p = 0.010</td></tr>
+  <tr><td>median cost</td><td class="n">$0.0954</td><td class="n">$0.0888</td><td>7% cheaper</td></tr>
+  <tr><td>median duration</td><td class="n">211 s</td><td class="n">135 s</td><td>36% faster</td></tr>
+  <tr><td>prose median (five runs each)</td><td class="n">$0.0624</td><td class="n">$0.0563</td><td>difference not proven</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> the mood of one paragraph changed and correctness tripled; prose did
+  not pay for it. v8 was approved on that.</p>
+
+<h3>4 · The v9 round (5 September)</h3>
+<div class="scroll"><table>
+  <tr><th>arm</th><th>correct</th><th>note</th></tr>
+  <tr><td>v9 candidate</td><td class="n">36/40</td><td>the bar was 39/40, written before the round</td></tr>
+  <tr><td>v8, same-day control</td><td class="n">32/40</td><td>p = 0.35: difference not proven</td></tr>
+  <tr><td>v8, three blocks pooled</td><td class="n">45/60</td><td>13/20, 15/20, 17/20: one version, three draws</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> the candidate was rejected. “Not proven” is not “does not work”; but
+  resolving the difference would have needed ~100 runs per arm. The round took 92 cells and $9.23.</p>
+
+<h3>5 · The real project round (30 August)</h3>
+<div class="scroll"><table>
+  <tr><th>setup</th><th>runs</th><th>median</th><th>range</th></tr>
+  <tr><td>Lea</td><td class="n">3</td><td class="n">$3.74</td><td class="n">$2.93 – $8.10</td></tr>
+  <tr><td><code>full</code></td><td class="n">3</td><td class="n">$5.56</td><td class="n">$5.49 – $7.04</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> Lea is not dearer on real work; but this round cannot prove a ranking
+  (p = 0.70). Seeing a 30% difference would have needed 37 runs per arm. No split on quality: the
+  site builds in all six runs.</p>
+
+<h3>6 · The 200k window (14 October – 10 November)</h3>
+<div class="scroll"><table>
+  <tr><th></th><th>per turn</th><th>median conversation carried</th></tr>
+  <tr><td>before the window</td><td class="n">$0.256</td><td class="n">278k tokens</td></tr>
+  <tr><td>prediction (written beforehand)</td><td class="n">$0.146</td><td class="n">—</td></tr>
+  <tr><td>measured, 9,021 turns</td><td class="n">$0.170</td><td class="n">126k tokens</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> the bar ($0.19) held, the prediction did not. This is a before/after
+  reading: the work done in the two periods is not the same. The growing starting load is thought to
+  be what broke the prediction; v11 tests that.</p>
+
+<h3>7 · v8 against each test's best rival (11 November)</h3>
+<p>The same night, median of 5 runs per arm. The rivals are those of table 2. The bar was written
+  beforehand: v8 not dearer, not less correct.</p>
+<div class="scroll"><table>
+  <tr><th>model</th><th>test</th><th>v8</th><th>best rival</th><th>difference</th><th>p</th><th>bar</th></tr>
+  <tr><td>Sonnet</td><td>plain text</td><td class="n">$0.0806</td><td class="n">modes $0.0519</td><td>55% dearer</td><td class="n">1.00</td><td>failed</td></tr>
+  <tr><td>Sonnet</td><td>easy bug fix</td><td class="n">$0.0617 · 5/5</td><td class="n">bare $0.0587 · 5/5</td><td>5% dearer</td><td class="n">0.012</td><td>failed</td></tr>
+  <tr><td>Sonnet</td><td>hard bug fix</td><td class="n">$0.0631 · 5/5</td><td class="n">superpowers $0.0900 · 5/5</td><td>30% cheaper</td><td class="n">0.012</td><td>held</td></tr>
+  <tr><td>Sonnet</td><td>website from scratch</td><td class="n">$0.0688 · 5/5</td><td class="n">bare $0.0662 · 5/5</td><td>4% dearer</td><td class="n">0.022</td><td>failed</td></tr>
+  <tr><td>Sonnet</td><td>second hard bug</td><td class="n">$0.0678 · 5/5</td><td class="n">bare $0.0646 · 5/5</td><td>5% dearer</td><td class="n">0.40</td><td>failed</td></tr>
+  <tr><td>Opus</td><td>plain text</td><td class="n">$0.0964</td><td class="n">modes $0.1509</td><td>36% cheaper</td><td class="n">0.14</td><td>held</td></tr>
+  <tr><td>Opus</td><td>easy bug fix</td><td class="n">$0.1295 · 5/5</td><td class="n">bare $0.1179 · 5/5</td><td>10% dearer</td><td class="n">0.012</td><td>failed</td></tr>
+  <tr><td>Opus</td><td>hard bug fix</td><td class="n">$0.1379 · 5/5</td><td class="n">superpowers $0.1509 · 5/5</td><td>9% cheaper</td><td class="n">0.012</td><td>held</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> the bar held on three of eight. On a short tool task the ruleset is
+  itself a load: a bare install is 4% – 10% cheaper on four tests, and on three of them the
+  difference stands clear of the noise. The two plain-text differences do not (the runs fall into
+  two clusters). Correctness says nothing: all 80 runs passed. The savings figure is not affected;
+  it is computed against <code>full</code>, the install Lea replaced, not against a bare one.</p>
+
+<h3>8 · Pilot on real session openers (11 November)</h3>
+<p>Nine questions that opened the developer's own sessions; each cell is one run, the same morning,
+  arms alternating. The session holds read-only tools. A ratio under 1 means Lea is cheaper. The
+  text of the questions is not published.</p>
+<div class="scroll"><table>
+  <tr><th>job</th><th>model</th><th>block 1: Lea</th><th><code>full</code></th><th>ratio</th><th>block 2: Lea</th><th><code>full</code></th><th><code>bare</code></th><th>Lea / full</th><th>Lea / bare</th></tr>
+  <tr><td>question in the project folder</td><td>Opus</td><td class="n">$0.152</td><td class="n">$0.228</td><td class="n">0.67</td><td class="n">$0.203</td><td class="n">$0.220</td><td class="n">$0.316</td><td class="n">0.92</td><td class="n">0.64</td></tr>
+  <tr><td>question in the project folder</td><td>Opus</td><td class="n">$0.047</td><td class="n">$0.142</td><td class="n">0.33</td><td class="n">$0.047</td><td class="n">$0.141</td><td class="n">$0.048</td><td class="n">0.33</td><td class="n">0.98</td></tr>
+  <tr><td>question with no folder</td><td>Opus</td><td class="n">$0.047</td><td class="n">$0.095</td><td class="n">0.50</td><td class="n">$0.031</td><td class="n">$0.094</td><td class="n">$0.041</td><td class="n">0.33</td><td class="n">0.76</td></tr>
+  <tr><td>question in the project folder</td><td>Opus</td><td class="n">$0.136</td><td class="n">$0.399</td><td class="n">0.34</td><td class="n">$0.154</td><td class="n">$0.299</td><td class="n">$0.176</td><td class="n">0.52</td><td class="n">0.87</td></tr>
+  <tr><td>question with no folder</td><td>Opus</td><td class="n">$0.053</td><td class="n">$0.132</td><td class="n">0.40</td><td class="n">$0.058</td><td class="n">$0.135</td><td class="n">$0.069</td><td class="n">0.43</td><td class="n">0.84</td></tr>
+  <tr><td>question in the project folder</td><td>Sonnet</td><td class="n">$0.064</td><td class="n">$0.147</td><td class="n">0.44</td><td class="n">$0.095</td><td class="n">$0.152</td><td class="n">$0.099</td><td class="n">0.62</td><td class="n">0.96</td></tr>
+  <tr><td>question with no folder</td><td>Sonnet</td><td class="n">$0.026</td><td class="n">$0.056</td><td class="n">0.47</td><td class="n">$0.025</td><td class="n">$0.054</td><td class="n">$0.025</td><td class="n">0.48</td><td class="n">1.02</td></tr>
+  <tr><td>reading another project</td><td>Opus</td><td class="n">$0.558</td><td class="n">$0.899</td><td class="n">0.62</td><td class="n">$0.799</td><td class="n">$0.926</td><td class="n">$0.616</td><td class="n">0.86</td><td class="n">1.30</td></tr>
+  <tr><td>question in the project folder</td><td>Opus</td><td class="n">$0.042</td><td class="n">$0.096</td><td class="n">0.43</td><td class="n">$0.029</td><td class="n">$0.096</td><td class="n">$0.038</td><td class="n">0.30</td><td class="n">0.76</td></tr>
+  <tr><td><b>median ratio</b></td><td></td><td></td><td></td><td class="n"><b>0.44</b></td><td></td><td></td><td></td><td class="n"><b>0.48</b></td><td class="n"><b>0.87</b></td></tr>
+  <tr><td>p (sign-flip)</td><td></td><td></td><td></td><td class="n">0.004</td><td></td><td></td><td></td><td class="n">0.004</td><td class="n">0.105</td></tr>
+</table></div>
+<p class="read"><b>Meaning:</b> on real openers Lea is cheaper than <code>full</code>, the install
+  it replaced, in 18 of 18 pairs; against a bare install there is no decision (cheaper in seven of
+  nine, 30% dearer on the dearest job). Four limits: the fence took the tool definitions out of the
+  session, so the starting load shrank and <code>full</code>'s plugin load looks larger than it is;
+  the number that carries over is not the ratio but about $0.08 per opener. The answers were not
+  graded for correctness. Only jobs that read were measured, not jobs that write or run. Both
+  blocks ran the same morning. The savings figure did not change.</p>
+</section>
+
+<section id="kurallar">
+<h2>Lessons learned <small>The numbers changed; these rules are what stood</small></h2>
+<ul>
+  <li><b>Measure the rival the same day.</b> Do not compare with a stored old figure: the same setup
+    gives a different result on a different day. v9 would have looked like a win against the old
+    figure.</li>
+  <li><b>One measurement is a hypothesis, not evidence.</b> The $2.90 headline, 4/5 and 13/20: each
+    was a single draw.</li>
+  <li><b>Write the bar before the round runs.</b> A threshold set after seeing the result always
+    holds.</li>
+  <li><b>Work out what a rig can see.</b> The project round, the shadow arm and the daily flip did
+    not have the power to see a difference of the size they were looking for.</li>
+  <li><b>A full score can hide a defect.</b> All three sites that scored 7/7 on the web test lacked
+    the mobile viewport tag; the test measured behaviour, not appearance.</li>
+  <li><b>In a rule text, position matters more than content.</b> Every sentence added in the middle
+    diluted the word budget; the same sentence shortened, with the budget moved to the end, brought
+    the result back. Four times.</li>
+</ul>
+</section>
+
+<footer>
+  Source table: <code>merged.csv</code> ·
+  286 graded agent runs · Sonnet + Opus · Dollar figures are not a bill; they are token cost at list
+  price.
+</footer>
+
+</div>
+
+<script>
+  // Timeline filter: hides the steps whose outcome is not the chosen one.
+  document.querySelector('.filters').addEventListener('click', function (event) {
+    var button = event.target.closest('button');
+    if (!button) return;
+    var want = button.getAttribute('data-f');
+    this.querySelectorAll('button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b === button ? 'true' : 'false');
+    });
+    document.querySelectorAll('ol.tl > li').forEach(function (li) {
+      li.hidden = want !== 'all' && !li.classList.contains(want);
+    });
+  });
+</script>
+
+</body>
+</html>

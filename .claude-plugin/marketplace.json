@@ -1,0 +1,15 @@
+{
+  "name": "lea",
+  "description": "Lea: a ~180-token SessionStart ruleset. Terse prose, fewer turns, and a required contract check when fixing code.",
+  "owner": {
+    "name": "hero-999-dev"
+  },
+  "plugins": [
+    {
+      "name": "lea",
+      "description": "Lea: a ~180-token SessionStart ruleset. Terse prose, fewer turns, and a required contract check when fixing code.",
+      "source": "./plugin",
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "lea",
+  "version": "8.1.0",
+  "description": "Lea: a ~180-token SessionStart ruleset. Terse prose, fewer turns, and a required contract check when fixing code.",
+  "author": {
+    "name": "hero-999-dev"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/lea.js\"",
+            "timeout": 20,
+            "statusMessage": "Loading Lea..."
+          }
+        ]
+      }
+    ]
+  }
+}
