@@ -64,7 +64,7 @@
   .card h3 { margin: 0 0 0.4rem; font-size: 0.8rem; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--dim); font-weight: 600; }
   .card p { margin: 0.3rem 0; font-size: 0.95rem; }
-  .card ul { margin: 0.3rem 0 0; padding-left: 1.1rem; font-size: 0.93rem; }
+  .card ul, .card ol { margin: 0.3rem 0 0; padding-left: 1.1rem; font-size: 0.93rem; }
   .card li { margin: 0.28rem 0; }
   .card.ok { border-top: 3px solid var(--ok); }
   .card.no { border-top: 3px solid var(--no); }
@@ -185,6 +185,7 @@
   <a href="#kisaca">Kısaca</a>
   <a href="#tasarruf">Kazanç</a>
   <a href="#durum">Bugünkü durum</a>
+  <a href="#yol">Yol haritası</a>
   <a href="#zaman">Zaman çizelgesi</a>
   <a href="#sonuclar">Test sonuçları</a>
   <a href="#kurallar">Öğrenilenler</a>
@@ -316,7 +317,7 @@ izdüşüm olmaktan çıkıp doğrudan ölçüme dayanabilir.">
     dolayısıyla hiçbir hesaptan para çıkmıyor. Tükenen şey kota. Dolar, iki config&rsquo;i
     karşılaştırmanın ortak birimi olarak duruyor: token sayıları, 205 ölçüm satırından
     türetilmiş API fiyat vektörleriyle değerlendi.
-    Güncelleme 2026-11-11 06:53 &middot; <code>python savings.py</code>
+    Güncelleme 2026-11-11 22:01 &middot; <code>python savings.py</code>
   </p>
 </section>
 <!-- SAVINGS:END -->
@@ -362,16 +363,51 @@ izdüşüm olmaktan çıkıp doğrudan ölçüme dayanabilir.">
   <div class="card open">
     <h3><span class="tag open">Açık</span> &nbsp;cevabı bekleniyor</h3>
     <ul>
-      <li><b>v11 okuması</b> — eşitlenen eklentiler kapatıldı; ilk kontrol geçti. Asıl okuma 2.000
-        tur sonra: tahmin tur başına $0.10; $0.13 ve altı tutar, $0.15 üstü tutmaz. Turlar yalnızca
-        geliştirme makinesinde sayılıyor (11 Kasım'da 2.000'in 216'sı); başka yerdeki eklenti
-        kurulumları hiçbir şey bildirmez.</li>
+      <li><b>v11 okuması</b> — eşitlenen eklentiler kapatıldı; ilk kontrol geçti. Tahmin tur başına
+        $0.10, baraj $0.13 idi. 11 Kasım akşamındaki ara okuma (2.000 turun 639'u) $0.195: tahmin
+        tutmuyor. Neden: her sıkıştırmadan sonra geri yüklenen taban beklenenden büyük.</li>
+      <li><b>v12: budanmış taban</b> — kural seti ve pencere aynı; hiç çağrılmayan araç şemaları ve
+        beceri açıklamaları her turda taşınmıyor. 11 Kasım'da yalnızca geliştirme makinesinde açıldı,
+        barajı önceden yazıldı, etkisi henüz okunmadı. İndirilen eklentide yok.</li>
       <li><b>Gerçek kullanımdaki tasarruf</b> — hâlâ izdüşüm. Onu ölçmesi beklenen iki düzenek de
         emekli edildi.</li>
       <li><b>v8, eklentisiz kurulumun yanında</b> — 11 Kasım turunda önceden yazılan baraj sekiz
         testin üçünde tuttu: v8 kısa araçlı işlerde eklentisiz kurulumdan %4 – %10 pahalı. Buna
         karşı ne yapılacağına karar verilmedi.</li>
     </ul>
+  </div>
+</div>
+</section>
+
+<section id="yol">
+<h2>Yol haritası <small>Sıradaki adımlar. İndirilen sürüm, bir geliştirme kanıtlanıp test edilene kadar değişmez.</small></h2>
+<div class="cards">
+  <div class="card ok">
+    <h3><span class="tag ok">Kural</span> &nbsp;indirilen sürüm donduruldu</h3>
+    <p>Eklenti olarak indirilen Lea (8.1.0, v8 kural seti) şu üçü olmadan güncellenmez:</p>
+    <ol>
+      <li>Tahmin ve baraj, denemeden <b>önce</b> yazılmış olacak.</li>
+      <li>Baraj geliştirme makinesinde tutmuş olacak — tek okuma kanıt sayılmaz.</li>
+      <li>Değişiklik ikinci, temiz bir kurulumda denenmiş olacak.</li>
+    </ol>
+    <p>Bu sayfa ise her turdan sonra güncellenmeye devam eder; tutmayan sonuçlar da yazılır.</p>
+  </div>
+  <div class="card open">
+    <h3><span class="tag open">Sırada</span> &nbsp;adım adım</h3>
+    <ol>
+      <li><b>v12'yi oku.</b> Baraj: sıkıştırmadan sonra taşınan medyan terminalde 55k token ve altı,
+        masaüstü uygulamasında 95k ve altı. Her girişte en az beş sıkıştırma birikince okunur.</li>
+      <li><b>Tutarsa ikinci kurulumda dene.</b> Taban budayıcı temiz bir kurulumda çalıştırılır:
+        doğru şeyi mi raporluyor, geri alma eksiksiz mi.</li>
+      <li><b>O da geçerse eklentiye ekle.</b> İsteğe bağlı bir komut olarak; kural seti değişmez.
+        Tutmazsa geri alınır ve buraya “vazgeçildi” diye yazılır.</li>
+      <li><b>Kısa araçlı işlerdeki %4 – %10'luk fark.</b> Bir aday ancak aynı gün kontrolüyle,
+        kol başına 20 koşuluk bir turda denenir.</li>
+      <li><b>Yeni modelin fiyatı.</b> Fiyat katmanı kesinleşince dolar tabloları yeniden hesaplanır;
+        o güne kadar o satırlar işaretli kalır.</li>
+      <li><b>Gerçek kullanımdaki tasarruf.</b> Yeni bir ölçüm düzeneği, ancak bir güç hesabı onun
+        karar üretebileceğini gösterirse kurulur.</li>
+    </ol>
   </div>
 </div>
 </section>

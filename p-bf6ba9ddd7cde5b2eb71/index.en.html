@@ -64,7 +64,7 @@
   .card h3 { margin: 0 0 0.4rem; font-size: 0.8rem; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--dim); font-weight: 600; }
   .card p { margin: 0.3rem 0; font-size: 0.95rem; }
-  .card ul { margin: 0.3rem 0 0; padding-left: 1.1rem; font-size: 0.93rem; }
+  .card ul, .card ol { margin: 0.3rem 0 0; padding-left: 1.1rem; font-size: 0.93rem; }
   .card li { margin: 0.28rem 0; }
   .card.ok { border-top: 3px solid var(--ok); }
   .card.no { border-top: 3px solid var(--no); }
@@ -185,6 +185,7 @@
   <a href="#kisaca">In short</a>
   <a href="#tasarruf">Savings</a>
   <a href="#durum">Where it stands</a>
+  <a href="#yol">Roadmap</a>
   <a href="#zaman">Timeline</a>
   <a href="#sonuclar">Test results</a>
   <a href="#kurallar">Lessons</a>
@@ -358,16 +359,53 @@ Everything else: 120 words.</pre>
   <div class="card open">
     <h3><span class="tag open">Open</span> &nbsp;answer pending</h3>
     <ul>
-      <li><b>The v11 read</b> — synced plugins were switched off; the first check passed. The real
-        read comes after 2,000 turns: predicted $0.10 per turn; $0.13 or less holds, above $0.15
-        fails. The turns are counted on the development machine only (216 of 2,000 on 11 November);
-        plugin installs elsewhere report nothing.</li>
+      <li><b>The v11 read</b> — synced plugins were switched off; the first check passed. The
+        prediction was $0.10 per turn and the bar $0.13. The interim read on the evening of
+        11 November (639 of 2,000 turns) is $0.195: the prediction is not holding. Why: the base
+        reloaded after every compaction is larger than expected.</li>
+      <li><b>v12: a trimmed base</b> — same ruleset, same window; tool schemas and skill descriptions
+        that are never called are no longer carried on every turn. Switched on 11 November on the
+        development machine only, its bar written beforehand, its effect not yet read. Not in the
+        downloadable plugin.</li>
       <li><b>The saving in real use</b> — still a projection. Both rigs meant to measure it were
         retired.</li>
       <li><b>v8 beside a bare install</b> — in the 11 November round the bar written beforehand held
         on three of eight tests: v8 is 4% – 10% dearer than a bare install on short tool tasks. What
         to do about it has not been decided.</li>
     </ul>
+  </div>
+</div>
+</section>
+
+<section id="yol">
+<h2>Roadmap <small>The next steps. The downloadable version does not change until an improvement is proven and tested.</small></h2>
+<div class="cards">
+  <div class="card ok">
+    <h3><span class="tag ok">Rule</span> &nbsp;the download is frozen</h3>
+    <p>The Lea you install as a plugin (8.1.0, the v8 ruleset) is not updated without all three:</p>
+    <ol>
+      <li>The prediction and the bar are written <b>before</b> the trial.</li>
+      <li>The bar held on the development machine — one reading is not evidence.</li>
+      <li>The change was tried on a second, clean install.</li>
+    </ol>
+    <p>This page keeps being updated after every round, including the results that did not hold.</p>
+  </div>
+  <div class="card open">
+    <h3><span class="tag open">Next</span> &nbsp;step by step</h3>
+    <ol>
+      <li><b>Read v12.</b> The bar: the median carried after a compaction is 55k tokens or less in
+        the terminal and 95k or less in the desktop app. Read once each has at least five compactions.</li>
+      <li><b>If it holds, try it on a second install.</b> The base trimmer is run on a clean install:
+        does it report the right things, is its undo complete.</li>
+      <li><b>If that passes too, add it to the plugin.</b> As an optional command; the ruleset does
+        not change. If it fails it is undone and listed here as dropped.</li>
+      <li><b>The 4% – 10% gap on short tool tasks.</b> A candidate is tried only in a round with a
+        same-day control, 20 runs per arm.</li>
+      <li><b>The new model's price.</b> Once its price tier is known the dollar tables are
+        recomputed; until then those rows stay marked.</li>
+      <li><b>The saving in real use.</b> A new measuring rig is built only if a power calculation
+        shows it can produce a decision.</li>
+    </ol>
   </div>
 </div>
 </section>
