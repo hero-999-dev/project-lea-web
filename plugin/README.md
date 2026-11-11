@@ -14,6 +14,16 @@ claude plugin install lea@lea
 
 Restart Claude Code: hooks are read when a session starts. Needs `node` on the PATH.
 
+## The command
+
+```
+/lea:lea                     what Lea is doing in this session
+/lea:lea full <question>     answer one question in full, without the word budget
+```
+
+It runs only when you type it, so it adds nothing to what a turn carries. The status block
+reads the plugin's manifest and your `settings.json`; it writes nothing.
+
 ## Remove
 
 ```
@@ -38,4 +48,4 @@ over.
 ## What this is not
 
 No telemetry, no statusline, no second arm, nothing written to disk. The hook prints its text
-and exits.
+and exits; the command prints a status block and exits.

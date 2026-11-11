@@ -1,6 +1,6 @@
 {
   "name": "lea",
-  "version": "8.1.0",
+  "version": "8.2.0",
   "description": "Lea: a ~180-token SessionStart ruleset. Terse prose, fewer turns, and a required contract check when fixing code.",
   "author": {
     "name": "hero-999-dev"
