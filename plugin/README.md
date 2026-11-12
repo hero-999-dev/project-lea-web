@@ -14,26 +14,30 @@ claude plugin install lea@lea
 
 Restart Claude Code: hooks are read when a session starts. Needs `node` on the PATH.
 
-## The command
+## The commands
 
 ```
-/lea:lea                     what Lea is doing in this session
-/lea:lea full <question>     answer one question in full, without the word budget
-/lea:shortcut                make plain /lea work
+/lea                         what Lea is doing in this session
+/lea full <question>         answer one question in full, without the word budget
+/lea-guide                   the guide: every command, every rule, how to remove Lea
 ```
 
-They run only when you type them, so they add nothing to what a turn carries. The status block
-reads the plugin's manifest and your `settings.json`; it writes nothing.
+They run only when you type them, so they add nothing to what a turn carries.
 
-Claude Code reaches a plugin's command only by its full name. `/lea:shortcut` writes one file,
-`~/.claude/commands/lea.md`, and from the next session `/lea` and `/lea full <question>` work
-too. It never overwrites a file it did not write; delete the file to remove the short name.
+Claude Code reaches a plugin's own commands only by their full names, `/lea:lea` and
+`/lea:guide`. So that the plain names work, the plugin keeps two files in your own commands
+folder, `~/.claude/commands/lea.md` and `lea-guide.md`, written when a session starts - which
+is why the plain names answer from the second session on, and the full names from the first.
+It never overwrites a file it did not write.
 
 ## Remove
 
 ```
 claude plugin uninstall lea@lea
 ```
+
+Then delete `~/.claude/commands/lea.md` and `lea-guide.md`: the plugin wrote them and nothing
+removes them for you.
 
 ## Optional: a smaller auto-compact window
 
@@ -52,6 +56,5 @@ over.
 
 ## What this is not
 
-No telemetry, no statusline, no second arm. The hook prints its text and exits; `/lea:lea`
-prints a status block and exits. Nothing is written to disk unless you type `/lea:shortcut`,
-which writes the one file named above.
+No telemetry, no statusline, no second arm. The hook prints its text and exits. The two files
+named above are the only things ever written to disk.

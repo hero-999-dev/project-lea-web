@@ -44,6 +44,6 @@ claude plugin marketplace add hero-999-dev/project-lea-web
 claude plugin install lea@lea
 ```
 
-That adds one `SessionStart` hook and one command you type (`/lea:lea`) - see `plugin/README.md`. No password is
+That adds one `SessionStart` hook and two commands you type (`/lea`, `/lea-guide`) - see `plugin/README.md`. No password is
 needed: the plugin sits outside the gate.
 <!-- plugin:end -->
